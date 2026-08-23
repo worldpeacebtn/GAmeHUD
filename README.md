@@ -1,2 +1,2 @@
 # GAmeHUD
-https://worldpeacebtn.io/github.io/GAmeHUD
+https://worldpeacebtn.github.io/GAmeHUD
