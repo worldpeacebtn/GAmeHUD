@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberpunk Social Dynamics Lab & Strategy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#05050a',
+                            panel: 'rgba(10, 15, 30, 0.85)',
+                            border: '#1e3a8a',
+                            neonPink: '#f43f5e',
+                            neonBlue: '#38bdf8',
+                            neonEmerald: '#34d399',
+                            neonAmber: '#fbbf24',
+                            neonPurple: '#a855f7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;800&display=swap');
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #05050a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .neon-glow-blue {
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.6), 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+        .neon-glow-pink {
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.6), 0 0 20px rgba(244, 63, 94, 0.3);
+        }
+        .neon-glow-amber {
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.6), 0 0 20px rgba(251, 191, 36, 0.3);
+        }
+
+        .cyber-box {
+            background: rgba(13, 18, 30, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: inset 0 0 15px rgba(56, 189, 248, 0.05), 0 0 15px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            position: relative;
+        }
+
+        .cyber-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 8px; height: 8px;
+            border-top: 2px solid #38bdf8;
+            border-left: 2px solid #38bdf8;
+        }
+        .cyber-box::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 8px; height: 8px;
+            border-bottom: 2px solid #38bdf8;
+            border-right: 2px solid #38bdf8;
+        }
+
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05050a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e3a8a;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+    <div class="fixed inset-0 scanlines z-50 pointer-events-none"></div>
+
+    <!-- Top Navigation HUD -->
+    <header class="cyber-box border-b border-sky-500/40 p-3 px-6 flex flex-wrap justify-between items-center z-40">
+        <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 bg-sky-400 rounded-full animate-ping"></div>
+            <h1 class="text-xl font-extrabold text-sky-400 tracking-wider neon-glow-blue">
+                NEO-HAMBURG // EHRG LAB & STRATEGY HUD
+            </h1>
+            <span class="text-xs px-2 py-0.5 bg-blue-950 text-sky-300 border border-sky-700 rounded">SYS.v4.0.9</span>
+        </div>
+        <div class="flex items-center space-x-4 text-xs">
+            <div class="hidden md:flex flex-col text-right">
+                <span class="text-slate-400">GLOBAL EQUILIBRIUM INDEX</span>
+                <span id="global-eq-val" class="text-emerald-400 font-bold">88.4% STABLE</span>
+            </div>
+            <div class="flex bg-slate-900 border border-slate-700 rounded p-1">
+                <button onclick="switchTab('arcade')" id="tab-btn-arcade" class="px-3 py-1 rounded text-sky-400 font-bold bg-sky-950/60 transition-all">
+                    SIM-CHAMBER
+                </button>
+                <button onclick="switchTab('map')" id="tab-btn-map" class="px-3 py-1 rounded text-slate-400 hover:text-sky-300 transition-all">
+                    CITY MAP & SCAN
+                </button>
+                <button onclick="switchTab('codex')" id="tab-btn-codex" class="px-3 py-1 rounded text-slate-400 hover:text-sky-300 transition-all">
+                    ARCHETYPE CODEX
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow p-4 md:p-6 max-w-7xl mx-auto w-full grid grid-cols-1 gap-6">
+
+        <!-- TAB 1: SIMULATION CHAMBER (Arcade / Particle Sandbox) -->
+        <div id="view-arcade" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Simulation Controls & Stats -->
+            <div class="cyber-box p-4 rounded flex flex-col space-y-4">
+                <h2 class="text-sm font-bold text-sky-400 border-b border-sky-900 pb-2 flex items-center justify-between">
+                    <span>[SIMULATION PARAMETERS]</span>
+                    <span class="text-xs text-rose-400">PREDATOR VS PREY DYNAMICS</span>
+                </h2>
+                
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Observe contagious social behavior. <span class="text-rose-400 font-bold">APEX (Red)</span> nodes emit disruptive pressure. When left unchecked, they infect vulnerable vectors. Use <span class="text-emerald-400 font-bold">Cohesion Pulse</span> or <span class="text-amber-400 font-bold">Boundary Isolation</span> to curate system immunity.
+                </p>
+
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span>Infected / Disruptive (APE)</span>
+                            <span id="stat-apes" class="text-rose-400 font-bold">0</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded h-2 border border-slate-800">
+                            <div id="bar-apes" class="bg-rose-500 h-full rounded transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span>Protected / Resilient (Bunny/Cohesive)</span>
+                            <span id="stat-bunnies" class="text-emerald-400 font-bold">0</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded h-2 border border-slate-800">
+                            <div id="bar-bunnies" class="bg-emerald-500 h-full rounded transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800 space-y-2">
+                    <span class="text-xs text-slate-400 block font-semibold">ACTIVE INTERVENTION TOOLS</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setSimTool('unite')" id="tool-unite" class="p-2 bg-emerald-950/60 border border-emerald-600/60 hover:bg-emerald-900/60 rounded text-xs font-bold text-emerald-300 transition-all flex items-center justify-center space-x-1">
+                            <span>🛡️ COHESION PULSE</span>
+                        </button>
+                        <button onclick="setSimTool('isolate')" id="tool-isolate" class="p-2 bg-amber-950/60 border border-amber-600/60 hover:bg-amber-900/60 rounded text-xs font-bold text-amber-300 transition-all flex items-center justify-center space-x-1">
+                            <span>⚡ BOUNDARY SHIELD</span>
+                        </button>
+                    </div>
+                    <button onclick="spawnApex()" class="w-full p-2 bg-rose-950/60 border border-rose-600/60 hover:bg-rose-900/60 rounded text-xs font-bold text-rose-300 transition-all">
+                        ⚠️ INJECT APE AGGRESSOR
+                    </button>
+                </div>
+
+                <div class="bg-slate-950/80 p-3 rounded border border-slate-800 text-xs text-slate-400 space-y-1">
+                    <span class="text-sky-300 font-bold block">PHILOSOPHICAL PROTOCOL:</span>
+                    <p>Why is the infection reversed? True social harmony requires recognizing parasitic vectors as isolated feedback loops. By applying structural barriers and empirical education, society cures the contagion.</p>
+                </div>
+            </div>
+
+            <!-- Center/Right Simulation Canvas & Arcade Exploration -->
+            <div class="cyber-box lg:col-span-2 rounded p-2 flex flex-col relative h-[500px]">
+                <div class="absolute top-4 left-4 z-10 bg-slate-950/80 px-3 py-1 border border-sky-500/30 rounded text-xs flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="sim-mode-display" class="text-sky-300 font-bold">TOOL: COHESION PULSE (Click canvas)</span>
+                </div>
+                <canvas id="arcadeCanvas" class="w-full h-full rounded cursor-crosshair bg-slate-950"></canvas>
+            </div>
+        </div>
+
+        <!-- TAB 2: CITY MAP & SCANNER (Tactical Dashboard) -->
+        <div id="view-map" class="hidden grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- City Map Grid -->
+            <div class="cyber-box lg:col-span-2 p-4 rounded flex flex-col h-[520px] relative overflow-hidden">
+                <div class="flex justify-between items-center mb-3 border-b border-sky-900 pb-2">
+                    <h2 class="text-sm font-bold text-sky-400">[TACTICAL MAP: HAMBURG SECTOR 4]</h2>
+                    <span class="text-xs text-slate-400">Click node vectors for deep telemetry analysis</span>
+                </div>
+                
+                <!-- SVG Interactive City Map -->
+                <div id="map-container" class="relative flex-grow bg-slate-950 rounded border border-slate-800 flex items-center justify-center overflow-hidden">
+                    <svg viewBox="0 0 800 500" class="w-full h-full">
+                        <!-- City Grid Lines -->
+                        <g stroke="#1e293b" stroke-width="1" opacity="0.5">
+                            <line x1="0" y1="100" x2="800" y2="100" />
+                            <line x1="0" y1="200" x2="800" y2="200" />
+                            <line x1="0" y1="300" x2="800" y2="300" />
+                            <line x1="0" y1="400" x2="800" y2="400" />
+                            <line x1="160" y1="0" x2="160" y2="500" />
+                            <line x1="320" y1="0" x2="320" y2="500" />
+                            <line x1="480" y1="0" x2="480" y2="500" />
+                            <line x1="640" y1="0" x2="640" y2="500" />
+                        </g>
+
+                        <!-- District Sectors -->
+                        <text x="30" y="30" fill="#334155" font-size="12" font-family="Orbitron">ALTONA_CORE</text>
+                        <text x="650" y="30" fill="#334155" font-size="12" font-family="Orbitron">HAFENCITY_SEC</text>
+                        <text x="30" y="470" fill="#334155" font-size="12" font-family="Orbitron">WANDSBEK_ZONE</text>
+                        <text x="630" y="470" fill="#334155" font-size="12" font-family="Orbitron">HARBURG_OUTPOST</text>
+
+                        <!-- Dynamic Interactive Map Nodes -->
+                        <g id="map-nodes">
+                            <!-- Injected dynamically via JS -->
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Node Telemetry & Analysis Panel -->
+            <div class="cyber-box p-4 rounded flex flex-col justify-between space-y-4">
+                <div>
+                    <h2 class="text-sm font-bold text-sky-400 border-b border-sky-900 pb-2 mb-3">
+                        [NODE TELEMETRY & ANALYSIS]
+                    </h2>
+                    <div id="node-details" class="space-y-3 text-xs">
+                        <div class="p-3 bg-slate-950 rounded border border-slate-800 text-slate-400 text-center py-12">
+                            Select any pulsing node on the map to inspect telemetry, actor classification, and EHRG legal anchors.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-blue-950/40 rounded border border-blue-900/60 text-xs space-y-2">
+                    <span class="text-sky-300 font-bold block">🚨 IMMEDIATE SURVIVAL ADVISORY:</span>
+                    <p class="text-slate-300">Maintain digital locks, log acoustic echoes via witness synergy ([E-LOG]), and rely on physical vulnerability barriers ([V-BAR]) to establish unassailable legal proof.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: ARCHETYPE CODEX (Detailed Knowledge Base) -->
+        <div id="view-codex" class="hidden grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- APE Class -->
+            <div class="cyber-box p-4 rounded space-y-3 border-rose-900/60">
+                <div class="flex justify-between items-center border-b border-rose-900/60 pb-2">
+                    <h3 class="font-bold text-rose-400">CLASS 🦍: APE (Predator)</h3>
+                    <span class="text-xs px-2 py-0.5 bg-rose-950 text-rose-300 rounded">THREAT: L3</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Infected aggressors driven by everyday sadism, narcissistic supply, and addiction loops. They seek to break targets and feed on chaos.
+                </p>
+                <div class="space-y-1 text-xs text-slate-400">
+                    <div><strong class="text-rose-300">Subclasses:</strong> APE-X (Brutal Hierarchy), APE-B (Patriarchal), APE-Y/Z (Digital Stalker).</div>
+                    <div><strong class="text-rose-300">Tactics:</strong> Sleep Deprivation, Toxic Smoke Assault, Hero Camouflage.</div>
+                    <div><strong class="text-rose-300">Counter-Strategy:</strong> Strict boundary isolation & legal logging.</div>
+                </div>
+            </div>
+
+            <!-- BUNNY Class -->
+            <div class="cyber-box p-4 rounded space-y-3 border-emerald-900/60">
+                <div class="flex justify-between items-center border-b border-emerald-900/60 pb-2">
+                    <h3 class="font-bold text-emerald-400">CLASS 🐇: BUNNY (Prey / Target)</h3>
+                    <span class="text-xs px-2 py-0.5 bg-emerald-950 text-emerald-300 rounded">STATUS: VULNERABLE</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Intellectually superior targets chosen due to empathy or temporary physical vulnerability. They actively block predatory access and protect dependents.
+                </p>
+                <div class="space-y-1 text-xs text-slate-400">
+                    <div><strong class="text-emerald-300">Subclasses:</strong> Target (Primary User), Target-A (Child Protection), Cooping (Support Network).</div>
+                    <div><strong class="text-emerald-300">Anchors:</strong> [V-BAR] Vulnerability Shield, [E-LOG] Witness Synergy.</div>
+                    <div><strong class="text-emerald-300">Goal:</strong> Systemic extraction & absolute freedom.</div>
+                </div>
+            </div>
+
+            <!-- CAT Class -->
+            <div class="cyber-box p-4 rounded space-y-3 border-amber-900/60">
+                <div class="flex justify-between items-center border-b border-amber-900/60 pb-2">
+                    <h3 class="font-bold text-amber-400">CLASS 🐈: CAT (Infiltrator)</h3>
+                    <span class="text-xs px-2 py-0.5 bg-amber-950 text-amber-300 rounded">ROLE: SABOTEUR</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Subtle zersetzer operating in the background. Sabotage data, execute gaslighting, and feed illicit networks with operational information.
+                </p>
+                <div class="space-y-1 text-xs text-slate-400">
+                    <div><strong class="text-amber-300">Traits:</strong> Indirect confrontation, plausible deniability.</div>
+                    <div><strong class="text-amber-300">Counter-Strategy:</strong> Zero-trust digital hygiene & robust evidentiary backups.</div>
+                    <div><strong class="text-amber-300">Legal Anchor:</strong> EHRG Documentation Standards.</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Tab switching logic
+        function switchTab(tab) {
+            document.getElementById('view-arcade').classList.add('hidden');
+            document.getElementById('view-map').classList.add('hidden');
+            document.getElementById('view-codex').classList.add('hidden');
+
+            document.getElementById('tab-btn-arcade').className = 'px-3 py-1 rounded text-slate-400 hover:text-sky-300 transition-all';
+            document.getElementById('tab-btn-map').className = 'px-3 py-1 rounded text-slate-400 hover:text-sky-300 transition-all';
+            document.getElementById('tab-btn-codex').className = 'px-3 py-1 rounded text-slate-400 hover:text-sky-300 transition-all';
+
+            document.getElementById('view-' + tab).classList.remove('hidden');
+            document.getElementById('view-' + tab).classList.add('grid');
+            document.getElementById('tab-btn-' + tab).className = 'px-3 py-1 rounded text-sky-400 font-bold bg-sky-950/60 transition-all';
+        }
+
+        // SIMULATION CANVAS ENGINE (Particle Contagion & Social Dynamics)
+        const canvas = document.getElementById('arcadeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        function resizeCanvas() {
+            width = canvas.width = canvas.parentElement.clientWidth - 16;
+            height = canvas.height = canvas.parentElement.clientHeight - 60;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let particles = [];
+        let simTool = 'unite'; // 'unite' or 'isolate'
+
+        function setSimTool(tool) {
+            simTool = tool;
+            if (tool === 'unite') {
+                document.getElementById('sim-mode-display').innerText = 'TOOL: COHESION PULSE (Boosts resilience)';
+                document.getElementById('tool-unite').className = 'p-2 bg-emerald-950/80 border border-emerald-500 rounded text-xs font-bold text-emerald-300 shadow-lg';
+                document.getElementById('tool-isolate').className = 'p-2 bg-amber-950/40 border border-amber-600/40 rounded text-xs font-bold text-amber-300';
+            } else {
+                document.getElementById('sim-mode-display').innerText = 'TOOL: BOUNDARY SHIELD (Isolates & de-escalates)';
+                document.getElementById('tool-isolate').className = 'p-2 bg-amber-950/80 border border-amber-500 rounded text-xs font-bold text-amber-300 shadow-lg';
+                document.getElementById('tool-unite').className = 'p-2 bg-emerald-950/40 border border-emerald-600/40 rounded text-xs font-bold text-emerald-300';
+            }
+        }
+
+        class SimParticle {
+            constructor(x, y, state = 'neutral') {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 1.2;
+                this.vy = (Math.random() - 0.5) * 1.2;
+                this.radius = 5;
+                this.state = state; // neutral, ape (disruptive), bunny (protected), isolated
+                this.timer = 0;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 10 || this.x > width - 10) this.vx *= -1;
+                if (this.y < 10 || this.y > height - 10) this.vy *= -1;
+
+                if (this.state === 'isolated') {
+                    this.vx *= 0.92;
+                    this.vy *= 0.92;
+                    this.timer--;
+                    if (this.timer <= 0) {
+                        this.state = 'neutral';
+                        this.vx = (Math.random() - 0.5) * 1.2;
+                        this.vy = (Math.random() - 0.5) * 1.2;
+                    }
+                } else if (this.state === 'bunny') {
+                    this.timer--;
+                    if (this.timer <= 0) this.state = 'neutral';
+                } else if (this.state === 'ape') {
+                    // Randomly de-escalate if isolated long enough or self-correct
+                    if (Math.random() < 0.001) this.state = 'neutral';
+                } else {
+                    // Spontaneous conflict injection chance
+                    if (Math.random() < 0.0003) this.state = 'ape';
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                if (this.state === 'ape') {
+                    ctx.fillStyle = '#f43f5e';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#f43f5e';
+                } else if (this.state === 'bunny') {
+                    ctx.fillStyle = '#34d399';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#34d399';
+                } else if (this.state === 'isolated') {
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.shadowBlur = 0;
+                } else {
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.shadowBlur = 0;
+                }
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function initSimulation() {
+            particles = [];
+            const count = 55;
+            for (let i = 0; i < count; i++) {
+                let st = 'neutral';
+                if (i < 5) st = 'ape';
+                particles.push(new SimParticle(Math.random() * (width - 40) + 20, Math.random() * (height - 40) + 20, st));
+            }
+        }
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const radius = 90;
+
+            particles.forEach(p => {
+                const dx = p.x - mouseX;
+                const dy = p.y - mouseY;
+                if (Math.sqrt(dx*dx + dy*dy) < radius) {
+                    if (simTool === 'unite' && p.state !== 'ape') {
+                        p.state = 'bunny';
+                        p.timer = 350;
+                    } else if (simTool === 'isolate' && p.state === 'ape') {
+                        p.state = 'isolated';
+                        p.timer = 250;
+                    }
+                }
+            });
+        });
+
+        function spawnApex() {
+            particles.push(new SimParticle(width / 2, height / 2, 'ape'));
+        }
+
+        function animateSimulation() {
+            ctx.clearRect(0, 0, width, height);
+
+            let apeCount = 0;
+            let bunnyCount = 0;
+
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                if (particles[i].state === 'ape') apeCount++;
+                if (particles[i].state === 'bunny') bunnyCount++;
+
+                // Contagion check between nearby nodes
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if (dist < 70 && particles[i].state !== 'isolated' && particles[j].state !== 'isolated') {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+
+                        if (particles[i].state === 'ape' || particles[j].state === 'ape') {
+                            ctx.strokeStyle = 'rgba(244, 63, 94, 0.35)';
+                            // Contagion spread if unprotected
+                            if (dist < 35 && Math.random() < 0.04) {
+                                if (particles[i].state === 'neutral' && particles[j].state === 'ape') particles[i].state = 'ape';
+                                if (particles[j].state === 'neutral' && particles[i].state === 'ape') particles[j].state = 'ape';
+                            }
+                        } else if (particles[i].state === 'bunny' || particles[j].state === 'bunny') {
+                            ctx.strokeStyle = 'rgba(52, 211, 153, 0.35)';
+                        } else {
+                            ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)';
+                        }
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Update stats
+            document.getElementById('stat-apes').innerText = apeCount;
+            document.getElementById('stat-bunnies').innerText = bunnyCount;
+            const apePct = Math.min(100, (apeCount / particles.length) * 100);
+            const bunnyPct = Math.min(100, (bunnyCount / particles.length) * 100);
+            document.getElementById('bar-apes').style.width = apePct + '%';
+            document.getElementById('bar-bunnies').style.width = bunnyPct + '%';
+
+            requestAnimationFrame(animateSimulation);
+        }
+
+        // TACTICAL CITY MAP NODES DATA
+        const cityNodes = [
+            { id: 'NODE-01', name: 'Altona Sector Alpha', type: 'APE-X / Critical', status: 'CRITICAL', coords: {x: 180, y: 120}, desc: 'High acoustic interference detected. Witness backup ([E-LOG]) active in adjacent residential block.', threat: 'L3', legal: '§ 239/240 StGB + EHRG Art. 8' },
+            { id: 'NODE-02', name: 'Sternschanze Hub', type: 'BUNNY-Target / Secure', status: 'PROTECTED', coords: {x: 350, y: 180}, desc: 'User telemetry secure. [V-BAR] physical vulnerability shield active. Handset encrypted.', threat: 'L1', legal: 'EHRG Art. 3 Protection' },
+            { id: 'NODE-03', name: 'HafenCity Node B', type: 'CAT / Infiltrator', status: 'MONITORED', coords: {x: 580, y: 110}, desc: 'Data tampering and gaslighting signatures recorded. Network node flagged for deep audit.', threat: 'L2', legal: 'Data Sabotage Protocol' },
+            { id: 'NODE-04', name: 'Wandsbek Border Outpost', type: 'COOPING Umfeld', status: 'STABLE', coords: {x: 250, y: 360}, desc: 'Support network in damage-limitation mode. Regularizing witness corroboration.', threat: 'L1', legal: 'Mediation Registry' },
+            { id: 'NODE-05', name: 'Harburg Sector Omega', type: 'APE-B / Patriarchal Loop', status: 'ISOLATED', coords: {x: 600, y: 380}, desc: 'Boundary isolation protocol successfully applied. Täter loop contained.', threat: 'L3', legal: 'LKA Hamburg Dossier #409' }
+        ];
+
+        function renderMapNodes() {
+            const container = document.getElementById('map-nodes');
+            container.innerHTML = '';
+
+            cityNodes.forEach(node => {
+                let color = '#38bdf8';
+                if (node.status === 'CRITICAL') color = '#f43f5e';
+                else if (node.status === 'PROTECTED') color = '#34d399';
+                else if (node.status === 'MONITORED') color = '#fbbf24';
+
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'cursor-pointer group');
+                g.onclick = () => selectMapNode(node);
+
+                // Outer pulsing ring for critical
+                if (node.status === 'CRITICAL') {
+                    const circlePulse = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circlePulse.setAttribute('cx', node.coords.x);
+                    circlePulse.setAttribute('cy', node.coords.y);
+                    circlePulse.setAttribute('r', '18');
+                    circlePulse.setAttribute('fill', 'none');
+                    circlePulse.setAttribute('stroke', color);
+                    circlePulse.setAttribute('stroke-width', '1.5');
+                    circlePulse.setAttribute('opacity', '0.7');
+                    g.appendChild(circlePulse);
+                }
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', node.coords.x);
+                circle.setAttribute('cy', node.coords.y);
+                circle.setAttribute('r', '8');
+                circle.setAttribute('fill', color);
+                circle.setAttribute('stroke', '#05050a');
+                circle.setAttribute('stroke-width', '2');
+                g.appendChild(circle);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', node.coords.x + 14);
+                text.setAttribute('y', node.coords.y + 4);
+                text.setAttribute('fill', '#94a3b8');
+                text.setAttribute('font-size', '10');
+                text.setAttribute('font-family', 'Share Tech Mono');
+                text.textContent = node.id + ' [' + node.status + ']';
+                g.appendChild(text);
+
+                container.appendChild(g);
+            });
+        }
+
+        function selectMapNode(node) {
+            let statusColor = 'text-sky-400 border-sky-900';
+            if (node.status === 'CRITICAL') statusColor = 'text-rose-400 border-rose-900';
+            else if (node.status === 'PROTECTED') statusColor = 'text-emerald-400 border-emerald-900';
+            else if (node.status === 'MONITORED') statusColor = 'text-amber-400 border-amber-900';
+
+            const details = document.getElementById('node-details');
+            details.innerHTML = `
+                <div class="p-3 bg-slate-950 rounded border ${statusColor} space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold font-orbitron">${node.id}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] bg-slate-900 border ${statusColor}">${node.status}</span>
+                    </div>
+                    <div><strong class="text-slate-300">Location:</strong> ${node.name}</div>
+                    <div><strong class="text-slate-300">Classification:</strong> ${node.type}</div>
+                    <div><strong class="text-slate-300">Threat Index:</strong> ${node.threat}</div>
+                    <div><strong class="text-slate-300">Legal Anchor:</strong> ${node.legal}</div>
+                    <p class="text-slate-300 pt-1 border-t border-slate-900">${node.desc}</p>
+                </div>
+            `;
+        }
+
+        // Start everything on load
+        window.onload = () => {
+            resizeCanvas();
+            initSimulation();
+            animateSimulation();
+            renderMapNodes();
+        };
+    </script>
+</body>
+</html>
