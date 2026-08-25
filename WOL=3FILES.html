@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>St. Pauli AR - Der Rote Faden JRPG</title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+            overflow: hidden;
+            background-color: #020617;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+        }
+        .fairytale-font {
+            font-family: 'Cinzel', serif;
+        }
+        .pixel-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+        @keyframes neonPulse {
+            0%,
+            100% {
+                box-shadow: 0 0 15px rgba(236, 72, 153, 0.5), inset 0 0 10px rgba(6, 182, 212, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 35px rgba(236, 72, 153, 0.9), inset 0 0 20px rgba(6, 182, 212, 0.7);
+            }
+        }
+        .glow-cyber {
+            animation: neonPulse 4s infinite;
+        }
+        @keyframes floatHolo {
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        .float-holo {
+            animation: floatHolo 3s ease-in-out infinite;
+        }
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px;
+            z-index: 4;
+            pointer-events: none;
+        }
+        canvas {
+            image-rendering: pixelated;
+            touch-action: none;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(236, 72, 153, 0.35);
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ec4899;
+            border-radius: 3px;
+        }
+        .sprite-portrait {
+            width: clamp(90px, 22vw, 180px);
+            height: clamp(135px, 33vw, 270px);
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid rgba(236, 72, 153, 0.6);
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.4);
+            flex-shrink: 0;
+        }
+        .hitbox-indicator {
+            position: absolute;
+            border: 2px dashed rgba(6, 182, 212, 0.7);
+            border-radius: 8px;
+            pointer-events: none;
+            animation: pulseHitbox 2s infinite;
+            z-index: 5;
+        }
+        @keyframes pulseHitbox {
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        .album-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid;
+            background: rgba(10, 15, 30, 0.8);
+        }
+        .album-chip:hover {
+            transform: scale(1.05);
+        }
+        .quest-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 116, 139, 0.4);
+            background: rgba(15, 23, 42, 0.8);
+            font-size: 11px;
+            font-family: monospace;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .quest-item:hover {
+            border-color: rgba(236, 72, 153, 0.6);
+            background: rgba(30, 41, 59, 0.9);
+        }
+        .quest-item.completed {
+            border-color: rgba(34, 197, 94, 0.6);
+            background: rgba(6, 78, 59, 0.5);
+            opacity: 0.7;
+        }
+        .quest-item.active {
+            border-color: rgba(236, 72, 153, 0.8);
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
+        }
+        .tag-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.97);
+            z-index: 75;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-content {
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(236, 72, 153, 0.5);
+            border-radius: 20px;
+            max-width: 480px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 0 50px rgba(236, 72, 153, 0.3);
+        }
+        .jrpg-battle-frame {
+            border: 3px solid rgba(236, 72, 153, 0.7);
+            border-radius: 18px;
+            box-shadow: 0 0 40px rgba(236, 72, 153, 0.4), inset 0 0 30px rgba(6, 182, 212, 0.15);
+        }
+        .scene-transition {
+            animation: sceneFade 0.5s ease-in-out;
+        }
+        @keyframes sceneFade {
+            0% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col items-center justify-between p-0 m-0 overflow-hidden select-none">
+
+    <header class="w-full border-b border-pink-900/40 bg-slate-950/95 backdrop-blur-md px-3 py-2 flex items-center justify-between z-40 shrink-0">
+        <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-full bg-pink-950 border border-pink-500 flex items-center justify-center shadow-lg animate-pulse">
+                <span class="text-xs">🐇</span>
+            </div>
+            <div>
+                <h1 class="fairytale-font text-xs sm:text-sm font-bold text-pink-400 tracking-wider flex items-center gap-1.5">
+                    ST. PAULI AR HUB <span class="text-cyan-400 text-[9px] pixel-font">v7.0 JRPG</span>
+                </h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-1.5 overflow-x-auto py-1">
+            <button onclick="toggleNeuralChat()" class="px-2.5 py-1 rounded-lg bg-cyan-950/90 border border-cyan-500/70 text-[11px] font-bold text-cyan-300 hover:bg-cyan-900 transition flex items-center gap-1 shadow-[0_0_12px_rgba(6,182,212,0.3)] cursor-pointer whitespace-nowrap">
+                🤖 Neural Chat
+            </button>
+            <button onclick="toggleWolfFiles()" class="px-2 py-1 rounded-lg bg-red-950/80 border border-red-500/60 text-[10px] font-mono text-red-300 hover:bg-red-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                🐺 Wolf Files
+            </button>
+            <button onclick="toggleQuestLog()" class="px-2 py-1 rounded-lg bg-amber-950/80 border border-amber-500/60 text-[10px] font-mono text-amber-300 hover:bg-amber-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                📋 Quests
+            </button>
+            <button id="btnSmartDevice" class="px-2.5 py-1 rounded-lg bg-pink-950/90 border border-pink-500/70 text-[11px] font-bold text-pink-300 hover:bg-pink-900 transition flex items-center gap-1 shadow-[0_0_12px_rgba(236,72,153,0.3)] cursor-pointer whitespace-nowrap">
+                📲 Cyberdeck 🗂️
+            </button>
+            <button onclick="toggleSettings()" class="px-2 py-1 rounded-lg bg-slate-800/90 border border-slate-500/70 text-[10px] font-mono text-slate-300 hover:bg-slate-700 transition cursor-pointer whitespace-nowrap">
+                ⚙️ API
+            </button>
+            <button onclick="toggleHelpPanel()" class="px-2 py-1 rounded-lg bg-indigo-950/90 border border-indigo-500/70 text-[10px] font-mono text-indigo-300 hover:bg-indigo-900 transition cursor-pointer whitespace-nowrap">
+                🆘 Hilfe
+            </button>
+        </div>
+    </header>
+
+    <main class="relative flex-1 w-full max-w-6xl bg-black border-y sm:border border-pink-900/40 shadow-2xl overflow-hidden scanlines flex flex-col justify-center items-center">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Hitbox Indicators Overlay (visual only) -->
+        <div id="hitboxOverlay" class="absolute inset-0 z-[6] pointer-events-none"></div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="absolute inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center backdrop-blur-2xl p-6 pointer-events-auto">
+            <div class="w-20 h-20 rounded-full bg-pink-950 border-2 border-pink-500 flex items-center justify-center text-4xl shadow-[0_0_40px_rgba(236,72,153,0.8)] mb-4 animate-bounce">
+                🐇
+            </div>
+            <div class="inline-block px-3 py-1 rounded-full bg-pink-950/80 border border-pink-500 text-[9px] pixel-font text-pink-300 mb-3 shadow-[0_0_15px_rgba(236,72,153,0.3)]">
+                ST. PAULI WE • GEMINI AI • JRPG ADVENTURE
+            </div>
+            <h1 class="fairytale-font text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-300 font-bold mb-2 text-center">
+                HINZ & KUNTZ KIOSK
+            </h1>
+            <p class="text-cyan-300 text-xs sm:text-sm mb-3 max-w-lg text-center font-mono">
+                "DER ROTE FADEN • EIN JRPG GEGEN DESINFORMATION"
+            </p>
+            <p class="text-slate-400 text-xs mb-6 max-w-md text-center italic">
+                Hilf den Kiez-Bewohnern, decke die Machenschaften des Wolf-Syndikats auf und navigiere durch die Krise der Desinformation.
+            </p>
+            <p class="text-pink-400 text-[10px] pixel-font mb-4 animate-pulse">⚙️ API KEY IN EINSTELLUNGEN HINTERLEGEN FÜR AI-FUNKTIONEN</p>
+            <button id="startBtn" class="px-8 py-3.5 bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600 hover:scale-105 text-white pixel-font text-xs rounded-xl shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300 transition cursor-pointer">
+                JRPG STARTEN 🚀
+            </button>
+        </div>
+
+        <!-- Visual Novel & Dialogue Overlay Box with Anime Sprite -->
+        <div id="dialogueBox" class="absolute bottom-16 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl glass-panel p-4 rounded-2xl shadow-2xl z-30 hidden border border-cyan-500/50 pointer-events-auto scene-transition">
+            <div class="flex gap-3 sm:gap-4 items-start">
+                <!-- Anime Portrait Sprite Area (calculated for halfbody) -->
+                <div id="spritePortraitContainer" class="hidden sm:block flex-shrink-0">
+                    <img id="spritePortrait" src="" alt="Charakter" class="sprite-portrait" onerror="this.style.display='none'">
+                    <p id="spriteNameLabel" class="text-[8px] font-mono text-cyan-400 text-center mt-1"></p>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-center mb-1.5 border-b border-pink-900/40 pb-1">
+                        <span id="speakerName" class="text-xs font-bold text-pink-400 pixel-font">WITNESS X</span>
+                        <div class="flex items-center gap-2">
+                            <button id="btnReadSpeech" onclick="speakCurrentText()" class="text-[10px] bg-cyan-950 border border-cyan-500/70 px-2 py-0.5 rounded text-cyan-300 hover:bg-cyan-800 cursor-pointer">🔊 Vorlesen</button>
+                            <span class="text-[9px] text-slate-400 font-mono">ST. PAULI AR</span>
+                        </div>
+                    </div>
+                    <p id="dialogueText" class="text-slate-100 text-xs sm:text-sm leading-relaxed font-mono min-h-[52px]"></p>
+                    <div id="dialogueChoices" class="mt-2.5 flex flex-wrap gap-2 justify-end"></div>
+                    <div class="mt-2 flex justify-end items-center gap-3">
+                        <span id="sceneHint" class="text-[9px] text-amber-400 font-mono"></span>
+                        <span class="text-pink-400 text-[11px] pixel-font animate-pulse cursor-pointer" onclick="advanceDialogue()">[WEITER ➔]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battle UI (JRPG Style) -->
+        <div id="battleUI" class="absolute inset-0 bg-slate-950/98 z-30 hidden flex-col justify-between p-6 backdrop-blur-2xl pointer-events-auto">
+            <div class="text-center pt-2">
+                <span class="text-[9px] pixel-font text-pink-400">⚔️ DIGITAL FIGHT AREA • COMMUNITY DEFENSE</span>
+                <h2 class="fairytale-font text-2xl sm:text-3xl text-red-400 font-bold">WOLF SYNDIKAT BLOCKADE</h2>
+                <p class="text-cyan-300 text-xs font-mono mt-1" id="battleLog">Widerstand gegen Mietenwahn & Datenklau erforderlich!</p>
+            </div>
+            <div class="flex justify-around items-center w-full max-w-lg mx-auto my-4">
+                <div class="text-center w-1/3 glass-panel p-3 rounded-2xl border border-pink-500/40 jrpg-battle-frame">
+                    <div class="text-4xl mb-1" id="playerBattleSprite">🐇</div>
+                    <p class="text-white text-xs font-bold">Witness X</p>
+                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden mt-2 border border-slate-700">
+                        <div id="playerHP" class="bg-gradient-to-r from-emerald-500 to-green-400 h-full transition-all duration-300" style="width:100%"></div>
+                    </div>
+                    <p class="text-[9px] text-emerald-400 mt-1 font-mono" id="playerHPLabel">HP: 100/100</p>
+                </div>
+                <div class="text-xl font-bold text-pink-500 fairytale-font">VS</div>
+                <div class="text-center w-1/3 glass-panel p-3 rounded-2xl border border-purple-500/40 jrpg-battle-frame">
+                    <div class="text-4xl mb-1" id="battleEnemySprite">🐺</div>
+                    <p class="text-white text-xs font-bold" id="enemyName">Corporate Wolf</p>
+                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden mt-2 border border-slate-700">
+                        <div id="enemyHP" class="bg-gradient-to-r from-red-600 to-pink-500 h-full transition-all duration-300" style="width:100%"></div>
+                    </div>
+                    <p class="text-[9px] text-red-400 mt-1 font-mono" id="enemyHPLabel">HP: 100/100</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg mx-auto w-full pb-6">
+                <button onclick="executeBattleAction('debate')" class="py-3 bg-blue-950/90 border border-blue-400/80 rounded-xl hover:bg-blue-900 text-cyan-200 font-bold font-mono text-xs shadow-lg cursor-pointer">
+                    🗣️ Hinz & Kunz Argument
+                </button>
+                <button onclick="executeBattleAction('dance')" class="py-3 bg-purple-950/90 border border-purple-400/80 rounded-xl hover:bg-purple-900 text-purple-200 font-bold font-mono text-xs shadow-lg cursor-pointer">
+                    🕺 Kiez Flashmob
+                </button>
+                <button onclick="executeBattleAction('card')" class="py-3 bg-pink-950/90 border border-pink-400/80 rounded-xl hover:bg-pink-900 text-pink-200 font-bold font-mono text-xs shadow-lg cursor-pointer">
+                    🃏 Roter Faden Trick
+                </button>
+                <button onclick="executeBattleAction('evidence')" class="py-3 bg-amber-950/90 border border-amber-400/80 rounded-xl hover:bg-amber-900 text-amber-200 font-bold font-mono text-xs shadow-lg cursor-pointer">
+                    📁 Wolf Files Beweis
+                </button>
+            </div>
+        </div>
+
+        <!-- Neural Chat Modal -->
+        <div id="neuralChatModal" class="absolute inset-y-0 right-0 w-full sm:w-[450px] bg-slate-950/98 border-l border-cyan-500/50 z-40 hidden flex-col p-4 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-cyan-900/50 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🤖</span>
+                    <div>
+                        <h3 class="fairytale-font text-sm font-bold text-cyan-400">WITNESS X • NEURAL CHAT</h3>
+                        <p class="text-[9px] text-slate-400 font-mono" id="neuralStatus">Gemini API: Nicht konfiguriert</p>
+                    </div>
+                </div>
+                <button onclick="toggleNeuralChat()" class="px-2.5 py-1 bg-cyan-950 rounded-lg text-xs font-bold border border-cyan-500 text-cyan-300 cursor-pointer">✕</button>
+            </div>
+            <div id="chatMessagesContainer" class="flex-1 overflow-y-auto space-y-3 pr-1 font-mono text-xs mb-3">
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-cyan-500/30 text-slate-200">
+                    <p class="text-cyan-400 font-bold mb-1">🤖 Witness X (Neural Core):</p>
+                    Moin! Ich bin dein AR-Assistent im St. Pauli Netzwerk. Frag mich über den Roten Faden, Hinz & Kunz, Kiez-Solidarität oder die Wolf-Syndikate.
+                </div>
+            </div>
+            <div class="flex gap-2 shrink-0">
+                <input type="text" id="chatInput" placeholder="Frage an Witness X stellen..." class="flex-1 bg-slate-900 border border-cyan-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter')sendNeuralMessage()">
+                <button onclick="sendNeuralMessage()" class="px-4 py-2 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 rounded-xl font-bold text-xs cursor-pointer shadow">Senden</button>
+            </div>
+        </div>
+
+        <!-- Wolf Files Modal -->
+        <div id="wolfFilesModal" class="absolute inset-y-0 right-0 w-full sm:w-96 bg-slate-950/98 border-l border-red-500/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-red-900/50 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🐺</span>
+                    <h3 class="fairytale-font text-sm font-bold text-red-400">WOLF FILES • DOSSIER</h3>
+                </div>
+                <button onclick="toggleWolfFiles()" class="px-2.5 py-1 bg-red-950 rounded-lg text-xs font-bold border border-red-500 text-red-300 cursor-pointer">✕</button>
+            </div>
+            <div class="space-y-3 font-mono text-xs overflow-y-auto flex-1 pr-1">
+                <div class="bg-red-950/30 p-3 rounded-xl border border-red-500/40 space-y-1">
+                    <p class="text-red-400 font-bold">GESUCHT WEGEN:</p>
+                    <ul class="text-slate-300 space-y-0.5 text-[11px] list-disc list-inside">
+                        <li>Korruption & Spekulation</li>
+                        <li>Menschenhandel & Ausbeutung</li>
+                        <li>Mietenwahn in St. Pauli</li>
+                        <li>Gewalt & Einschüchterung</li>
+                        <li>Datenklau & Überwachung</li>
+                    </ul>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl border border-red-500/50 space-y-2">
+                    <p class="text-yellow-400 font-bold">🌐 Live Kiez Intelligence (Google Search)</p>
+                    <p class="text-[10px] text-slate-400">Analysiere aktuelle Berichte zu Immobilienpreisen und Mieterprotesten in Hamburg mit Gemini Search Grounding:</p>
+                    <button onclick="fetchLiveDossier()" id="btnLiveDossier" class="w-full py-2 bg-red-900 hover:bg-red-800 text-red-100 font-bold rounded-lg text-[11px] cursor-pointer shadow">LIVE DOSSIER GENERIEREN</button>
+                    <div id="dossierResult" class="text-[11px] text-slate-200 mt-2 hidden max-h-40 overflow-y-auto bg-slate-950 p-2 rounded border border-red-900"></div>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl border border-slate-700 text-center space-y-2">
+                    <div class="text-3xl">📱</div>
+                    <p class="text-[10px] text-slate-400">Anonyme Übermittlung an Omas gegen Rechts & Hinz & Kunz.</p>
+                    <button onclick="triggerSuccess()" class="w-full py-2 bg-pink-900 hover:bg-pink-800 text-pink-200 font-bold rounded-lg text-[11px] cursor-pointer">HINWEIS GEBEN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quest Log Modal -->
+        <div id="questLogModal" class="absolute inset-y-0 left-0 w-full sm:w-96 bg-slate-950/98 border-r border-amber-500/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-amber-900/50 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📋</span>
+                    <h3 class="fairytale-font text-sm font-bold text-amber-400">KIEZ MISSIONS LOG</h3>
+                </div>
+                <button onclick="toggleQuestLog()" class="px-2.5 py-1 bg-amber-950 rounded-lg text-xs font-bold border border-amber-500 text-amber-300 cursor-pointer">✕</button>
+            </div>
+            <div id="questLogContent" class="space-y-2.5 font-mono text-xs overflow-y-auto flex-1 pr-1"></div>
+        </div>
+
+        <!-- Settings Modal for Gemini API Key -->
+        <div id="settingsModal" class="absolute inset-0 bg-slate-950/98 z-[65] hidden flex-col items-center justify-center p-4 backdrop-blur-2xl pointer-events-auto">
+            <div class="modal-content">
+                <div class="flex justify-between items-center pb-3 border-b border-pink-900/50 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">⚙️</span>
+                        <h3 class="fairytale-font text-base font-bold text-pink-400">GEMINI API EINSTELLUNGEN</h3>
+                    </div>
+                    <button onclick="toggleSettings()" class="px-3 py-1 bg-pink-950 rounded-lg text-xs font-bold border border-pink-500 text-pink-300 cursor-pointer">✕</button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[11px] font-mono text-cyan-300 font-bold block mb-1.5">🔑 GEMINI API KEY EINGEBEN:</label>
+                        <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-cyan-500/50 rounded-xl px-4 py-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400" oninput="saveApiKey(this.value)">
+                        <p class="text-[9px] text-slate-500 mt-1.5 font-mono">Wird lokal im Browser gespeichert. Key von <span class="text-cyan-400">aistudio.google.com/apikey</span></p>
+                    </div>
+                    <div class="p-3 bg-cyan-950/30 rounded-xl border border-cyan-500/30 space-y-1.5">
+                        <p class="text-[10px] font-bold text-cyan-300 font-mono">MODUS:</p>
+                        <p id="apiModeLabel" class="text-[10px] text-slate-300 font-mono">🔴 Nicht konfiguriert — AI Features deaktiviert</p>
+                        <p class="text-[9px] text-slate-500 font-mono">Neural Chat, Live Search, AI Sticker Studio und mehr benötigen den API Key.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="testApiConnection()" class="flex-1 py-2.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 font-bold rounded-xl text-xs cursor-pointer font-mono">🔌 VERBINDUNG TESTEN</button>
+                        <button onclick="toggleSettings()" class="flex-1 py-2.5 bg-pink-950 hover:bg-pink-900 border border-pink-500 text-pink-200 font-bold rounded-xl text-xs cursor-pointer font-mono">FERTIG</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Panel Modal -->
+        <div id="helpPanelModal" class="absolute inset-y-0 left-0 w-full sm:w-96 bg-slate-950/98 border-r border-indigo-500/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-indigo-900/50 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🆘</span>
+                    <h3 class="fairytale-font text-sm font-bold text-indigo-400">CITIZENS NEED HELP</h3>
+                </div>
+                <button onclick="toggleHelpPanel()" class="px-2.5 py-1 bg-indigo-950 rounded-lg text-xs font-bold border border-indigo-500 text-indigo-300 cursor-pointer">✕</button>
+            </div>
+            <div class="space-y-2.5 font-mono text-xs overflow-y-auto flex-1">
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-indigo-500/30">
+                    <p class="font-bold text-indigo-300 mb-0.5">🎮 JRPG STEUERUNG</p>
+                    <p class="text-[10px] text-slate-400">Bewege dich mit Pfeiltasten/WASD oder Touch-D-Pad. Drücke A/Enter um mit Objekten zu interagieren. Nähere dich den markierten Hitboxes!</p>
+                </div>
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-pink-500/30">
+                    <p class="font-bold text-pink-300 mb-0.5">🏠 Wohnungssuche & Kiez-Schutz</p>
+                    <p class="text-[10px] text-slate-400">Rechtliche Hilfe gegen Zwangsräumungen und Mieterhöhungen.</p>
+                </div>
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-cyan-500/30">
+                    <p class="font-bold text-cyan-300 mb-0.5">🍲 Warmes Essen & Kiez-Treff</p>
+                    <p class="text-[10px] text-slate-400">Tägliche Suppenküche & solidarische Essensausgabe am Park.</p>
+                </div>
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-amber-500/30">
+                    <p class="font-bold text-amber-300 mb-0.5">📋 QUEST FORTSCHRITT</p>
+                    <p class="text-[10px] text-slate-400">Öffne das Quest-Log um deine aktiven Missionen zu sehen. Erledige Aufgaben um XP zu sammeln und die Geschichte voranzutreiben.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Device / Cyberdeck Modal -->
+        <div id="smartDeviceModal" class="absolute inset-0 bg-slate-950/98 z-[60] hidden flex-col p-4 sm:p-6 backdrop-blur-2xl overflow-y-auto pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-pink-900/50 mb-4 sticky top-0 bg-slate-950/95 z-20 backdrop-blur">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xl">📲</span>
+                    <div>
+                        <h3 class="fairytale-font text-base sm:text-lg font-bold text-pink-400">CYBERDECK 42 OS • UNIVERSAL MEDIA HUB</h3>
+                        <p class="text-[10px] text-cyan-400 font-mono">Gemini 3.1 Flash Image • File Manager • Alben & Tags</p>
+                    </div>
+                </div>
+                <button id="btnCloseSmartDevice" class="px-3.5 py-1.5 bg-pink-900/80 hover:bg-pink-700 rounded-xl text-xs font-bold border border-pink-500 cursor-pointer shadow">✕ Schließen</button>
+            </div>
+
+            <!-- Album Management Bar -->
+            <div class="glass-panel p-3 rounded-2xl border border-pink-500/30 mb-3 flex flex-wrap items-center gap-2">
+                <span class="text-[10px] font-bold text-pink-400 font-mono">📁 ALBEN:</span>
+                <div id="albumChipContainer" class="flex flex-wrap gap-1.5 items-center"></div>
+                <button onclick="showCreateAlbumInput()" class="album-chip bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 text-[10px]">+ Neu</button>
+                <input type="text" id="newAlbumInput" placeholder="Albumname..." class="hidden bg-slate-900 border border-pink-500/40 rounded-lg px-2 py-1 text-[10px] text-slate-200 w-32 font-mono" onkeydown="if(event.key==='Enter')createAlbum()">
+            </div>
+
+            <!-- Media Format Tabs -->
+            <div class="flex gap-1.5 overflow-x-auto pb-2 mb-3 text-xs font-mono shrink-0">
+                <button onclick="switchMediaTab('all')" id="tabBtn-all" class="media-tab-btn px-3.5 py-2 rounded-xl bg-pink-900/60 border border-pink-500 text-pink-200 whitespace-nowrap cursor-pointer">📂 Alle (<span id="count-all">0</span>)</button>
+                <button onclick="switchMediaTab('video')" id="tabBtn-video" class="media-tab-btn px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 whitespace-nowrap cursor-pointer">🎬 Videos (<span id="count-video">0</span>)</button>
+                <button onclick="switchMediaTab('image')" id="tabBtn-image" class="media-tab-btn px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 whitespace-nowrap cursor-pointer">🖼️ Bilder (<span id="count-image">0</span>)</button>
+                <button onclick="switchMediaTab('audio')" id="tabBtn-audio" class="media-tab-btn px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 whitespace-nowrap cursor-pointer">🎵 Audio (<span id="count-audio">0</span>)</button>
+                <button onclick="switchMediaTab('text')" id="tabBtn-text" class="media-tab-btn px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 whitespace-nowrap cursor-pointer">📄 Texte (<span id="count-text">0</span>)</button>
+                <button onclick="switchMediaTab('threed')" id="tabBtn-threed" class="media-tab-btn px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 whitespace-nowrap cursor-pointer">🧊 3D (<span id="count-threed">0</span>)</button>
+                <button onclick="switchMediaTab('generator')" id="tabBtn-generator" class="media-tab-btn px-3.5 py-2 rounded-xl bg-purple-950 border border-purple-500 text-purple-200 whitespace-nowrap cursor-pointer">✨ AI Sticker Studio</button>
+                <button onclick="switchMediaTab('quests')" id="tabBtn-quests" class="media-tab-btn px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 whitespace-nowrap cursor-pointer">📋 Mission Quests</button>
+            </div>
+
+            <!-- AI Image Generator Tab Content -->
+            <div id="tabContent-generator" class="hidden glass-panel p-5 rounded-2xl border border-purple-500/50 font-mono text-xs space-y-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🎨</span>
+                    <div>
+                        <h4 class="font-bold text-purple-300 text-sm">GEMINI 3.1 FLASH IMAGE • ST. PAULI GRAFFITI & STICKER STUDIO</h4>
+                        <p class="text-[10px] text-slate-400">Generiere Cyberpunk-Sticker, Kiez-Plakate oder Wandgrafiken für deine AR-Sammlung.</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-pink-300 text-[11px]">Prompt für das Bild:</label>
+                    <textarea id="aiImagePrompt" rows="2" class="w-full bg-slate-900 border border-purple-500/50 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-purple-400" placeholder="Z.B.: Neon cyberpunk rainbow rabbit sticker with pink aura on brick wall in St. Pauli Reeperbahn...">Cyberpunk neon pink rainbow rabbit graffiti on a dark brick wall in St. Pauli Reeperbahn, highly detailed digital art</textarea>
+                </div>
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <span id="aiImageStatus" class="text-cyan-300 text-[10px]">Bereit für Generierung...</span>
+                    <button onclick="generateAISticker()" class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 text-white font-bold rounded-xl text-xs cursor-pointer shadow">BILD GENERIEREN 🚀</button>
+                </div>
+                <div id="aiGeneratedPreview" class="hidden mt-3 p-3 bg-slate-950 rounded-xl border border-purple-500/40">
+                    <p class="text-[10px] text-purple-300 font-bold mb-1.5">GENERIERTES BILD:</p>
+                    <img id="aiGeneratedImage" src="" alt="AI Generated" class="w-full max-w-sm mx-auto rounded-lg">
+                    <button onclick="saveAIGeneratedToLibrary()" class="mt-2 w-full py-2 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold rounded-lg text-[10px] cursor-pointer">💾 IN BIBLIOTHEK SPEICHERN</button>
+                </div>
+            </div>
+
+            <!-- Uploader & Cover Picker -->
+            <div class="glass-panel p-4 rounded-2xl border border-pink-500/30 mb-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                    <h4 class="text-xs font-bold text-pink-400 font-mono">📤 UNIVERSAL MEDIA UPLOADER & COVER SELECTOR</h4>
+                    <p class="text-[10px] text-slate-400">Wähle optional ein Cover-Bild und lade Mediendateien hoch:</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <div class="flex flex-col">
+                        <label class="text-[9px] text-cyan-300 font-mono mb-0.5">Vorschaubild:</label>
+                        <input type="file" id="previewCoverInput" accept="image/*" class="text-[10px] text-slate-300 bg-slate-900 border border-slate-700 rounded-lg p-1 w-40">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[9px] text-pink-300 font-mono mb-0.5">Media Datei(en):</label>
+                        <input type="file" id="universalFileInput" multiple onchange="handleUniversalUpload(event)" class="text-[10px] text-slate-300 bg-slate-900 border border-pink-500/50 rounded-lg p-1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tag Filter Bar -->
+            <div class="glass-panel p-2.5 rounded-xl border border-slate-700/40 mb-3 flex flex-wrap items-center gap-1.5">
+                <span class="text-[9px] font-mono text-slate-400 font-bold">🏷️ TAGS:</span>
+                <div id="tagFilterContainer" class="flex flex-wrap gap-1 items-center"></div>
+                <button onclick="showAddTagInput()" class="text-[9px] bg-slate-800 border border-slate-600 rounded px-2 py-0.5 text-slate-300 hover:bg-slate-700 cursor-pointer font-mono">+ Tag</button>
+                <input type="text" id="newTagInput" placeholder="Neues Tag..." class="hidden bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-[10px] text-slate-200 w-28 font-mono" onkeydown="if(event.key==='Enter')addTagFromInput()">
+            </div>
+
+            <!-- Grid View -->
+            <div id="mediaGridView" class="space-y-4">
+                <div id="mediaFilesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+            </div>
+
+            <!-- Quests Tab -->
+            <div id="tabContent-quests" class="hidden glass-panel p-5 rounded-2xl border border-yellow-500/40 font-mono text-xs space-y-3">
+                <h4 class="font-bold text-yellow-400 text-sm">📋 ACTIVE KIEZ MISSIONS</h4>
+                <div id="questsInCyberdeck" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- Media Viewer Modal -->
+        <div id="mediaViewerModal" class="absolute inset-0 bg-black/95 z-[80] hidden flex-col items-center justify-center p-4 backdrop-blur-xl pointer-events-auto">
+            <div class="bg-slate-900 border border-cyan-500/60 rounded-2xl max-w-2xl w-full p-4 flex flex-col shadow-2xl">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-800 mb-3">
+                    <span id="viewerTitle" class="text-xs font-mono text-cyan-300 font-bold truncate">Media Viewer</span>
+                    <div class="flex gap-2 items-center">
+                        <button onclick="assignAlbumToCurrentMedia()" class="px-2 py-0.5 bg-pink-950 border border-pink-500/50 rounded text-[10px] text-pink-300 cursor-pointer font-mono">📁 Album</button>
+                        <button onclick="assignTagToCurrentMedia()" class="px-2 py-0.5 bg-amber-950 border border-amber-500/50 rounded text-[10px] text-amber-300 cursor-pointer font-mono">🏷️ Tag</button>
+                        <button onclick="closeMediaViewer()" class="px-3 py-1 bg-red-950 text-red-300 rounded-lg text-xs font-bold border border-red-500/50 cursor-pointer">✕ Schließen</button>
+                    </div>
+                </div>
+                <div id="viewerContentArea" class="w-full aspect-video bg-black rounded-xl flex items-center justify-center overflow-hidden relative"></div>
+                <div id="viewerMetadata" class="mt-2 text-[10px] font-mono text-slate-400 flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Album/Tag Assignment Modal -->
+        <div id="assignmentModal" class="absolute inset-0 bg-slate-950/95 z-[85] hidden flex-col items-center justify-center p-4 backdrop-blur-2xl pointer-events-auto">
+            <div class="modal-content">
+                <div class="flex justify-between items-center pb-3 border-b border-pink-900/50 mb-4">
+                    <h3 class="fairytale-font text-sm font-bold text-pink-400" id="assignmentModalTitle">📁 ALBUM ZUWEISEN</h3>
+                    <button onclick="closeAssignmentModal()" class="px-3 py-1 bg-slate-800 rounded-lg text-xs font-bold border border-slate-600 text-slate-300 cursor-pointer">✕</button>
+                </div>
+                <div id="assignmentOptionsContainer" class="space-y-2 max-h-64 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <!-- Floating Sideview Video Player -->
+        <div id="sideVideoContainer" class="absolute bottom-16 right-4 w-44 sm:w-60 bg-slate-900/95 border border-cyan-500/60 rounded-2xl shadow-2xl z-20 overflow-hidden hidden transition-all duration-300 pointer-events-auto">
+            <div class="bg-slate-950 px-3 py-2 flex justify-between items-center border-b border-cyan-500/40">
+                <span id="videoTitleLabel" class="text-[10px] font-mono text-cyan-300 truncate">🎬 Media Player</span>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="toggleExpandVideo()" id="btnExpandVideo" class="text-[10px] text-cyan-400 hover:text-white px-1">🗖</button>
+                    <button onclick="closeSideVideo()" class="text-[10px] text-red-400 hover:text-red-300 px-1">✕</button>
+                </div>
+            </div>
+            <div class="relative bg-black aspect-video flex items-center justify-center">
+                <video id="sideVideoPlayer" class="w-full h-full object-cover" controls playsinline></video>
+            </div>
+        </div>
+
+        <!-- Mobile Touch Controls D-Pad -->
+        <div class="absolute bottom-3 left-3 grid grid-cols-3 gap-1 z-25 sm:hidden opacity-95 pointer-events-auto">
+            <div></div>
+            <button id="btnUp" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 shadow-lg text-base">▲</button>
+            <div></div>
+            <button id="btnLeft" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 shadow-lg text-base">◀</button>
+            <button id="btnDown" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 shadow-lg text-base">▼</button>
+            <button id="btnRight" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 shadow-lg text-base">▶</button>
+        </div>
+        <div class="absolute bottom-3 right-3 z-25 sm:hidden opacity-95 pointer-events-auto">
+            <button id="btnAction" class="w-14 h-14 bg-gradient-to-r from-pink-600 to-red-600 border-2 border-pink-300 rounded-full flex justify-center items-center text-white font-bold text-lg active:scale-95 pixel-font shadow-[0_0_20px_rgba(236,72,153,0.7)]">A</button>
+        </div>
+    </main>
+
+    <!-- Success / Scene Transition Modal (FIXED: multiple options) -->
+    <div id="successModal" class="fixed inset-0 bg-black/95 backdrop-blur-xl z-[90] flex items-center justify-center p-4 hidden pointer-events-auto">
+        <div class="bg-slate-900 border border-pink-500 rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative glow-cyber scene-transition">
+            <div class="w-16 h-16 bg-pink-950 border border-pink-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner animate-bounce">
+                👵🛡️
+            </div>
+            <div>
+                <h3 class="fairytale-font text-xl font-bold text-pink-400 mb-1">Signal & Daten Gesichert!</h3>
+                <p class="text-xs text-cyan-200 leading-relaxed font-mono">
+                    Die Wolf Files und der Rote Faden wurden erfolgreich an die <span class="text-pink-400 font-bold">Omas gegen Rechts</span> übergeben.
+                </p>
+                <p class="text-[10px] text-amber-300 font-mono mt-2" id="successXpText">+150 XP • Quest abgeschlossen</p>
+            </div>
+            <div class="space-y-2">
+                <button onclick="continueAfterSuccess()" class="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:scale-105 text-white rounded-xl font-medium text-xs pixel-font shadow-lg cursor-pointer transition">
+                    ▶️ WEITER IM KIEZ
+                </button>
+                <button onclick="location.reload()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium text-[10px] font-mono cursor-pointer transition border border-slate-600">
+                    🔄 NEU STARTEN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== GAME STATE ====================
+        let mediaLibrary = [
+            { id: 1, name: "St_Pauli_Resistance_EP.mp3", type: "audio", url: "#", preview: "💿", size: "3.4 MB",
+                category: "audio", album: "Kiez Sound", tags: ["musik", "resistance"] },
+            { id: 2, name: "Hinz_Kuntz_Kiosk_Blueprint.png", type: "image", url: "https://placehold.co/400x300/1e1b4b/ec4899?text=AR+Kiosk",
+                preview: "🖼️", size: "1.2 MB", category: "image", album: "Kiez Kartierung", tags: ["kiosk", "ar"] },
+            { id: 3, name: "Reeperbahn_Night_AR.mp4", type: "video", url: "#", preview: "🎬", size: "14.8 MB",
+                category: "video", album: "Kiez Video", tags: ["reeperbahn", "nacht"] },
+            { id: 4, name: "Der_Rote_Faden_Manifesto.txt", type: "text", url: "#", preview: "📄", size: "24 KB",
+                category: "text", album: "Dokumente", tags: ["manifest", "roter-faden"] },
+            { id: 5, name: "Rainbow_Rabbit_Avatar.obj", type: "threed", url: "#", preview: "🧊", size: "4.5 MB",
+                category: "threed", album: "AR Assets", tags: ["avatar", "3d"] },
+            { id: 6, name: "Wolf_Dossier_Evidence_A.txt", type: "text", url: "#", preview: "📄", size: "12 KB",
+                category: "text", album: "Wolf Files", tags: ["beweis", "wolf", "dossier"], connectedToWolf: true },
+        ];
+
+        let albums = ['Alle', 'Kiez Sound', 'Kiez Kartierung', 'Kiez Video', 'Dokumente', 'AR Assets', 'Wolf Files'];
+        let allTags = ['musik', 'resistance', 'kiosk', 'ar', 'reeperbahn', 'nacht', 'manifest', 'roter-faden',
+            'avatar', '3d', 'beweis', 'wolf', 'dossier'
+        ];
+        let activeMediaTab = 'all';
+        let activeAlbumFilter = 'Alle';
+        let activeTagFilter = null;
+        let currentViewingMediaId = null;
+        let assignmentMode = null; // 'album' or 'tag'
+
+        // Quest System
+        let quests = [
+            { id: 1, name: "Der Rote Faden finden", description: "Finde den Roten Faden am Hinz & Kuntz Kiosk.",
+                status: 'completed', xp: 50 },
+            { id: 2, name: "Neural Chat aktivieren", description: "Stelle Witness X eine Frage über den Gemini AI Neural Chat.",
+                status: 'active', xp: 30 },
+            { id: 3, name: "AI Sticker generieren", description: "Nutze das AI Sticker Studio um ein Kiez-Graffiti zu generieren.",
+                status: 'active', xp: 40 },
+            { id: 4, name: "Wolf Files übergeben", description: "Gib die Wolf Files Beweise an Oma Gertrude weiter.",
+                status: 'active', xp: 150 },
+            { id: 5, name: "Kiez Flashmob starten", description: "Besiege den Corporate Wolf mit einem Kiez Flashmob.",
+                status: 'completed', xp: 80 },
+            { id: 6, name: "Medienbibliothek nutzen", description: "Öffne das Cyberdeck und organisiere deine Mediendateien.",
+                status: 'active', xp: 20 },
+        ];
+
+        let playerXP = 130;
+        let playerLevel = 2;
+        let playerHP = 100;
+        let playerMaxHP = 100;
+
+        // Hitbox objects in the game world
+        let hitboxes = [
+            { id: 'kiosk', x: 260, y: 90, w: 140, h: 130, label: 'Hinz & Kuntz Kiosk', icon: '🏪',
+            action: 'kiosk', active: true },
+            { id: 'granny', x: 130, y: 155, w: 35, h: 50, label: 'Oma Gertrude', icon: '👵', action: 'granny',
+                active: true },
+            { id: 'homeless', x: 510, y: 170, w: 35, h: 45, label: 'Kiez Bewohner', icon: '🧑‍🦱', action: 'homeless',
+                active: true },
+            { id: 'redthread', x: 390, y: 180, w: 30, h: 40, label: 'Roter Faden', icon: '🧵', action: 'redthread',
+                active: true },
+            { id: 'communityboard', x: 450, y: 120, w: 40, h: 60, label: 'Community Board', icon: '📋',
+                action: 'communityboard', active: true },
+        ];
+
+        // Anime Sprite Portraits (Base64 encoded 1x1 placeholder will be replaced by user)
+        const spritePortraits = {
+            'Witness X': { url: '', label: 'Witness X • Cyberpunk Detektiv', emoji: '🐇' },
+            'Rainbow Rabbit': { url: '', label: 'Rainbow Rabbit • Kiez Geist', emoji: '🌈🐇' },
+            'Oma Gertrude': { url: '', label: 'Oma Gertrude • Kiez Beschützerin', emoji: '👵' },
+            'Corporate Wolf': { url: '', label: 'Corporate Wolf • Syndikat Boss', emoji: '🐺' },
+            'Kiez Bewohner': { url: '', label: 'Kiez Bewohner • Solidarität', emoji: '🧑‍🦱' },
+            'Erzähler': { url: '', label: 'Erzähler • Der Rote Faden', emoji: '📖' },
+        };
+
+        // ==================== GEMINI API INTEGRATIONS ====================
+        let geminiApiKey = localStorage.getItem('sp_gemini_api_key') || '';
+
+        function saveApiKey(key) {
+            geminiApiKey = key.trim();
+            localStorage.setItem('sp_gemini_api_key', geminiApiKey);
+            updateApiModeLabel();
+        }
+
+        function updateApiModeLabel() {
+            const label = document.getElementById('apiModeLabel');
+            const neuralStatus = document.getElementById('neuralStatus');
+            if (geminiApiKey) {
+                label.textContent = '🟢 Konfiguriert — AI Features aktiv';
+                label.className = 'text-[10px] text-emerald-400 font-mono';
+                neuralStatus.textContent = 'Gemini API: Aktiv ✓';
+                neuralStatus.className = 'text-[9px] text-emerald-400 font-mono';
+            } else {
+                label.textContent = '🔴 Nicht konfiguriert — AI Features deaktiviert';
+                label.className = 'text-[10px] text-slate-300 font-mono';
+                neuralStatus.textContent = 'Gemini API: Nicht konfiguriert';
+                neuralStatus.className = 'text-[9px] text-slate-400 font-mono';
+            }
+        }
+
+        async function testApiConnection() {
+            if (!geminiApiKey) {
+                alert('⚠️ Bitte zuerst einen API Key eingeben!');
+                return;
+            }
+            try {
+                const apiUrl =
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: 'Test' }] }] })
+                });
+                if (response.ok) {
+                    alert('✅ API Verbindung erfolgreich! Gemini AI ist bereit.');
+                } else {
+                    alert('❌ API Fehler: ' + response.status);
+                }
+            } catch (err) {
+                alert('❌ Verbindungsfehler: ' + err.message);
+            }
+        }
+
+        async function sendNeuralMessage() {
+            const inputEl = document.getElementById('chatInput');
+            const container = document.getElementById('chatMessagesContainer');
+            const text = inputEl.value.trim();
+            if (!text) return;
+            if (!geminiApiKey) {
+                container.innerHTML +=
+                    `<div class="bg-red-950/40 p-3 rounded-xl border border-red-500/30 text-red-200">⚠️ Bitte zuerst einen Gemini API Key in den ⚙️ Einstellungen eingeben!</div>`;
+                inputEl.value = '';
+                container.scrollTop = container.scrollHeight;
+                return;
+            }
+
+            container.innerHTML +=
+                `<div class="bg-cyan-950/40 p-3 rounded-xl border border-cyan-500/30 text-slate-200 ml-4"><p class="text-pink-400 font-bold mb-1">Du:</p>${escapeHtml(text)}</div>`;
+            inputEl.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            const loadingId = 'loading-' + Date.now();
+            container.innerHTML +=
+                `<div id="${loadingId}" class="bg-slate-900/90 p-3 rounded-xl border border-cyan-500/30 text-slate-400 animate-pulse">🤖 Witness X denkt nach...</div>`;
+            container.scrollTop = container.scrollHeight;
+
+            try {
+                const apiUrl =
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: text }] }],
+                    systemInstruction: {
+                        parts: [{ text: "Du bist Witness X, ein cyberpunk AR-Rebell und Kiez-Insider im St. Pauli 'Hinz & Kunz' Projekt. Du sprichst solidarisch, atmosphärisch, informierst über Gentrifizierung, den Roten Faden und die Unterstützung von Kiez-Bewohnern. Antworte prägnant auf Deutsch." }]
+                    }
+                };
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                document.getElementById(loadingId).remove();
+                const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text ||
+                    "Verbindung zum Neural Core gestört.";
+                container.innerHTML +=
+                    `<div class="bg-slate-900/90 p-3 rounded-xl border border-cyan-500/30 text-slate-200"><p class="text-cyan-400 font-bold mb-1">🤖 Witness X (Neural Core):</p>${escapeHtml(aiText)}</div>`;
+                completeQuest(2);
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                container.innerHTML +=
+                    `<div class="bg-red-950/40 p-3 rounded-xl border border-red-500/30 text-red-200">⚠️ Fehler bei der Neural-Verbindung: ${err.message}</div>`;
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function fetchLiveDossier() {
+            const btn = document.getElementById('btnLiveDossier');
+            const resultBox = document.getElementById('dossierResult');
+            if (!geminiApiKey) {
+                resultBox.classList.remove('hidden');
+                resultBox.innerHTML =
+                    '<span class="text-red-400">⚠️ Bitte zuerst einen Gemini API Key in den ⚙️ Einstellungen eingeben!</span>';
+                return;
+            }
+            btn.innerText = "SUCHE & ANALYSIERE...";
+            btn.disabled = true;
+            resultBox.classList.remove('hidden');
+            resultBox.innerHTML = "Durchsuche aktuelle Kiez-Nachrichten und Immobilienberichte in Hamburg...";
+            try {
+                const apiUrl =
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: "Fasse aktuelle Berichte über Mieterproteste, Gentrifizierung und Kiez-Initiativen in Hamburg St. Pauli zusammen." }] }],
+                    tools: [{ "google_search": {} }]
+                };
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Keine aktuellen Daten gefunden.";
+                let sourcesHTML = '';
+                const groundingMetadata = result.candidates?.[0]?.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                    const sources = groundingMetadata.groundingAttributions
+                        .map(attr => attr.web ?
+                            `<a href="${attr.web.uri}" target="_blank" class="text-cyan-400 underline block truncate">${attr.web.title}</a>` :
+                            '')
+                        .filter(Boolean);
+                    if (sources.length > 0) {
+                        sourcesHTML =
+                            `<div class="mt-2 pt-2 border-t border-red-900"><p class="text-[9px] text-slate-400 font-bold">Quellen:</p>${sources.join('')}</div>`;
+                    }
+                }
+                resultBox.innerHTML = `<p class="text-slate-200 mb-1">${escapeHtml(text)}</p>` + sourcesHTML;
+            } catch (err) {
+                resultBox.innerHTML = `<span class="text-red-400">Fehler beim Abrufen des Live-Dossiers: ${err.message}</span>`;
+            } finally {
+                btn.innerText = "LIVE DOSSIER GENERIEREN";
+                btn.disabled = false;
+            }
+        }
+
+        let lastGeneratedImageData = null;
+
+        async function generateAISticker() {
+            const promptInput = document.getElementById('aiImagePrompt');
+            const statusEl = document.getElementById('aiImageStatus');
+            const previewContainer = document.getElementById('aiGeneratedPreview');
+            const previewImg = document.getElementById('aiGeneratedImage');
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+            if (!geminiApiKey) {
+                statusEl.innerText = "⚠️ Bitte API Key in Einstellungen eingeben!";
+                return;
+            }
+            statusEl.innerText = "Generiere Kiez-Sticker mit Gemini 3.1 Flash Image...";
+            try {
+                const apiUrl =
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${geminiApiKey}`;
+                const payload = {
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                    generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: "1:1" } }
+                };
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                if (part && part.inlineData) {
+                    const imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                    lastGeneratedImageData = { url: imageUrl, prompt: prompt };
+                    previewImg.src = imageUrl;
+                    previewContainer.classList.remove('hidden');
+                    statusEl.innerText = "✓ Erfolgreich generiert! Speichere es in der Bibliothek.";
+                    completeQuest(3);
+                } else {
+                    statusEl.innerText = "Fehler: Kein Bild in der Antwort erhalten.";
+                }
+            } catch (err) {
+                statusEl.innerText = "Fehler bei der Bildgenerierung: " + err.message;
+            }
+        }
+
+        function saveAIGeneratedToLibrary() {
+            if (!lastGeneratedImageData) return;
+            const newFile = {
+                id: Date.now(),
+                name: "AI_Sticker_" + Date.now().toString().slice(-4) + ".png",
+                type: "image",
+                url: lastGeneratedImageData.url,
+                preview: lastGeneratedImageData.url,
+                isCustomCover: true,
+                size: "2.1 MB",
+                category: "image",
+                album: "AI Generiert",
+                tags: ['ai', 'sticker', 'generated']
+            };
+            if (!albums.includes('AI Generiert')) albums.push('AI Generiert');
+            mediaLibrary.push(newFile);
+            renderMediaLibrary();
+            renderAlbumChips();
+            document.getElementById('aiGeneratedPreview').classList.add('hidden');
+            lastGeneratedImageData = null;
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // ==================== MEDIA LIBRARY ====================
+        function handleUniversalUpload(event) {
+            const files = event.target.files;
+            const coverInput = document.getElementById('previewCoverInput');
+            let coverUrl = null;
+            if (files.length === 0) return;
+            if (coverInput.files && coverInput.files[0]) {
+                coverUrl = URL.createObjectURL(coverInput.files[0]);
+            }
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i];
+                let ext = file.name.split('.').pop().toLowerCase();
+                let cat = 'text';
+                let preview = '📄';
+                if (['mp4', 'webm', 'mov', 'avi'].includes(ext)) { cat = 'video';
+                    preview = '🎬'; } else if (['mp3', 'wav', 'ogg', 'aac', 'flac'].includes(ext)) { cat = 'audio';
+                    preview = '🎵'; } else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) { cat =
+                        'image';
+                    preview = '🖼️'; } else if (['obj', 'gltf', 'glb', 'stl', 'fbx'].includes(ext)) { cat = 'threed';
+                    preview = '🧊'; } else if (['txt', 'md', 'json', 'pdf', 'doc', 'html', 'css'].includes(ext)) { cat =
+                        'text';
+                    preview = '📄'; }
+                let fileObj = {
+                    id: Date.now() + i,
+                    name: file.name,
+                    type: cat,
+                    url: URL.createObjectURL(file),
+                    preview: coverUrl || preview,
+                    isCustomCover: !!coverUrl,
+                    size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+                    category: cat,
+                    album: activeAlbumFilter !== 'Alle' ? activeAlbumFilter : 'Dokumente',
+                    tags: []
+                };
+                mediaLibrary.push(fileObj);
+            }
+            renderMediaLibrary();
+            renderAlbumChips();
+            renderTagFilters();
+            event.target.value = '';
+            coverInput.value = '';
+            completeQuest(6);
+        }
+
+        function switchMediaTab(tab) {
+            activeMediaTab = tab;
+            document.querySelectorAll('.media-tab-btn').forEach(b => {
+                b.classList.remove('bg-pink-900/60', 'border-pink-500', 'text-pink-200', 'bg-purple-950',
+                    'border-purple-500', 'text-purple-200');
+                b.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-300');
+            });
+            const activeBtn = document.getElementById('tabBtn-' + tab);
+            if (activeBtn) {
+                if (tab === 'generator') {
+                    activeBtn.classList.add('bg-purple-950', 'border-purple-500', 'text-purple-200');
+                    activeBtn.classList.remove('bg-slate-900', 'border-slate-700', 'text-slate-300');
+                } else {
+                    activeBtn.classList.add('bg-pink-900/60', 'border-pink-500', 'text-pink-200');
+                    activeBtn.classList.remove('bg-slate-900', 'border-slate-700', 'text-slate-300');
+                }
+            }
+            document.getElementById('tabContent-quests').classList.add('hidden');
+            document.getElementById('tabContent-generator').classList.add('hidden');
+            document.getElementById('mediaGridView').classList.remove('hidden');
+            if (tab === 'quests') {
+                document.getElementById('mediaGridView').classList.add('hidden');
+                document.getElementById('tabContent-quests').classList.remove('hidden');
+                renderQuestsInCyberdeck();
+            } else if (tab === 'generator') {
+                document.getElementById('mediaGridView').classList.add('hidden');
+                document.getElementById('tabContent-generator').classList.remove('hidden');
+            } else {
+                renderMediaLibrary();
+            }
+        }
+
+        function renderAlbumChips() {
+            const container = document.getElementById('albumChipContainer');
+            container.innerHTML = '';
+            albums.forEach(album => {
+                const chip = document.createElement('button');
+                chip.className =
+                    `album-chip ${album === activeAlbumFilter ? 'bg-pink-900/60 border-pink-500 text-pink-200' : 'bg-slate-800 border-slate-600 text-slate-300'}`;
+                chip.innerText = album;
+                chip.onclick = () => { activeAlbumFilter = album;
+                    renderAlbumChips();
+                    renderMediaLibrary(); };
+                container.appendChild(chip);
+            });
+        }
+
+        function showCreateAlbumInput() {
+            const input = document.getElementById('newAlbumInput');
+            input.classList.remove('hidden');
+            input.focus();
+        }
+
+        function createAlbum() {
+            const input = document.getElementById('newAlbumInput');
+            const name = input.value.trim();
+            if (name && !albums.includes(name)) {
+                albums.push(name);
+                renderAlbumChips();
+            }
+            input.value = '';
+            input.classList.add('hidden');
+        }
+
+        function renderTagFilters() {
+            const container = document.getElementById('tagFilterContainer');
+            container.innerHTML = '';
+            allTags.forEach(tag => {
+                const badge = document.createElement('button');
+                badge.className =
+                    `tag-badge cursor-pointer ${activeTagFilter === tag ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`;
+                badge.innerText = tag;
+                badge.onclick = () => { activeTagFilter = activeTagFilter === tag ? null : tag;
+                    renderTagFilters();
+                    renderMediaLibrary(); };
+                container.appendChild(badge);
+            });
+            if (activeTagFilter) {
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'tag-badge bg-red-900 text-red-300 cursor-pointer';
+                clearBtn.innerText = '✕ Filter';
+                clearBtn.onclick = () => { activeTagFilter = null;
+                    renderTagFilters();
+                    renderMediaLibrary(); };
+                container.appendChild(clearBtn);
+            }
+        }
+
+        function showAddTagInput() {
+            const input = document.getElementById('newTagInput');
+            input.classList.remove('hidden');
+            input.focus();
+        }
+
+        function addTagFromInput() {
+            const input = document.getElementById('newTagInput');
+            const tag = input.value.trim().toLowerCase();
+            if (tag && !allTags.includes(tag)) {
+                allTags.push(tag);
+                renderTagFilters();
+            }
+            input.value = '';
+            input.classList.add('hidden');
+        }
+
+        function renderMediaLibrary() {
+            document.getElementById('count-all').innerText = mediaLibrary.length;
+            ['video', 'image', 'audio', 'text', 'threed'].forEach(c => {
+                const cntEl = document.getElementById('count-' + c);
+                if (cntEl) cntEl.innerText = mediaLibrary.filter(m => m.category === c).length;
+            });
+            const grid = document.getElementById('mediaFilesGrid');
+            grid.innerHTML = '';
+            let filtered = mediaLibrary;
+            if (activeMediaTab !== 'all') {
+                filtered = filtered.filter(m => m.category === activeMediaTab);
+            }
+            if (activeAlbumFilter !== 'Alle') {
+                filtered = filtered.filter(m => m.album === activeAlbumFilter);
+            }
+            if (activeTagFilter) {
+                filtered = filtered.filter(m => m.tags && m.tags.includes(activeTagFilter));
+            }
+            if (filtered.length === 0) {
+                grid.innerHTML =
+                    `<div class="col-span-full py-12 text-center text-slate-500 font-mono text-xs">Keine Dateien in dieser Kategorie / Album / Tag.</div>`;
+                return;
+            }
+            filtered.forEach(item => {
+                let card = document.createElement('div');
+                card.className =
+                    "bg-slate-900/90 border border-slate-800 hover:border-pink-500/60 rounded-2xl p-3 flex flex-col justify-between transition group shadow-md";
+                let previewHTML = '';
+                if (item.isCustomCover || (item.category === 'image' && item.url !== '#')) {
+                    previewHTML =
+                        `<div class="w-full h-24 sm:h-28 bg-black rounded-xl overflow-hidden mb-2 border border-slate-800 flex items-center justify-center"><img src="${item.url}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='📄'"></div>`;
+                } else {
+                    previewHTML =
+                        `<div class="w-full h-24 sm:h-28 bg-slate-950 rounded-xl overflow-hidden mb-2 border border-slate-800 flex items-center justify-center text-3xl shadow-inner">${item.preview}</div>`;
+                }
+                const tagHTML = item.tags && item.tags.length > 0 ?
+                    `<div class="flex flex-wrap gap-1 mt-1">${item.tags.slice(0,2).map(t => `<span class="tag-badge bg-slate-700 text-slate-300 text-[8px]">${t}</span>`).join('')}</div>` :
+                    '';
+                card.innerHTML = `
+                    <div>
+                        ${previewHTML}
+                        <p class="text-[11px] font-bold text-slate-200 truncate mb-0.5" title="${item.name}">${item.name}</p>
+                        <p class="text-[9px] font-mono text-slate-400 uppercase tracking-wider">${item.category} • ${item.size}${item.album ? ' • 📁' + item.album : ''}</p>
+                        ${tagHTML}
+                    </div>
+                    <div class="mt-3 flex gap-1.5">
+                        <button onclick="openMediaItem(${item.id})" class="flex-1 py-1.5 bg-pink-950 border border-pink-500/50 rounded-xl text-[10px] text-pink-200 hover:bg-pink-900 font-mono cursor-pointer">Öffnen</button>
+                        <button onclick="deleteMediaItem(${item.id})" class="px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-[10px] text-red-400 hover:bg-red-950 font-mono cursor-pointer" title="Löschen">🗑️</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openMediaItem(id) {
+            let item = mediaLibrary.find(m => m.id === id);
+            if (!item) return;
+            currentViewingMediaId = id;
+            if (item.url === '#') {
+                document.getElementById('viewerTitle').innerText = item.name + " [Demo-Modus]";
+                const area = document.getElementById('viewerContentArea');
+                area.innerHTML = `<div class="text-center font-mono text-xs text-pink-300 p-6 space-y-2">
+                    <p class="text-sm font-bold">📂 Demo-Datei aktiv</p>
+                    <p class="text-slate-400 text-[10px]">Diese Beispieldatei hat keine physische Medien-URL. Lade im Cyberdeck eigene Dateien hoch oder nutze das AI Sticker Studio!</p>
+                    <button onclick="deleteMediaItem(${item.id})" class="px-4 py-2 bg-red-950 border border-red-500/50 rounded-lg text-[10px] text-red-300 cursor-pointer">🗑️ Demo löschen</button>
+                </div>`;
+                showMediaViewer();
+                return;
+            }
+            if (item.category === 'video') {
+                const videoEl = document.getElementById('sideVideoPlayer');
+                videoEl.src = item.url;
+                videoEl.play().catch(err => console.warn(err));
+                document.getElementById('videoTitleLabel').innerText = "🎬 " + item.name;
+                document.getElementById('sideVideoContainer').classList.remove('hidden');
+                document.getElementById('smartDeviceModal').classList.add('hidden');
+                return;
+            } else if (item.category === 'audio') {
+                try { const a = new Audio(item.url);
+                    a.play().catch(err => console.warn(err)); } catch (err) { console.warn(err); }
+            }
+            document.getElementById('viewerTitle').innerText = item.name;
+            const area = document.getElementById('viewerContentArea');
+            if (item.category === 'image') {
+                area.innerHTML = `<img src="${item.url}" class="max-h-full max-w-full object-contain" onerror="this.outerHTML='<div class=&quot;text-center text-red-400&quot;>Bild konnte nicht geladen werden</div>'">`;
+            } else if (item.category === 'text') {
+                area.innerHTML = `<div class="text-center font-mono text-xs text-cyan-300 p-6">📄 Textdokument: ${item.name}<br><span class="text-slate-400 text-[10px]">Vorschau für Textformat. Datei enthält Kiez-Intelligence Daten.</span></div>`;
+            } else {
+                area.innerHTML = `<div class="text-center font-mono text-xs text-cyan-300 p-6">Vorschau für Format [${item.category}] aktiv.<br><span class="text-slate-400 text-[10px]">Dateiname: ${item.name}</span></div>`;
+            }
+            showMediaViewer();
+        }
+
+        function showMediaViewer() {
+            const modal = document.getElementById('mediaViewerModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            const item = mediaLibrary.find(m => m.id === currentViewingMediaId);
+            const metaEl = document.getElementById('viewerMetadata');
+            if (item) {
+                metaEl.innerHTML =
+                    `<span>📁 ${item.album || 'Kein Album'}</span>${item.tags && item.tags.length > 0 ? item.tags.map(t => `<span class="tag-badge bg-slate-700 text-slate-300 text-[8px]">${t}</span>`).join('') : '<span class="text-slate-500">Keine Tags</span>'}`;
+            }
+        }
+
+        function closeMediaViewer() {
+            document.getElementById('mediaViewerModal').classList.add('hidden');
+            document.getElementById('mediaViewerModal').classList.remove('flex');
+            document.getElementById('viewerContentArea').innerHTML = '';
+            currentViewingMediaId = null;
+        }
+
+        function deleteMediaItem(id) {
+            mediaLibrary = mediaLibrary.filter(m => m.id !== id);
+            renderMediaLibrary();
+            renderAlbumChips();
+            renderTagFilters();
+        }
+
+        function assignAlbumToCurrentMedia() {
+            if (!currentViewingMediaId) return;
+            assignmentMode = 'album';
+            document.getElementById('assignmentModalTitle').innerText = '📁 ALBUM ZUWEISEN';
+            const container = document.getElementById('assignmentOptionsContainer');
+            container.innerHTML = '';
+            albums.filter(a => a !== 'Alle').forEach(album => {
+                const btn = document.createElement('button');
+                btn.className =
+                    'w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-xs font-mono text-slate-200 cursor-pointer';
+                btn.innerText = '📁 ' + album;
+                btn.onclick = () => { const item = mediaLibrary.find(m => m.id === currentViewingMediaId); if (item) { item
+                            .album = album;
+                        renderMediaLibrary();
+                        renderAlbumChips();
+                        showMediaViewer(); }
+                    closeAssignmentModal(); };
+                container.appendChild(btn);
+            });
+            const newBtn = document.createElement('button');
+            newBtn.className =
+                'w-full py-2.5 bg-pink-950 hover:bg-pink-900 border border-pink-500 rounded-xl text-xs font-mono text-pink-300 cursor-pointer';
+            newBtn.innerText = '➕ Neues Album erstellen...';
+            newBtn.onclick = () => { showCreateAlbumInput();
+                closeAssignmentModal(); };
+            container.appendChild(newBtn);
+            document.getElementById('assignmentModal').classList.remove('hidden');
+            document.getElementById('assignmentModal').classList.add('flex');
+        }
+
+        function assignTagToCurrentMedia() {
+            if (!currentViewingMediaId) return;
+            assignmentMode = 'tag';
+            document.getElementById('assignmentModalTitle').innerText = '🏷️ TAG ZUWEISEN';
+            const container = document.getElementById('assignmentOptionsContainer');
+            container.innerHTML = '';
+            const item = mediaLibrary.find(m => m.id === currentViewingMediaId);
+            allTags.forEach(tag => {
+                const isActive = item && item.tags && item.tags.includes(tag);
+                const btn = document.createElement('button');
+                btn.className =
+                    `w-full py-2.5 ${isActive ? 'bg-pink-900 border-pink-400 text-pink-200' : 'bg-slate-800 border-slate-600 text-slate-300'} border rounded-xl text-xs font-mono cursor-pointer hover:bg-slate-700`;
+                btn.innerText = (isActive ? '✓ ' : '') + tag;
+                btn.onclick = () => { if (item) { if (!item.tags) item.tags = []; const idx = item.tags.indexOf(
+                            tag); if (idx > -1) { item.tags.splice(idx, 1); } else { item.tags.push(tag); } }
+                    renderMediaLibrary();
+                    renderTagFilters();
+                    assignTagToCurrentMedia(); };
+                container.appendChild(btn);
+            });
+            const newBtn = document.createElement('button');
+            newBtn.className =
+                'w-full py-2.5 bg-amber-950 hover:bg-amber-900 border border-amber-500 rounded-xl text-xs font-mono text-amber-300 cursor-pointer';
+            newBtn.innerText = '➕ Neues Tag erstellen...';
+            newBtn.onclick = () => { showAddTagInput();
+                closeAssignmentModal(); };
+            container.appendChild(newBtn);
+            document.getElementById('assignmentModal').classList.remove('hidden');
+            document.getElementById('assignmentModal').classList.add('flex');
+        }
+
+        function closeAssignmentModal() {
+            document.getElementById('assignmentModal').classList.add('hidden');
+            document.getElementById('assignmentModal').classList.remove('flex');
+            assignmentMode = null;
+        }
+
+        function renderQuestsInCyberdeck() {
+            const container = document.getElementById('questsInCyberdeck');
+            container.innerHTML = '';
+            quests.forEach(q => {
+                const item = document.createElement('div');
+                item.className = `quest-item ${q.status === 'completed' ? 'completed' : q.status === 'active' ? 'active' : ''}`;
+                const statusIcon = q.status === 'completed' ? '✅' : q.status === 'active' ? '⏳' : '🔒';
+                item.innerHTML =
+                    `<span class="text-lg">${statusIcon}</span><div><p class="font-bold text-slate-200">${q.name}</p><p class="text-[10px] text-slate-400">${q.description}</p><p class="text-[9px] text-amber-400">+${q.xp} XP</p></div>`;
+                container.appendChild(item);
+            });
+        }
+
+        function completeQuest(questId) {
+            const quest = quests.find(q => q.id === questId);
+            if (quest && quest.status !== 'completed') {
+                quest.status = 'completed';
+                playerXP += quest.xp;
+                checkLevelUp();
+                renderQuestsInCyberdeck();
+                renderQuestLog();
+                showToast(`✅ Quest abgeschlossen: ${quest.name} (+${quest.xp} XP)`);
+            }
+        }
+
+        function checkLevelUp() {
+            const nextLevelXP = playerLevel * 200;
+            if (playerXP >= nextLevelXP) {
+                playerLevel++;
+                playerMaxHP += 20;
+                playerHP = playerMaxHP;
+                showToast(`⬆️ Level Up! Du bist jetzt Level ${playerLevel}! HP +20`);
+            }
+        }
+
+        function renderQuestLog() {
+            const container = document.getElementById('questLogContent');
+            if (!container) return;
+            container.innerHTML = '';
+            quests.forEach(q => {
+                const item = document.createElement('div');
+                item.className = `quest-item ${q.status === 'completed' ? 'completed' : q.status === 'active' ? 'active' : ''}`;
+                const statusIcon = q.status === 'completed' ? '✅' : q.status === 'active' ? '⏳' : '🔒';
+                item.innerHTML =
+                    `<span class="text-lg">${statusIcon}</span><div><p class="font-bold text-slate-200">${q.name}</p><p class="text-[10px] text-slate-400">${q.description}</p><p class="text-[9px] text-amber-400">+${q.xp} XP</p></div>`;
+                container.appendChild(item);
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className =
+                'fixed top-20 left-1/2 -translate-x-1/2 z-[95] bg-slate-900 border border-pink-500 text-pink-200 px-4 py-2 rounded-xl text-xs font-mono shadow-2xl animate-bounce';
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== MODAL CONTROLS ====================
+        const smartModal = document.getElementById('smartDeviceModal');
+        document.getElementById('btnSmartDevice').addEventListener('click', () => {
+            smartModal.classList.toggle('hidden');
+            smartModal.classList.toggle('flex');
+            renderMediaLibrary();
+            renderAlbumChips();
+            renderTagFilters();
+        });
+        document.getElementById('btnCloseSmartDevice').addEventListener('click', () => {
+            smartModal.classList.add('hidden');
+            smartModal.classList.remove('flex');
+        });
+
+        function toggleWolfFiles() {
+            const wm = document.getElementById('wolfFilesModal');
+            wm.classList.toggle('hidden');
+            wm.classList.toggle('flex');
+        }
+
+        function toggleNeuralChat() {
+            const nc = document.getElementById('neuralChatModal');
+            nc.classList.toggle('hidden');
+            nc.classList.toggle('flex');
+        }
+
+        function toggleHelpPanel() {
+            const hm = document.getElementById('helpPanelModal');
+            hm.classList.toggle('hidden');
+            hm.classList.toggle('flex');
+        }
+
+        function toggleQuestLog() {
+            const ql = document.getElementById('questLogModal');
+            ql.classList.toggle('hidden');
+            ql.classList.toggle('flex');
+            if (!ql.classList.contains('hidden')) renderQuestLog();
+        }
+
+        function toggleSettings() {
+            const sm = document.getElementById('settingsModal');
+            sm.classList.toggle('hidden');
+            sm.classList.toggle('flex');
+            document.getElementById('geminiApiKeyInput').value = geminiApiKey;
+            updateApiModeLabel();
+        }
+
+        // ==================== VIDEO PLAYER ====================
+        let isVideoExpanded = false;
+
+        function toggleExpandVideo() {
+            const container = document.getElementById('sideVideoContainer');
+            isVideoExpanded = !isVideoExpanded;
+            if (isVideoExpanded) {
+                container.classList.remove('w-44', 'sm:w-60');
+                container.classList.add('w-80', 'sm:w-96');
+                document.getElementById('btnExpandVideo').innerText = "🗗";
+            } else {
+                container.classList.add('w-44', 'sm:w-60');
+                container.classList.remove('w-80', 'sm:w-96');
+                document.getElementById('btnExpandVideo').innerText = "🗖";
+            }
+        }
+
+        function closeSideVideo() {
+            const videoEl = document.getElementById('sideVideoPlayer');
+            videoEl.pause();
+            videoEl.src = "";
+            document.getElementById('sideVideoContainer').classList.add('hidden');
+        }
+
+        // ==================== DIALOGUE SYSTEM WITH SPRITES ====================
+        let currentText = "";
+        let currentSpeaker = "";
+
+        function speakCurrentText() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let cleanText = currentText.replace(/<[^>]*>?/gm, '');
+                let utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'de-DE';
+                try { window.speechSynthesis.speak(utterance); } catch (e) { console.warn(e); }
+            }
+        }
+
+        function startDialogue(speaker, text, choices = [], sceneHint = '') {
+            currentText = text;
+            currentSpeaker = speaker;
+            document.getElementById('speakerName').innerText = speaker;
+            document.getElementById('dialogueText').innerText = text;
+            const choiceArea = document.getElementById('dialogueChoices');
+            choiceArea.innerHTML = '';
+            if (choices.length > 0) {
+                choices.forEach(c => {
+                    let btn = document.createElement('button');
+                    btn.className =
+                        "px-3 py-1.5 bg-cyan-950/90 border border-cyan-400 text-cyan-200 text-xs font-mono rounded-lg hover:bg-cyan-900 cursor-pointer";
+                    btn.innerText = c.text;
+                    btn.onclick = c.action;
+                    choiceArea.appendChild(btn);
+                });
+            }
+            const hintEl = document.getElementById('sceneHint');
+            if (hintEl) hintEl.innerText = sceneHint;
+            document.getElementById('dialogueBox').classList.remove('hidden');
+            // Update sprite portrait
+            updateSpritePortrait(speaker);
+        }
+
+        function updateSpritePortrait(speaker) {
+            const container = document.getElementById('spritePortraitContainer');
+            const img = document.getElementById('spritePortrait');
+            const label = document.getElementById('spriteNameLabel');
+            const spriteData = spritePortraits[speaker] || spritePortraits['Erzähler'];
+            if (spriteData.url) {
+                img.src = spriteData.url;
+                img.style.display = 'block';
+                container.classList.remove('hidden');
+            } else {
+                // Use emoji placeholder
+                img.style.display = 'none';
+                label.innerText = spriteData.emoji + ' ' + spriteData.label;
+                container.classList.remove('hidden');
+            }
+            label.innerText = spriteData.emoji + ' ' + speaker;
+        }
+
+        function advanceDialogue() {
+            document.getElementById('dialogueBox').classList.add('hidden');
+            document.getElementById('sceneHint').innerText = '';
+            // Check if this was the granny success scene
+            if (currentSpeaker === 'Oma Gertrude' && currentText.includes('gewonnen')) {
+                // Already handled in triggerSuccess flow
+            }
+        }
+
+        function triggerSuccess() {
+            document.getElementById('successModal').classList.remove('hidden');
+            document.getElementById('successModal').classList.add('flex');
+            completeQuest(4);
+            document.getElementById('successXpText').innerText = `+150 XP • Level ${playerLevel} • Quest abgeschlossen`;
+        }
+
+        function continueAfterSuccess() {
+            document.getElementById('successModal').classList.add('hidden');
+            document.getElementById('successModal').classList.remove('flex');
+            // Start a new scene after success
+            startDialogue('Rainbow Rabbit',
+                '🌈✨ Der Kiez ist sicherer! Oma Gertrude hat die Beweise übergeben. Aber der Rote Faden zeigt noch mehr Aufgaben. Das Wolf-Syndikat operiert weiter im Verborgenen... Willst du die nächste Mission annehmen?',
+                [
+                    { text: '🕵️ Nächste Mission starten', action: () => { player.x = 80;
+                            player.y = 220;
+                            battleActive = false;
+                            advanceDialogue();
+                            startDialogue('Erzähler', 'Neue Mission: Untersuche das Community Board am östlichen Ende des Parks. Dort wurden seltsame QR-Codes und Desinformations-Flyer gefunden.', [], '🔍 QUEST: Community Board untersuchen');
+                            quests.push({id: 7, name: "Community Board untersuchen", description: "Untersuche das Community Board auf Desinformations-Flyer.", status: 'active', xp: 60});
+                            renderQuestLog();
+                        } },
+                    { text: '😴 Später weitermachen', action: () => { advanceDialogue();
+                            gameStarted = true; } }
+                ],
+                '✨ SIEG ERRUNGEN • WÄHLE DEINEN NÄCHSTEN SCHRITT');
+        }
+
+        // ==================== CANVAS & GAME LOOP ====================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const LOGICAL_WIDTH = 640;
+        const LOGICAL_HEIGHT = 360;
+
+        function resizeCanvas() {
+            canvas.width = LOGICAL_WIDTH;
+            canvas.height = LOGICAL_HEIGHT;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let gameStarted = false;
+        let player = { x: 80, y: 220, size: 20, speed: 3.2 };
+        let keys = {};
+        let battleActive = false;
+        let lastBattleX = -999;
+        let fishTimer = 0;
+        let dialogueLock = false;
+        let currentNearbyHitbox = null;
+
+        window.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                tryInteractWithHitbox();
+            }
+        });
+        window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+        function setupTouchBtn(id, keyName) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.addEventListener('touchstart', (e) => { e.preventDefault();
+                keys[keyName] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault();
+                keys[keyName] = false; });
+            btn.addEventListener('mousedown', () => { keys[keyName] = true; });
+            btn.addEventListener('mouseup', () => { keys[keyName] = false; });
+        }
+        setupTouchBtn('btnUp', 'ArrowUp');
+        setupTouchBtn('btnDown', 'ArrowDown');
+        setupTouchBtn('btnLeft', 'ArrowLeft');
+        setupTouchBtn('btnRight', 'ArrowRight');
+        setupTouchBtn('btnAction', 'Enter');
+
+        document.getElementById('btnAction').addEventListener('click', tryInteractWithHitbox);
+        document.getElementById('btnAction').addEventListener('touchend', (e) => { e.preventDefault();
+            tryInteractWithHitbox(); });
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('startScreen').classList.add('hidden');
+            gameStarted = true;
+            startDialogue('Witness X',
+                'Willkommen am transparenten AR Kiosk "Hinz & Kuntz". Der Rote Faden pulsiert durch den St. Pauli Stadtgarten. Nutze die Hitbox-Markierungen (cyan gestrichelte Bereiche) und drücke A/Enter um zu interagieren!',
+                [], '📍 Bewege dich mit Pfeiltasten/WASD oder Touch-D-Pad');
+            renderHitboxOverlay();
+        });
+
+        function renderHitboxOverlay() {
+            const overlay = document.getElementById('hitboxOverlay');
+            overlay.innerHTML = '';
+            hitboxes.forEach(hb => {
+                if (!hb.active) return;
+                const scaleX = canvas.clientWidth / LOGICAL_WIDTH;
+                const scaleY = canvas.clientHeight / LOGICAL_HEIGHT;
+                const div = document.createElement('div');
+                div.className = 'hitbox-indicator';
+                div.style.left = (hb.x * scaleX) + 'px';
+                div.style.top = (hb.y * scaleY) + 'px';
+                div.style.width = (hb.w * scaleX) + 'px';
+                div.style.height = (hb.h * scaleY) + 'px';
+                div.title = hb.label;
+                div.innerHTML = `<span class="text-[8px] font-mono text-cyan-400">${hb.icon}</span>`;
+                overlay.appendChild(div);
+            });
+        }
+
+        function tryInteractWithHitbox() {
+            if (!gameStarted || battleActive || dialogueLock) return;
+            for (let hb of hitboxes) {
+                if (!hb.active) continue;
+                const playerCenterX = player.x + 10;
+                const playerCenterY = player.y + 6;
+                if (playerCenterX >= hb.x && playerCenterX <= hb.x + hb.w &&
+                    playerCenterY >= hb.y && playerCenterY <= hb.y + hb.h) {
+                    handleHitboxInteraction(hb);
+                    return;
+                }
+            }
+            // If no hitbox found, show hint
+            showToast('🔍 Keine Interaktion in der Nähe. Bewege dich zu den markierten Bereichen!');
+        }
+
+        function handleHitboxInteraction(hb) {
+            dialogueLock = true;
+            setTimeout(() => dialogueLock = false, 300);
+            switch (hb.action) {
+                case 'kiosk':
+                    startDialogue('Hinz & Kuntz Kiosk',
+                        '🏪 Willkommen am Kiosk! Hier findest du alle Medien, Alben und Tags. Öffne das Cyberdeck um deine Dateien zu verwalten.',
+                        [
+                            { text: '📲 Cyberdeck öffnen', action: () => { advanceDialogue();
+                                    smartModal.classList.remove('hidden');
+                                    smartModal.classList.add('flex');
+                                    renderMediaLibrary();
+                                    renderAlbumChips();
+                                    renderTagFilters(); } },
+                            { text: '🔍 Mehr erfahren', action: () => { advanceDialogue();
+                                    startDialogue('Hinz & Kuntz Kiosk',
+                                        'Der Kiosk ist das Herzstück des Kiezes. Hier werden Informationen ausgetauscht, Medien geteilt und der Rote Faden weitergesponnen. Die Wolf Files sind ebenfalls hier versteckt.',
+                                        [], '📰 HINZ & KUNTZ • SEIT 1985'); } }
+                        ],
+                        '🏪 KIOSK • COMMUNITY HUB');
+                    break;
+                case 'granny':
+                    if (quests.find(q => q.id === 4 && q.status === 'completed')) {
+                        startDialogue('Oma Gertrude', '👵 Mein Kind! Die Beweise sind bereits übergeben. Der Kiez ist dir dankbar! Schau dich weiter um, es gibt noch viel zu tun.',
+                            [], '👵 OMA GERTRUDE • KIEZ BESCHÜTZERIN');
+                    } else {
+                        startDialogue('Oma Gertrude',
+                            '👵 Psst! Komm näher! Ich habe Beweise gegen das Wolf-Syndikat gesammelt. Aber ich brauche deine Hilfe um sie sicher zu übergeben.',
+                            [
+                                { text: '📋 Beweise annehmen', action: () => { advanceDialogue();
+                                        startDialogue('Oma Gertrude',
+                                            'Hier sind die Dokumente. Bring sie zu Hinz & Kuntz und nutze den "HINWEIS GEBEN" Button in den Wolf Files um sie zu übergeben. Der Kiez zählt auf dich!',
+                                            [], '📋 QUEST: Wolf Files übergeben');
+                                        quests.find(q => q.id === 4).status = 'active';
+                                        renderQuestLog(); } },
+                                { text: '🕵️ Mehr über das Syndikat', action: () => { advanceDialogue();
+                                        startDialogue('Oma Gertrude',
+                                            'Die Wölfe haben den Mietmarkt infiltriert. Sie kaufen Häuser auf, kündigen den Bewohnern und vermieten teuer an Touristen. Die Daten sind in meinen Wolf Files versteckt.',
+                                            [], '🐺 WARNUNG VOR DEM SYNDIKAT'); } }
+                            ],
+                            '👵 OMA GERTRUDE • KIEZ BESCHÜTZERIN');
+                    }
+                    break;
+                case 'homeless':
+                    startDialogue('Kiez Bewohner',
+                        '🧑‍🦱 Hey... du bist neu hier, oder? Pass auf dich auf. Die Wölfe sind überall. Aber der Rote Faden verbindet uns. Hier, nimm das.',
+                        [
+                            { text: '🧵 Roten Faden annehmen', action: () => { advanceDialogue();
+                                    startDialogue('Kiez Bewohner',
+                                        'Der Rote Faden ist das Symbol unserer Solidarität. Solange wir verbunden sind, können sie uns nicht brechen.',
+                                        [], '🧵 ROTER FADEN ERHALTEN');
+                                    completeQuest(1); } },
+                            { text: '🍲 Brauchst du etwas?', action: () => { advanceDialogue();
+                                    startDialogue('Kiez Bewohner',
+                                        'Danke, aber mir geht es okay. Die Suppenküche am Park hilft. Geh zum Community Board, dort gibt es Aufgaben.',
+                                        [], '🍲 SOLIDARITÄT ZEIGEN'); } }
+                        ],
+                        '🧑‍🦱 KIEZ BEWOHNER • SOLIDARITÄT');
+                    break;
+                case 'redthread':
+                    startDialogue('Rainbow Rabbit',
+                        '🌈✨ Du hast den Roten Faden gefunden! Er pulsiert mit der Energie des Kiezes. Folge ihm und du wirst die Wahrheit finden.',
+                        [], '🧵 DER ROTE FADEN • KIEZ VERBINDUNG');
+                    completeQuest(1);
+                    break;
+                case 'communityboard':
+                    startDialogue('Community Board',
+                        '📋 Das Community Board ist voll mit Ankündigungen. Einige Flyer sehen verdächtig aus... Desinformation! Hier wurde manipuliert.',
+                        [
+                            { text: '🔍 Flyer untersuchen', action: () => { advanceDialogue();
+                                    startDialogue('Community Board',
+                                        'Du findest QR-Codes die zu Fake-News Seiten führen. Das ist die Arbeit des Wolf-Syndikats! Du dokumentierst die Beweise.',
+                                        [], '🔍 DESINFORMATION ENTDECKT');
+                                    if (!quests.find(q => q.id === 7)) {
+                                        quests.push({ id: 7, name: "Community Board untersuchen",
+                                            description: "Untersuche das Community Board auf Desinformations-Flyer.",
+                                            status: 'completed', xp: 60 });
+                                        playerXP += 60;
+                                        checkLevelUp();
+                                        renderQuestLog();
+                                        showToast('✅ Community Board untersucht! +60 XP');
+                                    } } },
+                            { text: '📰 Hintergrund', action: () => { advanceDialogue();
+                                    startDialogue('Community Board',
+                                        'Die Hinz & Kunz Zeitung kämpft gegen Desinformation. Der Kiosk ist das Zentrum der Gegeninformation.',
+                                        [], '📰 HINZ & KUNZ ZEITUNG'); } }
+                        ],
+                        '📋 COMMUNITY BOARD • KIEZ INFO');
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        function triggerBattle() {
+            if (battleActive) return;
+            battleActive = true;
+            playerHP = playerMaxHP;
+            document.getElementById('battleUI').classList.remove('hidden');
+            document.getElementById('battleUI').classList.add('flex');
+            document.getElementById('playerHP').style.width = '100%';
+            document.getElementById('playerHPLabel').innerText = `HP: ${playerHP}/${playerMaxHP}`;
+            document.getElementById('enemyHP').style.width = '100%';
+            document.getElementById('enemyHPLabel').innerText = 'HP: 100/100';
+            document.getElementById('battleLog').innerText = '⚔️ Ein Corporate Wolf blockiert deinen Weg! Wähle deine Aktion!';
+        }
+
+        function executeBattleAction(type) {
+            const actions = {
+                debate: '🗣️ Du argumentierst mit Fakten und Solidarität! Der Wolf wird zurückgedrängt!',
+                dance: '🕺 Der Kiez Flashmob startet! Musik und Tanz brechen die Einschüchterung!',
+                card: '🃏 Du nutzt den Roten Faden Trick! Die Verbindung zum Kiez macht dich stärker!',
+                evidence: '📁 Du präsentierst die Wolf Files! Die Beweise sind erdrückend!'
+            };
+            document.getElementById('battleLog').innerText = actions[type] || actions.debate;
+            let enemyHP = 100;
+            const damage = type === 'evidence' ? 45 : type === 'dance' ? 30 : type === 'card' ? 35 : 25;
+            enemyHP -= damage;
+            if (enemyHP <= 0) {
+                document.getElementById('enemyHP').style.width = '0%';
+                document.getElementById('enemyHPLabel').innerText = 'HP: 0/100';
+                document.getElementById('battleLog').innerText = '💥 Wolf besiegt! Der Kiez atmet auf!';
+                setTimeout(() => {
+                    document.getElementById('battleUI').classList.add('hidden');
+                    document.getElementById('battleUI').classList.remove('flex');
+                    document.getElementById('enemyHP').style.width = '100%';
+                    document.getElementById('enemyHPLabel').innerText = 'HP: 100/100';
+                    battleActive = false;
+                    lastBattleX = player.x;
+                    startDialogue('Rainbow Rabbit', '🌈 Hervorragend! Der Weg ist frei. Der Kiez ist dir dankbar!',
+                        [], '⚔️ SIEG • DER WEG IST FREI');
+                    completeQuest(5);
+                }, 1500);
+            } else {
+                document.getElementById('enemyHP').style.width = enemyHP + '%';
+                document.getElementById('enemyHPLabel').innerText = `HP: ${enemyHP}/100`;
+                playerHP -= 15;
+                if (playerHP <= 0) playerHP = 10;
+                document.getElementById('playerHP').style.width = (playerHP / playerMaxHP * 100) + '%';
+                document.getElementById('playerHPLabel').innerText = `HP: ${playerHP}/${playerMaxHP}`;
+                if (playerHP <= 10) {
+                    document.getElementById('battleLog').innerText = '⚠️ Kritisch! Du brauchst einen besseren Plan!';
+                }
+            }
+        }
+
+        function update() {
+            if (!gameStarted || battleActive || dialogueLock) return;
+            let moved = false;
+            if (keys['ArrowUp'] || keys['w'] || keys['W']) { player.y -= player.speed;
+                moved = true; }
+            if (keys['ArrowDown'] || keys['s'] || keys['S']) { player.y += player.speed;
+                moved = true; }
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) { player.x -= player.speed;
+                moved = true; }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.x += player.speed;
+                moved = true; }
+
+            player.x = Math.max(20, Math.min(LOGICAL_WIDTH - 30, player.x));
+            player.y = Math.max(120, Math.min(LOGICAL_HEIGHT - 35, player.y));
+
+            // Check for battle trigger
+            if (player.x > 380 && Math.abs(player.x - lastBattleX) > 140 && Math.random() < 0.012) {
+                triggerBattle();
+            }
+
+            // Check for success trigger (reaching far east)
+            if (player.x > 560 && !quests.find(q => q.id === 4 && q.status === 'completed')) {
+                // Only trigger if wolf files quest is active but not completed
+                const wolfQuest = quests.find(q => q.id === 4);
+                if (wolfQuest && wolfQuest.status === 'active') {
+                    triggerSuccess();
+                    player.x = 540;
+                }
+            }
+
+            // Update hitbox overlay position if canvas resized
+            if (moved) {
+                renderHitboxOverlay();
+            }
+        }
+
+        function draw() {
+            fishTimer += 0.03;
+
+            // Background Night Sky & Docks
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+            // Gradient sky
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, 180);
+            skyGradient.addColorStop(0, '#0a0e1a');
+            skyGradient.addColorStop(1, '#090d1e');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, LOGICAL_WIDTH, 180);
+
+            // Buildings
+            ctx.fillStyle = '#0d1128';
+            ctx.fillRect(50, 40, 35, 140);
+            ctx.fillRect(110, 20, 20, 160);
+            ctx.fillRect(480, 50, 45, 130);
+            ctx.fillRect(560, 30, 30, 150);
+
+            // Building windows (lit)
+            ctx.fillStyle = '#f472b6';
+            for (let i = 0; i < 3; i++) {
+                ctx.fillRect(58, 55 + i * 25, 5, 5);
+                ctx.fillRect(118, 35 + i * 25, 4, 4);
+                ctx.fillRect(490, 65 + i * 22, 5, 5);
+                ctx.fillRect(568, 45 + i * 25, 4, 4);
+            }
+
+            // Ground Asphalt
+            ctx.fillStyle = '#04091f';
+            ctx.fillRect(0, 180, LOGICAL_WIDTH, LOGICAL_HEIGHT - 180);
+
+            // Neon Reflection Streaks
+            ctx.fillStyle = 'rgba(236, 72, 153, 0.15)';
+            ctx.fillRect(100, 190, 80, 80);
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.15)';
+            ctx.fillRect(380, 210, 100, 70);
+
+            // Hitbox visual indicators (cyan dashed areas)
+            hitboxes.forEach(hb => {
+                if (!hb.active) return;
+                ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+                ctx.setLineDash([6, 4]);
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(hb.x, hb.y, hb.w, hb.h);
+                ctx.setLineDash([]);
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
+                ctx.fillRect(hb.x, hb.y, hb.w, hb.h);
+            });
+
+            // --- GLOWING GLASS KIOSK ("HINZ & KUNTZ") ---
+            ctx.strokeStyle = '#ec4899';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(260, 90, 140, 130);
+            ctx.fillStyle = 'rgba(10, 15, 30, 0.85)';
+            ctx.fillRect(261, 91, 138, 128);
+            ctx.fillStyle = '#f472b6';
+            ctx.font = 'bold 9px Cinzel, serif';
+            ctx.fillText("HINZ & KUNTZ", 285, 108);
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = '7px monospace';
+            ctx.fillText("ST. PAULI EDITION", 293, 118);
+
+            let fishOffset = Math.sin(fishTimer) * 8;
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = '10px monospace';
+            ctx.fillText("🐟 🐟 🐟", 280 + fishOffset, 80);
+
+            // The Red Thread path ("Der Rote Faden")
+            ctx.strokeStyle = '#ec4899';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(30, 240);
+            ctx.bezierCurveTo(180, 280, 340, 160, 610, 220);
+            ctx.stroke();
+
+            // Kiosk Vendor Hologram
+            ctx.fillStyle = '#a855f7';
+            ctx.fillRect(310, 135, 40, 55);
+            ctx.fillStyle = '#fbcfe8';
+            ctx.beginPath();
+            ctx.arc(330, 130, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Senior citizen with walker (Oma Gertrude)
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(140, 160, 22, 45);
+            ctx.fillStyle = '#fef3c7';
+            ctx.beginPath();
+            ctx.arc(151, 154, 8, 0, Math.PI * 2);
+            ctx.fill();
+            // Walker
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(135, 205);
+            ctx.lineTo(135, 190);
+            ctx.lineTo(155, 190);
+            ctx.lineTo(155, 205);
+            ctx.stroke();
+
+            // Homeless person with sign
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(520, 175, 25, 40);
+            ctx.fillStyle = '#fbcfe8';
+            ctx.beginPath();
+            ctx.arc(532, 170, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fef3c7';
+            ctx.font = '6px monospace';
+            ctx.fillText("KEIN MENSCH IST ILLEGAL", 490, 225);
+
+            // Player character (Witness X)
+            ctx.fillStyle = '#ec4899';
+            ctx.beginPath();
+            ctx.arc(player.x + 10, player.y + 6, 9, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(player.x + 5, player.y - 8, 3, 12);
+            ctx.fillRect(player.x + 12, player.y - 8, 3, 12);
+
+            // HUD Status bar
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
+            ctx.fillRect(10, 10, 280, 24);
+            ctx.strokeStyle = '#ec4899';
+            ctx.strokeRect(10, 10, 280, 24);
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = '8px monospace';
+            ctx.fillText(`📍 ST. PAULI AR • LVL ${playerLevel} • XP ${playerXP}`, 14, 25);
+
+            // HP Bar in HUD
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
+            ctx.fillRect(300, 10, 120, 12);
+            ctx.strokeStyle = '#34d399';
+            ctx.strokeRect(300, 10, 120, 12);
+            ctx.fillStyle = '#34d399';
+            ctx.fillRect(302, 12, (playerHP / playerMaxHP) * 116, 8);
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '6px monospace';
+            ctx.fillText(`HP ${playerHP}/${playerMaxHP}`, 305, 19);
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Initialize
+        updateApiModeLabel();
+        renderAlbumChips();
+        renderTagFilters();
+        renderQuestLog();
+        renderHitboxOverlay();
+        requestAnimationFrame(loop);
+
+        // Canvas resize observer for hitbox overlay
+        const resizeObserver = new ResizeObserver(() => renderHitboxOverlay());
+        resizeObserver.observe(canvas);
+    </script>
+
+    <!-- SPRITE GENERATION PROMPTS DOCUMENTATION (for GPT-4/5 Image generation) -->
+    <!--
+    ============================================================
+    ANIME HALFBODY SPRITE PROMPTS FOR GPT IMAGE GENERATION
+    ============================================================
+
+    SPRITE SIZE CALCULATION:
+    - Dialogue box: max-w-2xl (672px) on desktop, ~90% of viewport on mobile
+    - Recommended sprite size: 180px wide × 270px tall (halfbody, 2:3 ratio)
+    - On mobile: ~120px × 180px
+    - In canvas logical coordinates (640×360): ~55px × 85px
+
+    GENERATION PROMPTS:
+
+    1. WITNESS X (Player Character):
+    "Anime halfbody portrait of a young cyberpunk detective, early 20s, wearing a pink hoodie with rabbit ears, confident smirk, short dark hair with pink highlights, neon cyberpunk city background in St. Pauli Hamburg, dark moody lighting with pink and cyan accents, clean 2D anime art style, detailed character illustration, upper body visible from waist up, 180x270 proportions"
+
+    2. RAINBOW RABBIT:
+    "Anime halfbody portrait of a magical rainbow rabbit spirit, ethereal glowing pink and purple aura, holographic fur with rainbow sparkles, cute but fierce expression, cyberpunk accessories with neon trim, floating pose, 2D anime style character illustration, upper body visible from waist up, 180x270 proportions"
+
+    3. OMA GERTRUDE:
+    "Anime halfbody portrait of an elderly German grandmother, around 70 years old, wearing a knitted cardigan and holding a red knitted scarf, warm determined expression, silver hair in bun, standing protective stance, warm lighting with subtle pink glow, clean 2D anime style, upper body visible from waist up, 180x270 proportions"
+
+    4. CORPORATE WOLF:
+    "Anime halfbody portrait of a menacing corporate wolf antagonist in a dark business suit with red tie, sharp angular features, red glowing eyes, dark purple aura, smug villain expression, cyberpunk corporate background, dramatic lighting, 2D anime villain style, upper body visible from waist up, 180x270 proportions"
+
+    5. KIEZ BEWOHNER (Homeless/Resident):
+    "Anime halfbody portrait of a friendly street resident in their 40s, wearing a warm jacket and beanie, kind tired eyes, holding a handmade sign, subtle warm lighting with pink glow, St. Pauli street background, clean 2D anime style, upper body visible from waist up, 180x270 proportions"
+
+    ============================================================
+    -->
+</body>
+</html>
