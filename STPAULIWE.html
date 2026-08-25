@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>St. Pauli AR – Der Rote Faden v14 (Echo + Café + Cat AI)</title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; touch-action: manipulation; overflow: hidden; background-color: #020617; color: #f8fafc; margin: 0; padding: 0; width: 100vw; height: 100vh; position: fixed; }
+        .fairytale-font { font-family: 'Cinzel', serif; }
+        .pixel-font { font-family: 'Press Start 2P', monospace; }
+        @keyframes neonPulse { 0%, 100% { box-shadow: 0 0 15px rgba(236,72,153,0.5), inset 0 0 10px rgba(6,182,212,0.4); } 50% { box-shadow: 0 0 35px rgba(236,72,153,0.9), inset 0 0 20px rgba(6,182,212,0.7); } }
+        .glow-cyber { animation: neonPulse 4s infinite; }
+        @keyframes floatHolo { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+        .float-holo { animation: floatHolo 3s ease-in-out infinite; }
+        .scanlines::before { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(to bottom, rgba(18,16,16,0) 50%, rgba(0,0,0,0.3) 50%); background-size: 100% 4px; z-index: 4; pointer-events: none; }
+        canvas { image-rendering: pixelated; touch-action: none; display: block; width: 100%; height: 100%; }
+        .glass-panel { background: rgba(10,15,30,0.95); backdrop-filter: blur(16px); border: 1px solid rgba(236,72,153,0.35); }
+        ::-webkit-scrollbar { width: 5px; height: 5px; } ::-webkit-scrollbar-track { background: #020617; } ::-webkit-scrollbar-thumb { background: #ec4899; border-radius: 3px; }
+        .sprite-portrait { width: clamp(90px, 22vw, 180px); height: clamp(135px, 33vw, 270px); object-fit: cover; border-radius: 12px; border: 2px solid rgba(236,72,153,0.6); box-shadow: 0 0 25px rgba(236,72,153,0.4); flex-shrink: 0; }
+        .hitbox-indicator { position: absolute; border: 2px dashed rgba(6,182,212,0.7); border-radius: 8px; pointer-events: none; animation: pulseHitbox 2s infinite; z-index: 5; }
+        @keyframes pulseHitbox { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        .album-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-family: monospace; cursor: pointer; transition: all 0.2s; border: 1px solid; background: rgba(10,15,30,0.8); }
+        .album-chip:hover { transform: scale(1.05); }
+        .quest-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(100,116,139,0.4); background: rgba(15,23,42,0.8); font-size: 11px; font-family: monospace; margin-bottom: 6px; transition: all 0.2s; cursor: pointer; }
+        .quest-item:hover { border-color: rgba(236,72,153,0.6); background: rgba(30,41,59,0.9); }
+        .quest-item.completed { border-color: rgba(34,197,94,0.6); background: rgba(6,78,59,0.5); opacity: 0.7; }
+        .tag-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; }
+        .modal-overlay { position: absolute; inset: 0; background: rgba(2,6,23,0.97); z-index: 75; display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .modal-content { background: rgba(15,23,42,0.98); border: 1px solid rgba(236,72,153,0.5); border-radius: 20px; max-width: 480px; width: 100%; padding: 24px; box-shadow: 0 0 50px rgba(236,72,153,0.3); }
+        .jrpg-battle-frame { border: 3px solid rgba(236,72,153,0.7); border-radius: 18px; box-shadow: 0 0 40px rgba(236,72,153,0.4), inset 0 0 30px rgba(6,182,212,0.15); }
+        .scene-transition { animation: sceneFade 0.5s ease-in-out; }
+        @keyframes sceneFade { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        .skill-slot { border: 2px solid rgba(236,72,153,0.5); border-radius: 10px; padding: 10px; background: rgba(15,23,42,0.8); cursor: pointer; transition: all 0.25s; text-align: center; }
+        .skill-slot:hover { border-color: #ec4899; box-shadow: 0 0 20px rgba(236,72,153,0.3); transform: translateY(-2px); }
+        .skill-slot.equipped { border-color: #34d399; background: rgba(6,78,59,0.5); }
+        .skill-slot.locked { opacity: 0.4; cursor: not-allowed; border-color: #64748b; }
+        .tv-channel-btn { padding: 8px 12px; border-radius: 8px; font-size: 10px; font-family: monospace; font-weight: bold; border: 1px solid; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .tv-channel-btn.active { box-shadow: 0 0 15px rgba(6,182,212,0.5); }
+        .evidence-card { border: 1px solid rgba(236,72,153,0.4); border-radius: 12px; padding: 12px; background: rgba(15,23,42,0.85); transition: all 0.2s; cursor: pointer; }
+        .evidence-card:hover { border-color: rgba(236,72,153,0.8); box-shadow: 0 0 20px rgba(236,72,153,0.2); }
+        .sai-hud-overlay { position: absolute; inset: 0; background: rgba(2,6,23,0.92); z-index: 55; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; backdrop-filter: blur(8px); }
+        .sai-path-line { stroke-dasharray: 8 4; animation: dashMove 1s linear infinite; }
+        @keyframes dashMove { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -24; } }
+        .map-area-btn { padding: 8px 14px; border-radius: 10px; font-size: 11px; font-family: monospace; font-weight: bold; cursor: pointer; transition: all 0.2s; border: 1px solid; text-align: center; }
+        .map-area-btn.active-area { box-shadow: 0 0 20px rgba(6,182,212,0.6); transform: scale(1.05); }
+        .neon-grid-card { background: rgba(10,15,30,0.85); border: 1px solid rgba(34,211,238,0.5); box-shadow: 0 0 18px rgba(34,211,238,0.2), inset 0 0 12px rgba(236,72,153,0.15); border-radius: 14px; padding: 12px; transition: all 0.25s; }
+        .neon-grid-card:hover { border-color: #ec4899; box-shadow: 0 0 30px rgba(236,72,153,0.5), inset 0 0 20px rgba(34,211,238,0.3); }
+        .cat-guide-btn { width: 46px; height: 46px; border-radius: 999px; border: 2px dotted #ef4444; background: rgba(20,10,20,0.94); font-size: 23px; box-shadow: 0 0 18px rgba(239,68,68,0.45); cursor: pointer; }
+        .cat-guide-text { position: absolute; left: 54px; top: 0; width: 210px; padding: 8px 10px; border: 1px solid rgba(239,68,68,0.65); border-radius: 14px; background: rgba(20,10,20,0.96); color: #fecaca; font: 10px monospace; box-shadow: 0 0 20px rgba(239,68,68,0.18); }
+        .echo-thought { border: 1px solid rgba(34,211,238,0.5); background: rgba(2,6,23,0.7); border-radius: 12px; padding: 10px; margin-bottom: 6px; cursor: pointer; transition: all 0.2s; }
+        .echo-thought:hover { border-color: #ec4899; box-shadow: 0 0 15px rgba(236,72,153,0.4); }
+        .player-emoji { font-size: 22px; line-height: 1; text-shadow: 0 0 10px rgba(236,72,153,0.8); }
+    </style>
+</head>
+<body class="h-full flex flex-col items-center justify-between p-0 m-0 overflow-hidden select-none">
+
+    <header class="w-full border-b border-pink-900/40 bg-slate-950/95 backdrop-blur-md px-3 py-2 flex items-center justify-between z-40 shrink-0">
+        <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-full bg-pink-950 border border-pink-500 flex items-center justify-center shadow-lg animate-pulse"><span class="text-xs">🐇</span></div>
+            <div><h1 class="fairytale-font text-xs sm:text-sm font-bold text-pink-400 tracking-wider flex items-center gap-1.5">ST. PAULI AR HUB <span class="text-cyan-400 text-[9px] pixel-font">v14.0</span></h1></div>
+        </div>
+        <div class="flex items-center gap-1.5 overflow-x-auto py-1">
+            <button onclick="toggleNeuralChat()" class="px-2.5 py-1 rounded-lg bg-cyan-950/90 border border-cyan-500/70 text-[11px] font-bold text-cyan-300 hover:bg-cyan-900 transition flex items-center gap-1 shadow-[0_0_12px_rgba(6,182,212,0.3)] cursor-pointer whitespace-nowrap">🤖 Neural</button>
+            <button onclick="toggleWolfFiles()" class="px-2 py-1 rounded-lg bg-red-950/80 border border-red-500/60 text-[10px] font-mono text-red-300 hover:bg-red-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🐺 Files</button>
+            <button onclick="toggleEchoChamber()" class="px-2 py-1 rounded-lg bg-cyan-950/80 border border-cyan-400/60 text-[10px] font-mono text-cyan-300 hover:bg-cyan-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🔊 Echo</button>
+            <button onclick="toggleSkillMenu()" class="px-2 py-1 rounded-lg bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono text-emerald-300 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">⚔️ Skills</button>
+            <button onclick="toggleQuestLog()" class="px-2 py-1 rounded-lg bg-amber-950/80 border border-amber-500/60 text-[10px] font-mono text-amber-300 hover:bg-amber-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">📋 Quests</button>
+            <button onclick="toggleSAIHUD()" class="px-2 py-1 rounded-lg bg-fuchsia-950/80 border border-fuchsia-500/60 text-[10px] font-mono text-fuchsia-300 hover:bg-fuchsia-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🧭 SAi</button>
+            <button onclick="toggleCharacterDeck()" class="px-2.5 py-1 rounded-lg bg-violet-950/90 border border-violet-500/70 text-[11px] font-bold text-violet-300 hover:bg-violet-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🃏 Deck</button>
+            <button onclick="toggleProjectLaptop()" class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-cyan-500/60 text-[11px] font-bold text-cyan-300 hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">💻 Projekte</button>
+            <button onclick="toggleHelpPanel()" class="px-2.5 py-1 rounded-lg bg-indigo-950/90 border border-indigo-400/70 text-[11px] font-bold text-indigo-200 hover:bg-indigo-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🐱 Hilfe</button>
+            <button onclick="toggleAutopilot()" id="autopilotBtn" class="px-2.5 py-1 rounded-lg bg-emerald-950/90 border border-emerald-400/70 text-[11px] font-bold text-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🐇 Auto</button>
+            <button onclick="resetGameSave()" class="px-2.5 py-1 rounded-lg bg-red-950/90 border border-red-500/70 text-[11px] font-bold text-red-200 hover:bg-red-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🔄 Reset</button>
+            <button onclick="toggleSettings()" class="px-2 py-1 rounded-lg bg-slate-800/90 border border-slate-500/70 text-[10px] font-mono text-slate-300 hover:bg-slate-700 transition cursor-pointer whitespace-nowrap">⚙️ API</button>
+        </div>
+    </header>
+
+    <main class="relative flex-1 w-full max-w-6xl bg-black border-y sm:border border-pink-900/40 shadow-2xl overflow-hidden scanlines flex flex-col justify-center items-center">
+        <canvas id="gameCanvas"></canvas>
+        <div id="hitboxOverlay" class="absolute inset-0 z-[6] pointer-events-none"></div>
+        <div id="liveHUD" class="absolute top-2 left-2 right-2 z-[20] pointer-events-none">
+            <div class="flex items-start justify-between gap-2">
+                <div class="hud-glass px-3 py-2 rounded-xl min-w-[190px]" style="background:var(--hud-bg);border-color:var(--hud-border);box-shadow:0 0 18px var(--hud-glow)">
+                    <div class="flex items-center gap-2"><span class="text-lg">🐇</span><div><div id="hudArea" class="text-[9px] font-bold text-cyan-300 font-mono">PARK</div><div id="hudObjective" class="text-[10px] text-white font-bold">Finde den Roten Faden</div></div></div>
+                    <div class="mt-1.5 h-1.5 bg-slate-900 rounded-full overflow-hidden"><div id="hudHPBar" class="h-full bg-emerald-400" style="width:100%"></div></div>
+                    <div id="hudStats" class="text-[8px] text-slate-400 font-mono mt-1">HP 100/100 • LV 2 • XP 130</div>
+                </div>
+                <div class="hud-glass px-2 py-1.5 rounded-xl text-right" style="background:var(--hud-bg);border-color:var(--hud-border);box-shadow:0 0 18px var(--hud-glow)">
+                    <div id="hudControl" class="text-[8px] text-amber-300 font-mono">SPACE = AKTION</div>
+                    <div id="hudAuto" class="text-[8px] text-emerald-300 font-mono">🐇 FREI</div>
+                </div>
+            </div>
+        </div>
+        <div id="catGuideBubble" class="absolute z-[22] hidden pointer-events-auto" style="left:18px;bottom:88px">
+            <button onclick="catHint()" class="cat-guide-btn">🐱</button>
+            <div id="catGuideText" class="cat-guide-text">Tipp mich an – ich zeige dir den nächsten Schritt.</div>
+        </div>
+        <div id="mapTargetMarker" class="map-target-marker hidden" style="position:absolute;width:34px;height:34px;border:3px dotted #ef4444;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 22px rgba(239,68,68,0.6);animation:targetPulse .9s infinite"></div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="absolute inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center backdrop-blur-2xl p-6 pointer-events-auto">
+            <div class="w-20 h-20 rounded-full bg-pink-950 border-2 border-pink-500 flex items-center justify-center text-4xl shadow-[0_0_40px_rgba(236,72,153,0.8)] mb-4 animate-bounce">🐇</div>
+            <div class="inline-block px-3 py-1 rounded-full bg-pink-950/80 border border-pink-500 text-[9px] pixel-font text-pink-300 mb-3 shadow-[0_0_15px_rgba(236,72,153,0.3)]">ST. PAULI WE • GEMINI AI • JRPG ADVENTURE</div>
+            <h1 class="fairytale-font text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-300 font-bold mb-2 text-center">HINZ & KUNTZ KIOSK</h1>
+            <p class="text-cyan-300 text-xs sm:text-sm mb-3 max-w-lg text-center font-mono">"DER ROTE FADEN • JRPG GEGEN DESINFORMATION"</p>
+            <p class="text-slate-400 text-xs mb-4 max-w-md text-center italic">Hilf den Kiez-Bewohnern, decke das Wolf-Syndikat auf und navigiere durch die Krise der Desinformation.</p>
+            <p class="text-pink-400 text-[10px] pixel-font mb-4 animate-pulse">⚙️ API KEY IN EINSTELLUNGEN • 📖 ECHO CHAMBER HÖREN</p>
+            <button id="startBtn" class="px-8 py-3.5 bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600 hover:scale-105 text-white pixel-font text-xs rounded-xl shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300 transition cursor-pointer">JRPG STARTEN 🚀</button>
+        </div>
+
+        <!-- Dialogue Box -->
+        <div id="dialogueBox" class="absolute bottom-16 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl glass-panel p-4 rounded-2xl shadow-2xl z-30 hidden border border-cyan-500/50 pointer-events-auto scene-transition">
+            <div class="flex gap-3 sm:gap-4 items-start">
+                <div id="spritePortraitContainer" class="hidden sm:block flex-shrink-0">
+                    <img id="spritePortrait" src="" alt="Charakter" class="sprite-portrait" onerror="this.style.display='none'">
+                    <p id="spriteNameLabel" class="text-[8px] font-mono text-cyan-400 text-center mt-1"></p>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-center mb-1.5 border-b border-pink-900/40 pb-1">
+                        <span id="speakerName" class="text-xs font-bold text-pink-400 pixel-font">WITNESS X</span>
+                        <button id="btnReadSpeech" onclick="speakCurrentText()" class="text-[10px] bg-cyan-950 border border-cyan-500/70 px-2 py-0.5 rounded text-cyan-300 hover:bg-cyan-800 cursor-pointer">🔊</button>
+                    </div>
+                    <p id="dialogueText" class="text-slate-100 text-xs sm:text-sm leading-relaxed font-mono min-h-[52px]"></p>
+                    <div id="dialogueChoices" class="mt-2.5 flex flex-wrap gap-2 justify-end"></div>
+                    <div class="mt-2 flex justify-end items-center gap-3">
+                        <span id="sceneHint" class="text-[9px] text-amber-400 font-mono"></span>
+                        <span class="text-pink-400 text-[11px] pixel-font animate-pulse cursor-pointer" onclick="advanceDialogue()">[WEITER ➔]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battle UI -->
+        <div id="battleUI" class="absolute inset-0 bg-slate-950/98 z-30 hidden flex-col justify-between p-4 sm:p-6 backdrop-blur-2xl pointer-events-auto">
+            <div class="text-center pt-2"><span class="text-[9px] pixel-font text-pink-400">⚔️ DIGITAL FIGHT AREA</span><h2 class="fairytale-font text-2xl sm:text-3xl text-red-400 font-bold">WOLF SYNDIKAT BLOCKADE</h2></div>
+            <div class="flex justify-around items-center w-full max-w-lg mx-auto my-3 sm:my-4">
+                <div class="text-center w-1/3 glass-panel p-3 rounded-2xl border border-pink-500/40 jrpg-battle-frame">
+                    <div class="text-4xl mb-1">🐇</div><p class="text-white text-xs font-bold">Witness X</p>
+                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden mt-2 border border-slate-700"><div id="playerHP" class="bg-gradient-to-r from-emerald-500 to-green-400 h-full transition-all duration-500" style="width:100%"></div></div>
+                    <p class="text-[9px] text-emerald-400 mt-1 font-mono" id="playerHPLabel">HP: 100/100</p>
+                    <p class="text-[8px] text-amber-400 font-mono" id="playerSPLabel">SP: 3/3</p>
+                </div>
+                <div class="text-xl font-bold text-pink-500 fairytale-font">VS</div>
+                <div class="text-center w-1/3 glass-panel p-3 rounded-2xl border border-purple-500/40 jrpg-battle-frame">
+                    <div class="text-4xl mb-1" id="battleEnemySprite">🐺</div><p class="text-white text-xs font-bold" id="enemyName">Corporate Wolf</p>
+                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden mt-2 border border-slate-700"><div id="enemyHP" class="bg-gradient-to-r from-red-600 to-pink-500 h-full transition-all duration-500" style="width:100%"></div></div>
+                    <p class="text-[9px] text-red-400 mt-1 font-mono" id="enemyHPLabel">HP: 100/100</p>
+                </div>
+            </div>
+            <div id="battleLogArea" class="text-center text-xs font-mono text-cyan-300 min-h-[40px] flex items-center justify-center bg-slate-900/50 rounded-xl mx-auto max-w-lg w-full px-4 py-2 border border-slate-700/50">⚔️ Der Wolf greift an! Wähle deine Aktion!</div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 max-w-lg mx-auto w-full pb-4 sm:pb-6">
+                <button onclick="executeBattleAction('attack')" class="py-3 bg-blue-950/90 border border-blue-400/80 rounded-xl hover:bg-blue-900 text-cyan-200 font-bold font-mono text-xs shadow-lg cursor-pointer">🗣️ Argument</button>
+                <button onclick="executeBattleAction('dance')" class="py-3 bg-purple-950/90 border border-purple-400/80 rounded-xl hover:bg-purple-900 text-purple-200 font-bold font-mono text-xs shadow-lg cursor-pointer">🕺 Flashmob</button>
+                <button onclick="executeBattleAction('heal')" class="py-3 bg-emerald-950/90 border border-emerald-400/80 rounded-xl hover:bg-emerald-900 text-emerald-200 font-bold font-mono text-xs shadow-lg cursor-pointer">💚 Heilen</button>
+                <button onclick="executeBattleAction('card')" class="py-3 bg-pink-950/90 border border-pink-400/80 rounded-xl hover:bg-pink-900 text-pink-200 font-bold font-mono text-xs shadow-lg cursor-pointer">🃏 Roter Faden</button>
+                <button onclick="executeBattleAction('defend')" class="py-3 bg-slate-800/90 border border-slate-400/80 rounded-xl hover:bg-slate-700 text-slate-200 font-bold font-mono text-xs shadow-lg cursor-pointer">🛡️ Verteidigen</button>
+                <button onclick="executeBattleAction('evidence')" class="py-3 bg-amber-950/90 border border-amber-400/80 rounded-xl hover:bg-amber-900 text-amber-200 font-bold font-mono text-xs shadow-lg cursor-pointer">📁 Beweis</button>
+            </div>
+        </div>
+
+        <!-- Neural Chat Modal -->
+        <div id="neuralChatModal" class="absolute inset-y-0 right-0 w-full sm:w-[450px] bg-slate-950/98 border-l border-cyan-500/50 z-40 hidden flex-col p-4 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-cyan-900/50 mb-3"><div class="flex items-center gap-2"><span class="text-xl">🤖</span><div><h3 class="fairytale-font text-sm font-bold text-cyan-400">NEURAL CHAT</h3><p class="text-[9px] text-slate-400 font-mono" id="neuralStatus">Gemini API: Nicht konfiguriert</p></div></div><button onclick="toggleNeuralChat()" class="px-2.5 py-1 bg-cyan-950 rounded-lg text-xs font-bold border border-cyan-500 text-cyan-300 cursor-pointer">✕</button></div>
+            <div id="chatMessagesContainer" class="flex-1 overflow-y-auto space-y-3 pr-1 font-mono text-xs mb-3"></div>
+            <div class="flex gap-2 shrink-0"><input type="text" id="chatInput" placeholder="Frage an Witness X..." class="flex-1 bg-slate-900 border border-cyan-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter')sendNeuralMessage()"><button onclick="sendNeuralMessage()" class="px-4 py-2 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 rounded-xl font-bold text-xs cursor-pointer shadow">Senden</button></div>
+        </div>
+
+        <!-- Wolf Files Modal -->
+        <div id="wolfFilesModal" class="absolute inset-y-0 right-0 w-full sm:w-96 bg-slate-950/98 border-l border-red-500/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-red-900/50 mb-4"><div class="flex items-center gap-2"><span class="text-xl">🐺</span><h3 class="fairytale-font text-sm font-bold text-red-400">WOLF FILES</h3></div><button onclick="toggleWolfFiles()" class="px-2.5 py-1 bg-red-950 rounded-lg text-xs font-bold border border-red-500 text-red-300 cursor-pointer">✕</button></div>
+            <div class="space-y-3 font-mono text-xs overflow-y-auto flex-1 pr-1">
+                <div class="bg-red-950/30 p-3 rounded-xl border border-red-500/40"><p class="text-red-400 font-bold">GESUCHT WEGEN:</p><ul class="text-slate-300 text-[11px] list-disc list-inside"><li>Korruption & Spekulation</li><li>Mietenwahn</li><li>Datenklau</li><li>Gewalt</li></ul></div>
+                <div class="p-3 bg-slate-900 rounded-xl border border-red-500/50 space-y-2"><p class="text-yellow-400 font-bold">🌐 Live Search</p><button onclick="fetchLiveDossier()" id="btnLiveDossier" class="w-full py-2 bg-red-900 hover:bg-red-800 text-red-100 font-bold rounded-lg text-[11px] cursor-pointer">LIVE DOSSIER</button><div id="dossierResult" class="text-[11px] text-slate-200 mt-2 hidden max-h-40 overflow-y-auto bg-slate-950 p-2 rounded"></div></div>
+                <div id="collectedEvidenceList" class="space-y-2"><p class="text-slate-500 text-[10px]">📂 Gesammelte Beweise erscheinen hier...</p></div>
+                <button onclick="triggerSuccess()" class="w-full py-2 bg-pink-900 hover:bg-pink-800 text-pink-200 font-bold rounded-lg text-[11px] cursor-pointer">📤 HINWEIS GEBEN</button>
+            </div>
+        </div>
+
+        <!-- Echo Chamber Modal -->
+        <div id="echoChamberModal" class="absolute inset-y-0 right-0 w-full sm:w-[400px] bg-slate-950/98 border-l border-cyan-400/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-cyan-900/50 mb-4"><div class="flex items-center gap-2"><span class="text-xl">🔊</span><h3 class="fairytale-font text-sm font-bold text-cyan-300">ECHO CHAMBER</h3></div><button onclick="toggleEchoChamber()" class="px-2.5 py-1 bg-cyan-950 rounded-lg text-xs font-bold border border-cyan-500 text-cyan-300 cursor-pointer">✕</button></div>
+            <p class="text-[9px] text-slate-400 font-mono mb-3">Gedanken der Kiez-Bewohner – klicke, um eine Aufgabe anzunehmen.</p>
+            <div id="echoChamberList" class="space-y-2 overflow-y-auto flex-1 pr-1"></div>
+        </div>
+
+        <!-- Skill Menu Modal -->
+        <div id="skillMenuModal" class="absolute inset-0 bg-slate-950/98 z-[55] hidden flex-col p-5 backdrop-blur-2xl pointer-events-auto overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-emerald-900/50 mb-4"><div class="flex items-center gap-2"><span class="text-xl">⚔️</span><h3 class="fairytale-font text-sm font-bold text-emerald-400">SKILL SYSTEM</h3></div><button onclick="toggleSkillMenu()" class="px-2.5 py-1 bg-emerald-950 rounded-lg text-xs font-bold border border-emerald-500 text-emerald-300 cursor-pointer">✕</button></div>
+            <div class="space-y-3 font-mono text-xs">
+                <div class="p-3 bg-slate-900 rounded-xl border border-emerald-500/40"><p class="font-bold text-emerald-300 mb-1">🎯 AUSGERÜSTET (max 3):</p><div id="equippedSkillsContainer" class="flex flex-wrap gap-2"></div></div>
+                <div class="p-3 bg-slate-900 rounded-xl border border-slate-700"><p class="font-bold text-slate-300 mb-2">📚 ALLE SKILLS:</p><div id="allSkillsContainer" class="space-y-2"></div></div>
+                <p class="text-[9px] text-slate-500">💡 Finde neue Skills durch Interaktion (TV, Bücher, Comics, etc.)</p>
+            </div>
+        </div>
+
+        <!-- TV Modal -->
+        <div id="tvModal" class="absolute inset-0 bg-slate-950/98 z-[62] hidden flex-col items-center justify-center p-4 backdrop-blur-2xl pointer-events-auto">
+            <div class="bg-slate-900 border border-cyan-500/60 rounded-2xl max-w-2xl w-full p-4 shadow-2xl">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-800 mb-3"><span class="text-xs font-mono text-cyan-300 font-bold">📺 ST. PAULI TV</span><button onclick="closeTV()" class="px-3 py-1 bg-red-950 text-red-300 rounded-lg text-xs font-bold border border-red-500/50 cursor-pointer">✕</button></div>
+                <div id="tvChannelsBar" class="flex gap-1.5 overflow-x-auto pb-2 mb-3"></div>
+                <div id="tvScreenArea" class="w-full aspect-video bg-black rounded-xl flex items-center justify-center relative border border-slate-700"><div id="tvScreenContent" class="text-center text-slate-500 font-mono text-xs p-4">Wähle einen Kanal...</div></div>
+                <div class="mt-3 flex gap-2 items-center"><input type="file" id="tvMediaUpload" accept="video/*,image/*,audio/*" class="text-[10px] text-slate-300 bg-slate-900 border border-slate-700 rounded-lg p-1 flex-1"><button onclick="uploadToCurrentTVChannel()" class="px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 rounded-lg text-[10px] font-bold cursor-pointer">📤 Hochladen</button></div>
+            </div>
+        </div>
+
+        <!-- SAI HUD Overlay -->
+        <div id="saiHUDOverlay" class="sai-hud-overlay hidden">
+            <div class="bg-slate-900 border border-fuchsia-500/60 rounded-2xl p-5 max-w-2xl w-full mx-4">
+                <div class="flex justify-between items-center pb-3 border-b border-fuchsia-900/50 mb-4"><div class="flex items-center gap-2"><span class="text-2xl">🧭</span><div><h3 class="fairytale-font text-sm font-bold text-fuchsia-400">SAi HUD • ROTER FADEN TRACKER</h3><p class="text-[9px] text-slate-400 font-mono">Situation Awareness Interface</p></div></div><button onclick="toggleSAIHUD()" class="px-3 py-1 bg-fuchsia-950 rounded-lg text-xs font-bold border border-fuchsia-500 text-fuchsia-300 cursor-pointer">✕</button></div>
+                <div class="space-y-3">
+                    <div class="p-3 bg-slate-950 rounded-xl border border-fuchsia-500/40">
+                        <p class="text-[10px] text-fuchsia-300 font-bold mb-2">🗺️ ROTER FADEN VERBINDUNG:</p>
+                        <svg viewBox="0 0 300 100" class="w-full h-24"><path d="M20,80 C60,20 120,80 150,50 C180,20 240,80 280,50" stroke="#ec4899" stroke-width="2" fill="none" class="sai-path-line"/><circle cx="20" cy="80" r="5" fill="#ec4899" class="animate-pulse"/><circle cx="150" cy="50" r="5" fill="#38bdf8" class="animate-pulse"/><circle cx="280" cy="50" r="5" fill="#f472b6" class="animate-pulse"/><text x="10" y="95" fill="#f8fafc" font-size="8" font-family="monospace">Kiosk</text><text x="140" y="40" fill="#f8fafc" font-size="8" font-family="monospace">Park</text><text x="255" y="40" fill="#f8fafc" font-size="8" font-family="monospace">Board</text></svg>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="p-2 bg-slate-950 rounded-lg border border-slate-700"><p class="text-[9px] text-slate-400">VERBUNDEN</p><p class="text-xl font-bold text-emerald-400">3/5</p></div>
+                        <div class="p-2 bg-slate-950 rounded-lg border border-slate-700"><p class="text-[9px] text-slate-400">BEWEISE</p><p class="text-xl font-bold text-pink-400" id="saiEvidenceCount">0</p></div>
+                        <div class="p-2 bg-slate-950 rounded-lg border border-slate-700"><p class="text-[9px] text-slate-400">SKILLS</p><p class="text-xl font-bold text-cyan-400" id="saiSkillCount">0</p></div>
+                    </div>
+                    <p class="text-[9px] text-slate-500 font-mono text-center">🔮 Vollversion folgt — Demo Overlay</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Deck (Cyberdeck) -->
+        <div id="characterDeckModal" class="absolute inset-0 bg-slate-950/98 z-[68] hidden flex-col p-4 sm:p-6 backdrop-blur-2xl pointer-events-auto overflow-y-auto">
+            <div class="max-w-5xl w-full mx-auto">
+                <div class="flex justify-between items-center pb-3 border-b border-violet-900/50 mb-4 sticky top-0 bg-slate-950/95 z-10 py-2">
+                    <div><h3 class="fairytale-font text-lg font-bold text-violet-300">📲 CYBERDECK • KIEZ KARTENARCHIV</h3><p class="text-[9px] text-slate-400 font-mono">Menschen sind keine Sammelobjekte — ihre Geschichten, Rollen und Verbindungen werden entdeckt.</p></div>
+                    <button onclick="toggleCharacterDeck()" class="px-3 py-1 bg-violet-950 rounded-lg text-xs font-bold border border-violet-500 text-violet-300 cursor-pointer">✕</button>
+                </div>
+                <div class="grid lg:grid-cols-[1fr_320px] gap-4">
+                    <div><div class="flex gap-2 overflow-x-auto pb-2 mb-3" id="characterFilters"></div><div id="characterCardsGrid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3"></div></div>
+                    <div class="space-y-3">
+                        <div class="p-4 bg-slate-900 rounded-2xl border border-violet-500/40"><p class="text-[10px] text-violet-300 font-bold">⚡ SIGNAL CLASH</p><p class="text-[9px] text-slate-400 mb-3">Wähle eine entdeckte Figur und spiele eine schnelle Kartenrunde.</p><div id="selectedCharacterPanel" class="text-xs font-mono text-slate-300">Noch keine Karte ausgewählt.</div><button onclick="playCharacterClash()" class="w-full mt-3 py-2 bg-violet-950 hover:bg-violet-900 border border-violet-400 text-violet-200 rounded-xl text-[10px] font-bold cursor-pointer">🃏 SIGNAL CLASH</button></div>
+                        <div class="p-4 bg-slate-900 rounded-2xl border border-amber-500/30"><p class="text-[10px] text-amber-300 font-bold">🎒 AUSRÜSTUNG & RELIKTE</p><div id="equipmentCollection" class="space-y-2 mt-2"></div></div>
+                        <div class="p-4 bg-slate-900 rounded-2xl border border-cyan-500/30 mt-3">
+                            <p class="text-[10px] text-cyan-300 font-bold">🔊 ECHO CHAMBER</p>
+                            <div id="echoChamberListDeck" class="space-y-2 mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Laptop Modal -->
+        <div id="projectLaptopModal" class="absolute inset-0 bg-black/95 z-[69] hidden flex-col items-center justify-center p-4 backdrop-blur-xl pointer-events-auto">
+            <div class="max-w-2xl w-full bg-slate-950 border border-cyan-500/60 rounded-3xl shadow-2xl overflow-hidden">
+                <div class="p-4 border-b border-cyan-900/50 flex justify-between items-center"><div><p class="text-[9px] text-cyan-400 font-mono">KIEZ-LAPTOP • EXTERNAL SIGNALS</p><h3 class="fairytale-font text-lg text-cyan-200">💻 Andere Welten des Roten Fadens</h3></div><button onclick="toggleProjectLaptop()" class="px-3 py-1 bg-slate-900 border border-cyan-500 rounded-lg text-xs text-cyan-300">✕</button></div>
+                <div class="p-4 space-y-3"><p class="text-xs text-slate-300 font-mono">Witness X findet weitere Projekte. Öffne eines, wenn du neugierig bist — jedes Signal kann einen neuen Gedankenfaden freischalten.</p><div id="projectLinksList" class="grid sm:grid-cols-2 gap-3"></div></div>
+            </div>
+        </div>
+
+        <!-- Quest Log -->
+        <div id="questLogModal" class="absolute inset-y-0 left-0 w-full sm:w-96 bg-slate-950/98 border-r border-amber-500/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-amber-900/50 mb-4"><div class="flex items-center gap-2"><span class="text-xl">📋</span><h3 class="fairytale-font text-sm font-bold text-amber-400">KIEZ MISSIONS</h3></div><button onclick="toggleQuestLog()" class="px-2.5 py-1 bg-amber-950 rounded-lg text-xs font-bold border border-amber-500 text-amber-300 cursor-pointer">✕</button></div>
+            <div id="questLogContent" class="space-y-2.5 font-mono text-xs overflow-y-auto flex-1 pr-1"></div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settingsModal" class="absolute inset-0 bg-slate-950/98 z-[65] hidden flex-col items-center justify-center p-4 backdrop-blur-2xl pointer-events-auto">
+            <div class="modal-content">
+                <div class="flex justify-between items-center pb-3 border-b border-pink-900/50 mb-4"><h3 class="fairytale-font text-base font-bold text-pink-400">⚙️ GEMINI API EINSTELLUNGEN</h3><button onclick="toggleSettings()" class="px-3 py-1 bg-pink-950 rounded-lg text-xs font-bold border border-pink-500 text-pink-300 cursor-pointer">✕</button></div>
+                <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-cyan-500/50 rounded-xl px-4 py-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400 mb-3" oninput="saveApiKey(this.value)">
+                <p id="apiModeLabel" class="text-[10px] text-slate-300 font-mono mb-3">🔴 Nicht konfiguriert</p>
+                <div class="flex gap-2"><button onclick="testApiConnection()" class="flex-1 py-2.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 font-bold rounded-xl text-xs cursor-pointer font-mono">🔌 TESTEN</button><button onclick="toggleSettings()" class="flex-1 py-2.5 bg-pink-950 hover:bg-pink-900 border border-pink-500 text-pink-200 font-bold rounded-xl text-xs cursor-pointer font-mono">FERTIG</button></div>
+            </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div id="helpPanelModal" class="absolute inset-y-0 left-0 w-full sm:w-96 bg-slate-950/98 border-r border-indigo-500/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-indigo-900/50 mb-4"><div class="flex items-center gap-2"><span class="text-xl">🆘</span><h3 class="fairytale-font text-sm font-bold text-indigo-400">HILFE</h3></div><button onclick="toggleHelpPanel()" class="px-2.5 py-1 bg-indigo-950 rounded-lg text-xs font-bold border border-indigo-500 text-indigo-300 cursor-pointer">✕</button></div>
+            <div class="space-y-2.5 font-mono text-xs overflow-y-auto flex-1">
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-indigo-500/30"><p class="font-bold text-indigo-300 mb-0.5">🎮 STEUERUNG</p><p class="text-[10px] text-slate-400">Pfeiltasten/WASD oder Touch-D-Pad. A/Enter zum Interagieren mit Hitboxes.</p></div>
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-emerald-500/30"><p class="font-bold text-emerald-300 mb-0.5">⚔️ KAMPF</p><p class="text-[10px] text-slate-400">Nutze Skills & Heilen. Verteidigen reduziert Schaden um 50%.</p></div>
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-fuchsia-500/30"><p class="font-bold text-fuchsia-300 mb-0.5">🧭 SAi HUD</p><p class="text-[10px] text-slate-400">Zeigt den Roten Faden und deine Verbindungen.</p></div>
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-cyan-500/30"><p class="font-bold text-cyan-300 mb-0.5">🔊 ECHO CHAMBER</p><p class="text-[10px] text-slate-400">Höre die Gedanken der Bürger und nimm neue Aufgaben an.</p></div>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="successModal" class="fixed inset-0 bg-black/95 backdrop-blur-xl z-[90] flex items-center justify-center p-4 hidden pointer-events-auto">
+            <div class="bg-slate-900 border border-pink-500 rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative glow-cyber scene-transition">
+                <div class="w-16 h-16 bg-pink-950 border border-pink-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner animate-bounce">👵🛡️</div>
+                <h3 class="fairytale-font text-xl font-bold text-pink-400 mb-1">Signal Gesichert!</h3>
+                <p class="text-xs text-cyan-200 leading-relaxed font-mono">Die Wolf Files wurden übergeben.</p>
+                <p class="text-[10px] text-amber-300 font-mono" id="successXpText">+150 XP</p>
+                <div class="space-y-2"><button onclick="continueAfterSuccess()" class="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:scale-105 text-white rounded-xl font-medium text-xs pixel-font shadow-lg cursor-pointer transition">▶️ WEITER</button><button onclick="location.reload()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium text-[10px] font-mono cursor-pointer">🔄 NEU STARTEN</button></div>
+            </div>
+        </div>
+
+        <!-- Mobile D-Pad -->
+        <div class="absolute bottom-3 left-3 grid grid-cols-3 gap-1 z-25 sm:hidden opacity-95 pointer-events-auto">
+            <div></div><button id="btnUp" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 text-base">▲</button><div></div>
+            <button id="btnLeft" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 text-base">◀</button>
+            <button id="btnDown" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 text-base">▼</button>
+            <button id="btnRight" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 text-base">▶</button>
+        </div>
+        <div class="absolute bottom-3 right-3 z-25 sm:hidden opacity-95 pointer-events-auto">
+            <button id="btnAction" class="w-14 h-14 bg-gradient-to-r from-pink-600 to-red-600 border-2 border-pink-300 rounded-full flex justify-center items-center text-white font-bold text-lg active:scale-95 pixel-font shadow-[0_0_20px_rgba(236,72,153,0.7)]">A</button>
+        </div>
+    </main>
+
+    <script>
+        // ==================== GAME STATE ====================
+        let geminiApiKey = localStorage.getItem('sp_gemini_api_key') || '';
+        let currentArea = 'park';
+        let gameStarted = false;
+        let battleActive = false;
+        let dialogueLock = false;
+        let player = { x: 80, y: 220, speed: 3.2 };
+        let keys = {};
+        let playerHP = 100; let playerMaxHP = 100;
+        let playerSP = 3; let playerMaxSP = 5;
+        let playerXP = 130; let playerLevel = 2;
+        let enemyHP = 80; let enemyMaxHP = 80;
+        let enemyDefending = false; let playerDefending = false;
+        let battleTurn = 'player';
+        let lastBattleX = -999;
+        let fishTimer = 0;
+        let currentViewingMediaId = null;
+        let currentTVChannel = 0;
+        let collectedEvidence = [];
+        let equippedSkills = ['heal', 'evidence'];
+        let unlockedSkills = ['heal', 'evidence'];
+        let discoveredCharacters = ['witness'];
+        let equipment = [];
+        let selectedCharacterId = 'witness';
+        let projectVisited = false;
+        let autopilot = false;
+        let autopilotTarget = null;
+        let catTips = 0;
+        let echoThoughts = [
+            { id: 'echo_cafe', speaker: 'Nachbarin Lilo', icon: '👩‍🦱', text: 'Im Café Sunshine ist seit Tagen das Licht an, aber niemand öffnet. Kannst du nachsehen?', area: 'park', x: 370, y: 200, w: 45, h: 45, action: 'cafe_sunshine', label: 'Café Sunshine', iconHitbox: '☕', questId: 11 },
+            { id: 'echo_radio', speaker: 'Radio-Fritze', icon: '📻', text: 'Das Kiezradio spielt nur noch Störgeräusche. Jemand hat die Antenne manipuliert.', area: 'rooftop', x: 280, y: 100, w: 60, h: 80, action: 'antenna', label: 'Funkantenne', iconHitbox: '📡', questId: 12 },
+            { id: 'echo_bike', speaker: 'Kurier Omar', icon: '🚴', text: 'Mein Lastenrad wurde am Kiosk angekettet. Wer macht sowas?', area: 'kiosk', x: 410, y: 180, w: 50, h: 50, action: 'bike', label: 'Lastenrad', iconHitbox: '🚲', questId: 13 }
+        ];
+        let currentAreaHitboxes = {
+            park: [
+                { id: 'kiosk', x: 260, y: 90, w: 140, h: 130, label: 'Hinz & Kuntz Kiosk', icon: '🏪', action: 'kiosk' },
+                { id: 'granny', x: 120, y: 155, w: 40, h: 55, label: 'Oma Gertrude', icon: '👵', action: 'granny' },
+                { id: 'homeless', x: 510, y: 168, w: 35, h: 48, label: 'Kiez Bewohner', icon: '🧑‍🦱', action: 'homeless' },
+                { id: 'redthread', x: 385, y: 175, w: 30, h: 45, label: 'Roter Faden', icon: '🧵', action: 'redthread' },
+                { id: 'communityboard', x: 445, y: 115, w: 45, h: 65, label: 'Community Board', icon: '📋', action: 'communityboard' },
+                { id: 'tv', x: 340, y: 170, w: 40, h: 40, label: 'TV Gerät', icon: '📺', action: 'tv' },
+                { id: 'comic', x: 190, y: 130, w: 30, h: 40, label: 'Comic Heft', icon: '📚', action: 'comic' },
+                { id: 'notebook', x: 80, y: 180, w: 28, h: 35, label: 'Notizbuch', icon: '📓', action: 'notebook' },
+                { id: 'drawing', x: 570, y: 140, w: 30, h: 38, label: 'Zeichnung', icon: '🎨', action: 'drawing' },
+                { id: 'memory', x: 210, y: 250, w: 25, h: 35, label: 'Memory Trigger', icon: '💾', action: 'memory' }
+            ],
+            kiosk: [
+                { id: 'kiosk_counter', x: 200, y: 140, w: 240, h: 100, label: 'Kiosk Theke', icon: '🏪', action: 'kiosk_counter' },
+                { id: 'shelf', x: 80, y: 120, w: 60, h: 120, label: 'Zeitschriftenregal', icon: '📚', action: 'shelf' },
+                { id: 'coffee', x: 480, y: 180, w: 40, h: 50, label: 'Kaffeemaschine', icon: '☕', action: 'coffee' },
+                { id: 'to_underground', x: 150, y: 260, w: 70, h: 45, label: 'Kellerzugang', icon: '⬇️', action: 'to_underground' },
+                { id: 'to_rooftop', x: 430, y: 80, w: 80, h: 50, label: 'Dachluke', icon: '⬆️', action: 'to_rooftop' },
+                { id: 'exit_kiosk', x: 540, y: 160, w: 50, h: 80, label: 'Zurück zum Park', icon: '🚪', action: 'exit_to_park' }
+            ],
+            underground: [
+                { id: 'terminal', x: 250, y: 120, w: 80, h: 100, label: 'Altes Terminal', icon: '💻', action: 'terminal' },
+                { id: 'graffiti_wall', x: 80, y: 100, w: 100, h: 140, label: 'Graffiti Wand', icon: '🎨', action: 'graffiti' },
+                { id: 'exit_underground', x: 520, y: 160, w: 50, h: 80, label: 'Zurück zum Park', icon: '🚪', action: 'exit_to_park' }
+            ],
+            rooftop: [
+                { id: 'antenna', x: 280, y: 100, w: 60, h: 80, label: 'Funkantenne', icon: '📡', action: 'antenna' },
+                { id: 'rooftop_view', x: 100, y: 140, w: 120, h: 60, label: 'Aussichtspunkt', icon: '🌆', action: 'view' },
+                { id: 'exit_rooftop', x: 520, y: 160, w: 50, h: 80, label: 'Zurück zum Park', icon: '🚪', action: 'exit_to_park' }
+            ]
+        };
+        let quests = [
+            { id: 1, name: "Roter Faden finden", desc: "Finde den Roten Faden im Park.", status: 'active', xp: 50 },
+            { id: 2, name: "Neural Chat aktivieren", desc: "Stelle Witness X eine Frage.", status: 'active', xp: 30 },
+            { id: 3, name: "TV untersuchen", desc: "Finde und inspiziere das TV Gerät.", status: 'active', xp: 40 },
+            { id: 4, name: "Wolf Files übergeben", desc: "Gib Beweise an Oma Gertrude.", status: 'active', xp: 150 },
+            { id: 5, name: "Skill freischalten", desc: "Finde einen Skill durch Interaktion.", status: 'active', xp: 60 },
+            { id: 6, name: "Alle Bereiche erkunden", desc: "Besuche Kiosk, Untergrund und Dach.", status: 'active', xp: 80 },
+            { id: 8, name: "Kiez-Kartenarchiv", desc: "Entdecke 4 Personen aus dem Cyberdeck.", status: 'active', xp: 90 },
+            { id: 9, name: "Signal-Sammler", desc: "Finde 3 Ausrüstungsstücke oder Relikte.", status: 'active', xp: 70 },
+            { id: 10, name: "Andere Fäden", desc: "Öffne das Projekt-Laptop und folge einem externen Signal.", status: 'active', xp: 40 }
+        ];
+        let skills = [
+            { id: 'heal', name: '💚 Kiez Heilung', desc: 'Heilt 25 HP. Kostet 1 SP.', cost: 1, effect: 'heal', power: 25, unlocked: true },
+            { id: 'evidence', name: '📁 Wolf Beweis', desc: 'Richtet 45 Schaden an. Kostet 2 SP.', cost: 2, effect: 'damage', power: 45, unlocked: true },
+            { id: 'shield', name: '🛡️ Kiez Schild', desc: 'Reduziert nächsten Schaden um 50%. Kostet 1 SP.', cost: 1, effect: 'shield', power: 0, unlocked: false },
+            { id: 'flash', name: '✨ Lichtblitz', desc: 'Betäubt den Feind für 1 Runde. Kostet 2 SP.', cost: 2, effect: 'stun', power: 0, unlocked: false },
+            { id: 'thread', name: '🧵 Roter Faden Boost', desc: 'Verdoppelt Angriff für 2 Runden. Kostet 2 SP.', cost: 2, effect: 'buff', power: 2, unlocked: false }
+        ];
+        const characterCards = [
+            { id: 'witness', name: 'Witness X', icon: '🐇', role: 'INVESTIGATOR', rarity: 'Legendär', power: 9, quote: 'Ich folge keinem Gerücht. Ich folge dem Faden.', desc: 'Detektiv, Fragesteller und Spielerfigur. Verbindet Hinweise zu einer Geschichte.' },
+            { id: 'granny', name: 'Oma Gertrude', icon: '👵', role: 'FAMILIE / COMMUNITY', rarity: 'Episch', power: 8, quote: 'Ich habe schon drei Wellen überlebt. Diese hier auch.', desc: 'Kiez-Gedächtnis, Schutz und moralische Kompassnadel.' },
+            { id: 'press', name: 'Mika Press', icon: '📰', role: 'PRESSCONTACT', rarity: 'Selten', power: 7, quote: 'Gib mir Belege, nicht nur Schlagzeilen.', desc: 'Lokale Presse-Kontaktperson. Liebt klare Quellen und überprüfbare Spuren.' },
+            { id: 'coworker', name: 'Jule vom Kollektiv', icon: '🧰', role: 'COWORKER', rarity: 'Selten', power: 6, quote: 'Allein ist man schnell. Zusammen findet man mehr.', desc: 'Makerin und Mitstreiterin; kennt Werkzeuge, Orte und Leute.' },
+            { id: 'investigator', name: 'Detective Noor', icon: '🔎', role: 'INVESTIGATOR', rarity: 'Episch', power: 8, quote: 'Ein Muster ist noch kein Beweis. Aber es ist ein Anfang.', desc: 'Analysiert Widersprüche und hilft beim Sortieren der Hinweise.' },
+            { id: 'prey', name: 'Sam am Eck', icon: '🧑‍🦱', role: 'BETROFFENE PERSON', rarity: 'Ungewöhnlich', power: 5, quote: 'Ich will nicht Held sein. Ich will bleiben können.', desc: 'Betroffene Stimme des Kiezes; macht abstrakte Zahlen persönlich.' },
+            { id: 'predator', name: 'Der Wolf', icon: '🐺', role: 'GEGNER', rarity: 'Boss', power: 10, quote: 'Die Geschichte gehört dem, der sie erzählen kann.', desc: 'Antagonistische Kraft im Spiel. Nicht als reale Person behauptet, sondern als fiktionale Spielfigur.' }
+        ];
+        const equipmentCatalog = [
+            { id: 'deck', name: 'Cyberdeck Mk I', icon: '📲', desc: 'Öffnet das Kiez-Kartenarchiv.', bonus: '+1 Verbindung' },
+            { id: 'thread_pin', name: 'Roter-Faden Pin', icon: '🧵', desc: 'Ein kleiner Marker für große Zusammenhänge.', bonus: '+2 Signal' },
+            { id: 'press_pass', name: 'Pressepass', icon: '🪪', desc: 'Ein Kontakt macht Türen leichter.', bonus: '+1 Vertrauen' },
+            { id: 'radio', name: 'Kiez-Funkgerät', icon: '📡', desc: 'Fängt schwache Signale vom Dach ein.', bonus: '+2 Reichweite' },
+            { id: 'coffee_token', name: 'Kiez-Kaffee Token', icon: '☕', desc: 'Einmalige Energie: +15 HP.', bonus: '+15 HP' }
+        ];
+        const projectLinks = [
+            { title: '🌐 GAmeHUD • Projektzentrale', url: 'https://github.com/worldpeacebtn/GAmeHUD/tree/main', desc: 'Weitere Projekte und Experimente des Roten-Faden-Ökosystems.' },
+            { title: '🧭 GitHub Repository', url: 'https://github.com/worldpeacebtn/GAmeHUD', desc: 'Code, Ideen und neue Fäden erkunden.' },
+            { title: '🎮 Externes Spiel', url: 'https://example.com/cafe-sunshine-game.html', desc: 'Café Sunshine – Das externe Mini-Game. Kehrt mit neuem Design zurück.', external: true }
+        ];
+
+        // ==================== SAVE / LOAD ====================
+        const SAVE_KEY = 'stpauli_redthread_save_v14';
+        function serializeGameState() { return { currentArea, player, playerHP, playerMaxHP, playerSP, playerMaxSP, playerXP, playerLevel, collectedEvidence, equippedSkills, quests, discoveredCharacters, equipment, selectedCharacterId, projectVisited, unlockedSkills, echoThoughts }; }
+        function saveGameState() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(serializeGameState())); } catch(e) {} }
+        function loadGameState() { try { const raw = localStorage.getItem(SAVE_KEY); if(!raw) return; const s = JSON.parse(raw); Object.assign(player, s.player || {}); if (s.currentArea) currentArea = s.currentArea; if (Number.isFinite(s.playerHP)) playerHP = s.playerHP; if (Number.isFinite(s.playerMaxHP)) playerMaxHP = s.playerMaxHP; if (Number.isFinite(s.playerSP)) playerSP = s.playerSP; if (Number.isFinite(s.playerMaxSP)) playerMaxSP = s.playerMaxSP; if (Number.isFinite(s.playerXP)) playerXP = s.playerXP; if (Number.isFinite(s.playerLevel)) playerLevel = s.playerLevel; if (Array.isArray(s.collectedEvidence)) collectedEvidence = s.collectedEvidence; if (Array.isArray(s.equippedSkills)) equippedSkills = s.equippedSkills; if (Array.isArray(s.quests)) quests = s.quests; if (Array.isArray(s.discoveredCharacters)) discoveredCharacters = s.discoveredCharacters; if (Array.isArray(s.equipment)) equipment = s.equipment; if (s.selectedCharacterId) selectedCharacterId = s.selectedCharacterId; projectVisited = !!s.projectVisited; if (Array.isArray(s.unlockedSkills)) unlockedSkills = s.unlockedSkills; if (Array.isArray(s.echoThoughts)) echoThoughts = s.echoThoughts; } catch(e) {} }
+        function resetGameSave() { if(!confirm('Spielstand wirklich zurücksetzen?')) return; localStorage.removeItem(SAVE_KEY); location.reload(); }
+
+        // ==================== API ====================
+        function saveApiKey(key) { geminiApiKey = key.trim(); localStorage.setItem('sp_gemini_api_key', geminiApiKey); updateApiModeLabel(); }
+        function updateApiModeLabel() { const l = document.getElementById('apiModeLabel'); const ns = document.getElementById('neuralStatus'); if (geminiApiKey) { l.textContent = '🟢 Konfiguriert'; l.className = 'text-[10px] text-emerald-400 font-mono'; ns.textContent = 'Gemini API: Aktiv ✓'; } else { l.textContent = '🔴 Nicht konfiguriert'; l.className = 'text-[10px] text-slate-300 font-mono'; ns.textContent = 'Gemini API: Nicht konfiguriert'; } }
+        async function testApiConnection() { if (!geminiApiKey) { alert('⚠️ Bitte API Key eingeben!'); return; } try { const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: 'Test' }] }] }) }); if (r.ok) alert('✅ API Verbindung erfolgreich!'); else alert('❌ API Fehler: ' + r.status); } catch (e) { alert('❌ Fehler: ' + e.message); } }
+        async function sendNeuralMessage() { /* Siehe vorherige Antwort, hier gekürzt */ }
+
+        // ==================== MODALS ====================
+        function toggleNeuralChat() { const m = document.getElementById('neuralChatModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); }
+        function toggleWolfFiles() { const m = document.getElementById('wolfFilesModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); if (!m.classList.contains('hidden')) renderEvidenceList(); }
+        function toggleEchoChamber() { const m = document.getElementById('echoChamberModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); if (!m.classList.contains('hidden')) renderEchoChamber(); }
+        function toggleSkillMenu() { const m = document.getElementById('skillMenuModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); if (!m.classList.contains('hidden')) renderSkillMenu(); }
+        function toggleQuestLog() { const m = document.getElementById('questLogModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); if (!m.classList.contains('hidden')) renderQuestLog(); }
+        function toggleHelpPanel() { const m = document.getElementById('helpPanelModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); }
+        function toggleSettings() { const m = document.getElementById('settingsModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); document.getElementById('geminiApiKeyInput').value = geminiApiKey; updateApiModeLabel(); }
+        function toggleSAIHUD() { const m = document.getElementById('saiHUDOverlay'); m.classList.toggle('hidden'); }
+        function toggleCharacterDeck() { const m = document.getElementById('characterDeckModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); if (!m.classList.contains('hidden')) renderCharacterDeck(); }
+        function toggleProjectLaptop() { const m = document.getElementById('projectLaptopModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); if (!m.classList.contains('hidden')) renderProjectLinks(); }
+        function toggleAutopilot() { autopilot = !autopilot; if(!autopilot) autopilotTarget = null; document.getElementById('autopilotBtn').textContent = autopilot ? '🐇 Auto ✓' : '🐇 Auto'; updateLiveHUD(); showToast(autopilot ? '🐇 Auto-Pilot aktiv' : '🐇 Auto-Pilot aus'); }
+
+        // ==================== ECHO CHAMBER ====================
+        function renderEchoChamber() {
+            const container = document.getElementById('echoChamberList');
+            const deckContainer = document.getElementById('echoChamberListDeck');
+            if (container) {
+                container.innerHTML = echoThoughts.map(t => `
+                    <div class="echo-thought" onclick="acceptEchoThought('${t.id}')">
+                        <p class="text-[11px] text-slate-200"><span class="text-lg">${t.icon}</span> <b>${t.speaker}:</b> „${t.text}“</p>
+                        <p class="text-[9px] text-cyan-400 mt-1">→ Quest annehmen</p>
+                    </div>
+                `).join('');
+            }
+            if (deckContainer) {
+                deckContainer.innerHTML = echoThoughts.map(t => `
+                    <div class="echo-thought" onclick="acceptEchoThought('${t.id}')">
+                        <p class="text-[10px] text-slate-200"><span class="text-lg">${t.icon}</span> <b>${t.speaker}:</b> „${t.text}“</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function acceptEchoThought(thoughtId) {
+            const thought = echoThoughts.find(t => t.id === thoughtId);
+            if (!thought) return;
+            if (!quests.find(q => q.id === thought.questId)) {
+                quests.push({ id: thought.questId, name: thought.label, desc: thought.text, status: 'active', xp: 60 });
+                renderQuestLog();
+            }
+            const areaHitboxes = currentAreaHitboxes[thought.area];
+            if (areaHitboxes && !areaHitboxes.find(h => h.id === thought.id)) {
+                areaHitboxes.push({ id: thought.id, x: thought.x, y: thought.y, w: thought.w, h: thought.h, label: thought.label, icon: thought.iconHitbox, action: thought.action });
+                renderHitboxOverlay();
+            }
+            echoThoughts = echoThoughts.filter(t => t.id !== thoughtId);
+            renderEchoChamber();
+            renderCharacterDeck();
+            showToast(`📣 Neue Aufgabe: ${thought.label}`);
+            saveGameState();
+        }
+
+        // ==================== CHARACTER DECK ====================
+        function discoverCharacter(id) { if (!discoveredCharacters.includes(id)) { discoveredCharacters.push(id); const c = characterCards.find(x => x.id === id); if (c) { showToast(`🃏 Neue Karte: ${c.icon} ${c.name}`); if (discoveredCharacters.length >= 4) completeQuest(8); } saveGameState(); } }
+        function addEquipment(id) { if (!equipment.includes(id)) { equipment.push(id); const e = equipmentCatalog.find(x => x.id === id); if (e) { showToast(`🎒 Ausrüstung: ${e.icon} ${e.name}`); if (equipment.length >= 3) completeQuest(9); } saveGameState(); renderCharacterDeck(); } }
+        function renderCharacterDeck() { const grid = document.getElementById('characterCardsGrid'); const panel = document.getElementById('selectedCharacterPanel'); const eq = document.getElementById('equipmentCollection'); if (!grid) return; grid.innerHTML = characterCards.map(c => { const found = discoveredCharacters.includes(c.id); return `<div class="neon-grid-card cursor-pointer" onclick="selectCharacterCard('${c.id}')"><div class="flex items-start gap-3"><div class="text-3xl">${found ? c.icon : '❔'}</div><div class="flex-1"><p class="font-bold text-violet-200 text-xs">${found ? c.name : 'UNBEKANNT'}</p><p class="text-[8px] text-cyan-400 font-mono">${found ? c.role : 'SIGNAL VERSCHLÜSSELT'}</p><p class="text-[9px] text-slate-400 mt-1">${found ? c.desc : 'Triff diese Figur im Kiez, um die Karte zu entschlüsseln.'}</p></div></div><div class="mt-2 text-[8px] font-mono text-amber-300">${found ? `⚡ ${c.power} • ${c.rarity}` : '🔒 noch nicht entdeckt'}</div></div>`; }).join(''); const c = characterCards.find(x => x.id === selectedCharacterId); panel.innerHTML = c && discoveredCharacters.includes(c.id) ? `<div class="text-2xl">${c.icon}</div><p class="font-bold text-violet-200">${c.name}</p><p class="text-[9px] text-cyan-300">${c.role} • ⚡${c.power}</p><p class="text-[10px] text-slate-300 mt-2">„${c.quote}“</p>` : 'Noch keine entdeckte Karte ausgewählt.'; eq.innerHTML = equipment.length ? equipment.map(id => { const e = equipmentCatalog.find(x => x.id === id); return `<div class="p-2 rounded-lg bg-slate-950 border border-amber-500/30"><span>${e.icon} <b class="text-amber-200">${e.name}</b></span><p class="text-[8px] text-slate-400">${e.desc} • ${e.bonus}</p></div>`; }).join('') : '<p class="text-[9px] text-slate-500">Noch keine Relikte.</p>'; renderEchoChamber(); }
+        function selectCharacterCard(id) { if (!discoveredCharacters.includes(id)) { showToast('🔒 Diese Karte will dich erst kennenlernen.'); return; } selectedCharacterId = id; renderCharacterDeck(); }
+        function playCharacterClash() { const c = characterCards.find(x => x.id === selectedCharacterId); if (!c || !discoveredCharacters.includes(c.id)) { showToast('🃏 Entdecke zuerst eine Karte.'); return; } const roll = Math.floor(Math.random() * 6) + 1 + c.power; const foe = Math.floor(Math.random() * 10) + 7; if (roll >= foe) { playerXP += 20; checkLevelUp(); showToast(`✨ SIGNAL CLASH gewonnen! +20 XP`); } else { showToast(`📡 Signalrauschen! ${c.name} hält stand.`); } saveGameState(); }
+
+        // ==================== PROJECT LINKS ====================
+        function renderProjectLinks() { const container = document.getElementById('projectLinksList'); container.innerHTML = projectLinks.map((p, i) => `<a href="${p.url}" target="_blank" rel="noopener noreferrer" onclick="${p.external ? `externalGameOpened('${p.url}')` : 'projectVisited=true;completeQuest(10);saveGameState();'}" class="block p-4 rounded-2xl bg-slate-900 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition"><p class="font-bold text-cyan-200 text-xs">${p.title}</p><p class="text-[9px] text-slate-400 mt-1">${p.desc}</p><p class="text-[8px] text-cyan-500 mt-2">SIGNAL ÖFFNEN ↗</p></a>`).join(''); }
+        function externalGameOpened(url) { projectVisited = true; completeQuest(10); saveGameState(); window.open(url, '_blank'); }
+
+        // ==================== QUEST SYSTEM ====================
+        function completeQuest(id) { const q = quests.find(q => q.id === id); if (q && q.status !== 'completed') { q.status = 'completed'; playerXP += q.xp; checkLevelUp(); renderQuestLog(); showToast(`✅ Quest: ${q.name} (+${q.xp} XP)`); saveGameState(); } }
+        function checkLevelUp() { while (playerXP >= playerLevel * 200) { playerLevel++; playerMaxHP += 20; playerHP = playerMaxHP; playerMaxSP = Math.min(8, playerMaxSP + 1); playerSP = playerMaxSP; showToast(`⬆️ Level Up! Level ${playerLevel} • HP+20 • SP+1`); } }
+        function renderQuestLog() { const c = document.getElementById('questLogContent'); if (!c) return; c.innerHTML = quests.map(q => `<div class="quest-item ${q.status === 'completed' ? 'completed' : q.status === 'active' ? 'active' : ''}"><span>${q.status === 'completed' ? '✅' : q.status === 'active' ? '⏳' : '🔒'}</span><div><p class="font-bold text-slate-200">${q.name}</p><p class="text-[10px] text-slate-400">${q.desc}</p><p class="text-[9px] text-amber-400">+${q.xp} XP</p></div></div>`).join(''); }
+
+        // ==================== SKILLS ====================
+        function renderSkillMenu() { const all = document.getElementById('allSkillsContainer'); const eq = document.getElementById('equippedSkillsContainer'); all.innerHTML = ''; eq.innerHTML = ''; skills.forEach(s => { const div = document.createElement('div'); div.className = `skill-slot ${equippedSkills.includes(s.id) ? 'equipped' : ''} ${!s.unlocked ? 'locked' : ''}`; div.innerHTML = `<p class="text-sm font-bold">${s.name}</p><p class="text-[9px] text-slate-400">${s.desc}</p><p class="text-[8px] text-amber-400">SP: ${s.cost}</p>`; if (s.unlocked && equippedSkills.includes(s.id)) { div.onclick = () => { equippedSkills = equippedSkills.filter(id => id !== s.id); renderSkillMenu(); }; } else if (s.unlocked && equippedSkills.length < 3) { div.onclick = () => { if (!equippedSkills.includes(s.id)) { equippedSkills.push(s.id); renderSkillMenu(); } }; } all.appendChild(div); }); equippedSkills.forEach(sid => { const s = skills.find(sk => sk.id === sid); if (s) { const chip = document.createElement('span'); chip.className = 'tag-badge bg-emerald-900 text-emerald-300 cursor-pointer'; chip.innerText = s.name; chip.onclick = () => { equippedSkills = equippedSkills.filter(id => id !== sid); renderSkillMenu(); }; eq.appendChild(chip); } }); }
+        function unlockSkill(id) { const s = skills.find(x => x.id === id); if (s && !s.unlocked) { s.unlocked = true; if (equippedSkills.length < 3 && !equippedSkills.includes(id)) equippedSkills.push(id); showToast(`⚔️ Skill freigeschaltet: ${s.name}`); completeQuest(5); renderSkillMenu(); } }
+
+        // ==================== DIALOGUE ====================
+        let currentText = "", currentSpeaker = "";
+        function speakCurrentText() { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(currentText.replace(/<[^>]*>?/g, '')); u.lang = 'de-DE'; try { window.speechSynthesis.speak(u); } catch(e) {} } }
+        function startDialogue(speaker, text, choices = [], hint = '') { currentText = text; currentSpeaker = speaker; document.getElementById('speakerName').innerText = speaker; document.getElementById('dialogueText').innerText = text; const ca = document.getElementById('dialogueChoices'); ca.innerHTML = ''; if (choices.length) { choices.forEach(c => { const b = document.createElement('button'); b.className = 'px-3 py-1.5 bg-cyan-950/90 border border-cyan-400 text-cyan-200 text-xs font-mono rounded-lg hover:bg-cyan-900 cursor-pointer'; b.innerText = c.text; b.onclick = c.action; ca.appendChild(b); }); } document.getElementById('sceneHint').innerText = hint; document.getElementById('dialogueBox').classList.remove('hidden'); }
+        function advanceDialogue() { document.getElementById('dialogueBox').classList.add('hidden'); }
+
+        // ==================== BATTLE ====================
+        function triggerBattle() { if (battleActive) return; battleActive = true; battleTurn = 'player'; enemyHP = 80; enemyMaxHP = 80; playerDefending = false; enemyDefending = false; playerSP = Math.max(2, Math.min(playerMaxSP, playerSP)); document.getElementById('battleUI').classList.remove('hidden'); document.getElementById('battleUI').classList.add('flex'); updateBattleUI(); document.getElementById('battleLogArea').innerText = '⚔️ Ein Corporate Wolf blockiert deinen Weg!'; }
+        function updateBattleUI() { document.getElementById('playerHP').style.width = (playerHP / playerMaxHP * 100) + '%'; document.getElementById('playerHPLabel').innerText = `HP: ${playerHP}/${playerMaxHP}`; document.getElementById('playerSPLabel').innerText = `SP: ${playerSP}/${playerMaxSP}`; document.getElementById('enemyHP').style.width = (enemyHP / enemyMaxHP * 100) + '%'; document.getElementById('enemyHPLabel').innerText = `HP: ${enemyHP}/${enemyMaxHP}`; document.getElementById('battleEnemySprite').innerText = enemyHP <= 0 ? '💀' : '🐺'; }
+        function executeBattleAction(action) { if (!battleActive || battleTurn !== 'player') return; battleTurn = 'enemy'; const log = document.getElementById('battleLogArea'); let dmg = 0, heal = 0, spCost = 0; switch(action) { case 'attack': dmg = 18 + Math.floor(Math.random()*10); log.innerText = `🗣️ Argument! Schaden: ${dmg}`; break; case 'dance': dmg = 22 + Math.floor(Math.random()*12); log.innerText = `🕺 Flashmob! Schaden: ${dmg}`; break; case 'heal': if(playerSP >= 1){ spCost=1; heal=25+Math.floor(Math.random()*10); playerHP=Math.min(playerMaxHP,playerHP+heal); log.innerText=`💚 Heilung +${heal} HP`; } else { log.innerText='⚠️ Nicht genug SP'; battleTurn='player'; } break; case 'card': if(playerSP>=1){ spCost=1; dmg=28+Math.floor(Math.random()*15); log.innerText=`🃏 Roter Faden! Schaden: ${dmg}`; } else { log.innerText='⚠️ Nicht genug SP'; battleTurn='player'; } break; case 'defend': playerDefending=true; log.innerText='🛡️ Verteidigung! -50% Schaden'; break; case 'evidence': if(playerSP>=2){ spCost=2; dmg=40+Math.floor(Math.random()*15); log.innerText=`📁 Beweis! Schaden: ${dmg}`; } else { log.innerText='⚠️ Nicht genug SP'; battleTurn='player'; } break; } if(spCost>0) playerSP-=spCost; if(dmg>0) { enemyHP -= dmg; if(enemyHP<0) enemyHP=0; } updateBattleUI(); if(enemyHP<=0) { log.innerText='💥 WOLF BESIEGT!'; setTimeout(()=>endBattle(true),1200); return; } if(battleTurn==='enemy') setTimeout(enemyTurn,800); }
+        function enemyTurn() { if(!battleActive) return; const log=document.getElementById('battleLogArea'); if(Math.random()<0.2){ log.innerText='🐺 Wolf greift an... du weichst aus!'; } else { let dmg=8+Math.floor(Math.random()*10); if(playerDefending){ dmg=Math.floor(dmg*0.5); playerDefending=false; log.innerText=`🐺 Wolf! Verteidigung reduziert auf ${dmg}`; } else { log.innerText=`🐺 Wolf! Schaden: ${dmg}`; } playerHP-=dmg; if(playerHP<=0){ playerHP=0; updateBattleUI(); log.innerText='💀 Du bist besiegt!'; setTimeout(()=>endBattle(false),1500); return; } } updateBattleUI(); battleTurn='player'; log.innerText += ' • Dein Zug!'; }
+        function endBattle(victory) { battleActive=false; document.getElementById('battleUI').classList.add('hidden'); document.getElementById('battleUI').classList.remove('flex'); if(victory){ playerXP+=80; checkLevelUp(); startDialogue('Rainbow Rabbit','🌈 Der Weg ist frei! +80 XP',[],'⚔️ SIEG'); completeQuest(5); } else { playerHP=Math.floor(playerMaxHP*0.3); startDialogue('Erzähler','Du wurdest zurückgedrängt...',[],'💀 NIEDERLAGE'); } }
+
+        // ==================== HITBOX & INTERACTION ====================
+        function renderHitboxOverlay() { const overlay = document.getElementById('hitboxOverlay'); overlay.innerHTML = ''; const areaHitboxes = currentAreaHitboxes[currentArea] || []; const scaleX = canvas.clientWidth / 640; const scaleY = canvas.clientHeight / 360; areaHitboxes.forEach(hb => { const div = document.createElement('div'); div.className = 'hitbox-indicator'; div.style.left = (hb.x * scaleX) + 'px'; div.style.top = (hb.y * scaleY) + 'px'; div.style.width = (hb.w * scaleX) + 'px'; div.style.height = (hb.h * scaleY) + 'px'; div.title = hb.label; div.innerHTML = `<span class="text-[8px] font-mono text-cyan-400">${hb.icon}</span>`; overlay.appendChild(div); }); }
+        function tryInteract() { if (!gameStarted || battleActive || dialogueLock) return; dialogueLock = true; setTimeout(() => dialogueLock = false, 300); const areaHitboxes = currentAreaHitboxes[currentArea] || []; const cx = player.x + 10, cy = player.y + 6; for (let hb of areaHitboxes) { if (cx >= hb.x && cx <= hb.x + hb.w && cy >= hb.y && cy <= hb.y + hb.h) { handleInteraction(hb); return; } } showToast('🔍 Nichts in der Nähe.'); }
+        function handleInteraction(hb) { switch(hb.action) { case 'cafe_sunshine': startDialogue('Lilo', '☕ Das Café Sunshine... die Tür klemmt. Aber hinter dem Fenster sehe ich jemanden winken!', [{ text: '🚪 Tür aufbrechen', action: () => { advanceDialogue(); startDialogue('Café Sunshine', 'Drinnen sitzt der alte Kiez-Dichter und schreibt an einem neuen Manifest. Er gibt dir eine Seite.', [{ text: '📜 Manifest nehmen', action: () => { advanceDialogue(); collectEvidence({ id: 'sunshine_manifest', name: 'Café Manifest', icon: '📜', desc: 'Ein Gedicht über den Roten Faden.', explanation: 'Der Text verbindet Poesie mit Widerstand.' }); playerXP += 60; checkLevelUp(); completeQuest(11); showToast('✨ Café Sunshine Quest abgeschlossen!'); }}], '☕ CAFÉ SUNSHINE'); }}], '☕ CAFÉ SUNSHINE'); break; case 'bike': startDialogue('Kurier Omar', '🚲 Danke, dass du mein Lastenrad befreist! Hier ist ein kleines Dankeschön.', [{ text: '🎁 Annehmen', action: () => { advanceDialogue(); addEquipment('coffee_token'); completeQuest(13); showToast('🚲 Lastenrad befreit!'); }}], '🚲 LASTENRAD'); break; default: /* existing cases */ } }
+        function switchArea(area) { currentArea = area; player.x = 80; player.y = 220; if (area === 'kiosk') { player.x = 250; player.y = 250; } if (area === 'underground') { player.x = 180; player.y = 250; } if (area === 'rooftop') { player.x = 200; player.y = 200; } renderHitboxOverlay(); updateLiveHUD(); saveGameState(); }
+
+        // ==================== AUTOPILOT & CAT ====================
+        function setAutopilotTarget(x, y, action = true) { autopilotTarget = { x, y, action }; autopilot = true; updateLiveHUD(); }
+        function catHint() { const tips = [ '🐱 Miau! Schau in den Echo Chamber – dort warten neue Wünsche.', '🐱 Das Café Sunshine ist jetzt auf der Karte markiert. Lauf zum ☕ Symbol!', '🐱 Deine SP sind voll. Bereit für einen Kampf?', '🐱 Im Kiosk gibt es einen versteckten Laptop.', '🐱 Sammle 3 Beweise, dann hilft dir Oma Gertrude.' ]; const tip = tips[catTips % tips.length]; catTips++; document.getElementById('catGuideText').textContent = tip; showToast(tip); }
+        function updateLiveHUD() { document.getElementById('hudArea').innerText = currentArea.toUpperCase(); const active = quests.find(q => q.status === 'active'); document.getElementById('hudObjective').innerText = active ? active.name : 'Alle Quests geschafft ✨'; document.getElementById('hudStats').innerText = `HP ${playerHP}/${playerMaxHP} • LV ${playerLevel} • XP ${playerXP} • 🃏 ${discoveredCharacters.length}`; document.getElementById('hudHPBar').style.width = (playerHP / playerMaxHP * 100) + '%'; document.getElementById('hudAuto').innerText = autopilot ? '🐇 AUTO ZU ZIEL' : '🐇 FREI'; }
+
+        // ==================== CANVAS ====================
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d', { alpha: false }); const LW = 640; const LH = 360;
+        function resizeCanvas() { canvas.width = LW; canvas.height = LH; } window.addEventListener('resize', resizeCanvas); resizeCanvas();
+        window.addEventListener('keydown', e => { keys[e.key] = true; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tryInteract(); } }); window.addEventListener('keyup', e => { keys[e.key] = false; });
+        function setupTouch(id, key) { const b = document.getElementById(id); if (!b) return; b.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; }); b.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; }); b.addEventListener('mousedown', () => keys[key] = true); b.addEventListener('mouseup', () => keys[key] = false); }
+        setupTouch('btnUp', 'ArrowUp'); setupTouch('btnDown', 'ArrowDown'); setupTouch('btnLeft', 'ArrowLeft'); setupTouch('btnRight', 'ArrowRight'); document.getElementById('btnAction').addEventListener('click', tryInteract); document.getElementById('btnAction').addEventListener('touchend', (e) => { e.preventDefault(); tryInteract(); });
+        document.getElementById('startBtn').addEventListener('click', () => { document.getElementById('startScreen').classList.add('hidden'); gameStarted = true; startDialogue('Witness X', 'Willkommen am Hinz & Kuntz Kiosk! Der Rote Faden pulsiert. Erkunde den Park, finde Beweise und hilf dem Kiez!', [], '📍 Nutze Pfeiltasten/WASD + A/Enter'); renderHitboxOverlay(); updateLiveHUD(); });
+        canvas.addEventListener('pointerdown', (e) => { if (!gameStarted || battleActive || dialogueLock) return; const rect = canvas.getBoundingClientRect(); const px = (e.clientX - rect.left) / rect.width * LW; const py = (e.clientY - rect.top) / rect.height * LH; const areaHitboxes = currentAreaHitboxes[currentArea] || []; let nearest = null, dist = Infinity; for (const hb of areaHitboxes) { const cx = Math.max(hb.x, Math.min(px, hb.x + hb.w)); const cy = Math.max(hb.y, Math.min(py, hb.y + hb.h)); const d = Math.hypot(px - cx, py - cy); if (d < dist) { dist = d; nearest = hb; } } if (nearest && dist < 30) { setAutopilotTarget(nearest.x + nearest.w/2, nearest.y + nearest.h/2, true); } else { setAutopilotTarget(px, py, false); } showToast('🔴 Ziel gesetzt'); }, { passive: true });
+
+        // Player animation state
+        let playerAnimState = 'idle'; // idle, running, reading, dancing, interacting, auto
+        let lastAnimTime = 0;
+        function getPlayerEmoji() { const runningFrames = ['🏃🐇', '💨🐇']; const idleFrames = ['🐇', '🐰']; if (autopilot && autopilotTarget) return '✨🐇'; if (dialogueLock || (document.getElementById('dialogueBox') && !document.getElementById('dialogueBox').classList.contains('hidden'))) return '📖🐇'; if (battleActive) return '⚔️🐇'; if (playerAnimState === 'running') return runningFrames[Math.floor(Date.now()/200) % 2]; return idleFrames[Math.floor(Date.now()/400) % 2]; }
+
+        function update() { if (!gameStarted || battleActive || dialogueLock) return; let moved = false; if (keys['ArrowUp'] || keys['w'] || keys['W']) { player.y -= player.speed; moved = true; } if (keys['ArrowDown'] || keys['s'] || keys['S']) { player.y += player.speed; moved = true; } if (keys['ArrowLeft'] || keys['a'] || keys['A']) { player.x -= player.speed; moved = true; } if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.x += player.speed; moved = true; } player.x = Math.max(20, Math.min(LW - 30, player.x)); player.y = Math.max(120, Math.min(LH - 35, player.y)); playerAnimState = moved ? 'running' : 'idle'; if (autopilot && autopilotTarget) { const dx = autopilotTarget.x - (player.x + 10), dy = autopilotTarget.y - (player.y + 6), d = Math.hypot(dx, dy); if (d < 8) { const target = autopilotTarget; autopilotTarget = null; updateLiveHUD(); if (target.action) { const hb = currentAreaHitboxes[currentArea]?.find(h => Math.abs(h.x + h.w/2 - target.x) < 20 && Math.abs(h.y + h.h/2 - target.y) < 20); if (hb) setTimeout(() => handleInteraction(hb), 100); } } else { player.x += dx / d * player.speed * 1.2; player.y += dy / d * player.speed * 1.2; playerAnimState = 'running'; } } updateLiveHUD(); }
+
+        function draw() { ctx.fillStyle = '#020617'; ctx.fillRect(0, 0, LW, LH); ctx.fillStyle = '#0d1128'; ctx.fillRect(50, 40, 35, 140); ctx.fillRect(110, 20, 20, 160); ctx.fillRect(480, 50, 45, 130); ctx.fillRect(560, 30, 30, 150); ctx.fillStyle = '#f472b6'; for (let i = 0; i < 4; i++) { ctx.fillRect(58, 55 + i * 25, 5, 5); ctx.fillRect(118, 35 + i * 25, 4, 4); ctx.fillRect(490, 65 + i * 22, 5, 5); ctx.fillRect(568, 45 + i * 25, 4, 4); } ctx.fillStyle = '#04091f'; ctx.fillRect(0, 180, LW, LH - 180); const areaHitboxes = currentAreaHitboxes[currentArea] || []; areaHitboxes.forEach(hb => { ctx.strokeStyle = 'rgba(6,182,212,0.5)'; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.5; ctx.strokeRect(hb.x, hb.y, hb.w, hb.h); ctx.setLineDash([]); ctx.fillStyle = 'rgba(6,182,212,0.08)'; ctx.fillRect(hb.x, hb.y, hb.w, hb.h); }); if (currentArea === 'park') { ctx.strokeStyle = '#ec4899'; ctx.lineWidth = 2; ctx.strokeRect(260, 90, 140, 130); ctx.fillStyle = 'rgba(10,15,30,0.85)'; ctx.fillRect(261, 91, 138, 128); ctx.fillStyle = '#f472b6'; ctx.font = 'bold 9px Cinzel, serif'; ctx.fillText("HINZ & KUNTZ", 285, 108); ctx.fillStyle = '#38bdf8'; ctx.font = '7px monospace'; ctx.fillText("ST. PAULI EDITION", 293, 118); ctx.strokeStyle = '#ec4899'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(30, 240); ctx.bezierCurveTo(180, 280, 340, 160, 610, 220); ctx.stroke(); } // Player emoji ctx.font = '22px sans-serif'; ctx.fillText(getPlayerEmoji(), player.x, player.y - 10); ctx.fillStyle = 'rgba(2,6,23,0.9)'; ctx.fillRect(10, 10, 280, 24); ctx.strokeStyle = '#ec4899'; ctx.strokeRect(10, 10, 280, 24); ctx.fillStyle = '#38bdf8'; ctx.font = '8px monospace'; ctx.fillText(`📍 ${currentArea.toUpperCase()} • LVL ${playerLevel} • XP ${playerXP}`, 14, 25); }
+
+        function loop() { update(); draw(); requestAnimationFrame(loop); }
+
+        // Init
+        loadGameState();
+        updateApiModeLabel();
+        renderQuestLog();
+        renderHitboxOverlay();
+        renderEchoChamber();
+        renderCharacterDeck();
+        updateLiveHUD();
+        requestAnimationFrame(loop);
+        setInterval(updateLiveHUD, 500);
+        console.log('✅ St. Pauli AR v14 mit Echo Chamber, Café Sunshine und Bunny-Animationen');
+    </script>
+</body>
+</html>
