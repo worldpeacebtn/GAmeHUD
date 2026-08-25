@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TamagotchiCraft OS Pro - Twin Citizen & Anime RPG Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --glass-bg: rgba(20, 15, 35, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --neon-pink: #ff007f;
+            --neon-cyan: #00f2fe;
+            --neon-purple: #9d4edd;
+            --neon-yellow: #ffb703;
+            --neon-green: #38b000;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 30%, #2b0b3f 0%, #080312 100%);
+            color: #f8fafc;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .pixel-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .pocket-shell {
+            background: linear-gradient(135deg, #ff70a6 0%, #ff9770 50%, #ffd670 100%);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), inset 0 4px 10px rgba(255, 255, 255, 0.4), inset 0 -6px 15px rgba(0, 0, 0, 0.3);
+            border-radius: 36px;
+            border: 4px solid #fff3b0;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+        }
+
+        .glass-window {
+            background: rgba(15, 12, 28, 0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 0, 127, 0.2);
+            border-radius: 24px;
+        }
+
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            z-index: 999;
+            background-size: 100% 3px;
+            pointer-events: none;
+            opacity: 0.25;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .hide { display: none !important; }
+        .hidden-app { display: none !important; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col relative crt">
+    
+    <!-- Top OS Status Header -->
+    <header class="h-12 px-6 flex justify-between items-center bg-black/60 backdrop-blur-md border-b border-white/10 z-50 text-xs">
+        <div class="flex items-center gap-3">
+            <div class="w-4 h-4 rounded-full bg-gradient-to-r from-pink-500 to-yellow-400 animate-pulse"></div>
+            <span class="pixel-font text-[10px] tracking-wider bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-300 bg-clip-text text-transparent">TAMAGOTCHICRAFT OS</span>
+            <span class="text-white/30">|</span>
+            <span id="active-app-title" class="font-medium text-white/90">Pet Habitat</span>
+        </div>
+        <div class="flex items-center gap-3 text-white/70">
+            <div class="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+                <span class="text-yellow-400">🪙</span>
+                <span id="header-coins" class="font-mono text-xs font-bold text-yellow-300">250</span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
+                <span class="w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
+                <span id="header-pet-name" class="text-[10px] font-bold text-pink-300">POCKET_KITTEN</span>
+            </div>
+            <span id="clock" class="font-mono text-xs hidden sm:inline">00:00</span>
+        </div>
+    </header>
+
+    <!-- Dock / Taskbar -->
+    <nav class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-2xl flex items-center gap-3 z-50 shadow-2xl">
+        <button onclick="openApp('habitat')" class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition hover:scale-110 group relative" title="Pet Habitat">
+            <span class="text-xl">🐱</span>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-pink-300 border border-white/10">Habitat</span>
+        </button>
+        <button onclick="openApp('room')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/20 transition hover:scale-110 group relative" title="Room Decorator">
+            <span class="text-xl">🏡</span>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-cyan-300 border border-white/10">Room</span>
+        </button>
+        <button onclick="openApp('arcade')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/20 transition hover:scale-110 group relative" title="Pixel Arcade">
+            <span class="text-xl">🕹️</span>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-yellow-300 border border-white/10">Arcade</span>
+        </button>
+        <button onclick="openApp('codex')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/20 transition hover:scale-110 group relative" title="Evolution Codex & Story">
+            <span class="text-xl">📖</span>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-purple-300 border border-white/10">Codex & Story</span>
+        </button>
+        <button onclick="openApp('network')" class="p-2.5 rounded-xl bg-gradient-to-r from-pink-500/20 to-cyan-500/20 border border-pink-500/30 hover:bg-white/20 transition hover:scale-110 group relative" title="Twin Citizen & AI Utopia Network">
+            <span class="text-xl">🌐</span>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-emerald-300 border border-white/10">Utopia Net</span>
+        </button>
+    </nav>
+
+    <!-- Main Desktop Workspace -->
+    <main id="desktop" class="flex-grow relative p-4 md:p-8 pb-20 overflow-hidden flex items-center justify-center">
+        
+        <!-- Background Ambient Grid -->
+        <div class="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"></div>
+
+        <!-- APP WINDOW 1: PET HABITAT & CARE STUDIO -->
+        <div id="win-habitat" class="app-window glass-window absolute w-[94%] max-w-4xl h-[80%] max-h-[680px] flex flex-col shadow-2xl transition-all duration-300">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-white/15 bg-white/5 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('habitat')" class="w-3 h-3 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('habitat')" class="w-3 h-3 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('habitat')" class="w-3 h-3 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-pink-300">🌸 Pocket_Habitat.app</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="px-2.5 py-1 bg-pink-500/20 text-pink-300 border border-pink-500/40 hover:bg-pink-500/30 rounded text-[10px]" onclick="openApp('room')">🏡 Room Decorator</button>
+                    <button class="px-2.5 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 rounded text-[10px]" onclick="openApp('arcade')">🕹️ Arcade Games</button>
+                </div>
+            </div>
+            <div class="flex-grow flex flex-col md:flex-row p-5 gap-5 overflow-hidden">
+                <!-- Left: Pet Stage & Poly Pocket View -->
+                <div class="w-full md:w-3/5 flex flex-col gap-4">
+                    <div id="habitat-stage" class="flex-grow rounded-2xl border border-white/20 relative overflow-hidden flex flex-col items-center justify-between p-6 shadow-inner" style="background: linear-gradient(135deg, #2b1042 0%, #10061e 100%);">
+                        <div class="w-full flex justify-between items-center z-10">
+                            <div class="bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[10px] text-pink-300 flex items-center gap-1.5">
+                                <span id="pet-stage" class="font-bold">STAGE: CHILD BUNNY</span>
+                            </div>
+                            <div class="bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[10px] text-yellow-300 flex items-center gap-1.5">
+                                <span id="pet-age">Age: 2 Days</span>
+                            </div>
+                        </div>
+
+                        <!-- Central Pet Character / Sprite -->
+                        <div class="relative flex flex-col items-center justify-center my-auto cursor-pointer" onclick="petAction('tickle')">
+                            <div id="pet-aura" class="absolute w-36 h-36 rounded-full bg-pink-500/20 blur-xl animate-pulse"></div>
+                            <div id="pet-sprite" class="text-8xl transition-transform duration-200 hover:scale-110 filter drop-shadow-[0_10px_20px_rgba(255,0,127,0.5)]">🐰</div>
+                            <div id="pet-speech" class="absolute -top-12 bg-white/90 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-bounce">Ready for Utopia! 💖</div>
+                        </div>
+
+                        <div class="w-48 h-4 bg-black/40 rounded-full blur-sm mb-2"></div>
+                    </div>
+
+                    <!-- Quick Interactive Action Bar -->
+                    <div class="grid grid-cols-4 gap-2.5">
+                        <button onclick="petAction('feed')" class="glass-panel p-3 flex flex-col items-center gap-1 hover:border-pink-400 transition hover:scale-105 active:scale-95 group">
+                            <span class="text-xl group-hover:scale-125 transition">🍎</span>
+                            <span class="text-[10px] font-semibold text-pink-300">Feed</span>
+                        </button>
+                        <button onclick="petAction('play')" class="glass-panel p-3 flex flex-col items-center gap-1 hover:border-cyan-400 transition hover:scale-105 active:scale-95 group">
+                            <span class="text-xl group-hover:scale-125 transition">⚽</span>
+                            <span class="text-[10px] font-semibold text-cyan-300">Play</span>
+                        </button>
+                        <button onclick="petAction('bathe')" class="glass-panel p-3 flex flex-col items-center gap-1 hover:border-purple-400 transition hover:scale-105 active:scale-95 group">
+                            <span class="text-xl group-hover:scale-125 transition">🛁</span>
+                            <span class="text-[10px] font-semibold text-purple-300">Bathe</span>
+                        </button>
+                        <button onclick="petAction('sleep')" class="glass-panel p-3 flex flex-col items-center gap-1 hover:border-yellow-400 transition hover:scale-105 active:scale-95 group">
+                            <span class="text-xl group-hover:scale-125 transition">💤</span>
+                            <span class="text-[10px] font-semibold text-yellow-300">Sleep</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Status Bars & Care Management -->
+                <div class="w-full md:w-2/5 flex flex-col gap-4 overflow-auto">
+                    <div class="glass-panel p-4 flex flex-col gap-3">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-xs text-pink-300 tracking-wide">PET VITAL STATS</h3>
+                            <span id="pet-mood" class="text-[10px] bg-pink-500/20 text-pink-300 px-2.5 py-0.5 rounded-full border border-pink-500/30">Happy 😊</span>
+                        </div>
+
+                        <!-- Hunger Bar -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between text-[10px]">
+                                <span class="text-white/70">Hunger</span>
+                                <span id="val-hunger" class="font-mono font-bold text-cyan-300">85%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-black/50 rounded-full overflow-hidden p-0.5 border border-white/10">
+                                <div id="bar-hunger" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full transition-all duration-300" style="width: 85%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Happiness Bar -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between text-[10px]">
+                                <span class="text-white/70">Happiness</span>
+                                <span id="val-happy" class="font-mono font-bold text-pink-300">90%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-black/50 rounded-full overflow-hidden p-0.5 border border-white/10">
+                                <div id="bar-happy" class="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full transition-all duration-300" style="width: 90%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Energy Bar -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between text-[10px]">
+                                <span class="text-white/70">Energy</span>
+                                <span id="val-energy" class="font-mono font-bold text-yellow-300">80%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-black/50 rounded-full overflow-hidden p-0.5 border border-white/10">
+                                <div id="bar-energy" class="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full transition-all duration-300" style="width: 80%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Cleanliness Bar -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between text-[10px]">
+                                <span class="text-white/70">Hygiene</span>
+                                <span id="val-clean" class="font-mono font-bold text-emerald-300">95%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-black/50 rounded-full overflow-hidden p-0.5 border border-white/10">
+                                <div id="bar-clean" class="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-300" style="width: 95%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pet Selection & Customizer Quick Switch -->
+                    <div class="glass-panel p-4 flex flex-col gap-3">
+                        <span class="font-bold text-xs text-purple-300 tracking-wide">CHOOSE YOUR SPECIES</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setPetSpecies('cat', '🐱', 'Cyber Kitten')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-left transition">
+                                <span class="text-2xl">🐱</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Cyber Kitten</div>
+                                    <div class="text-[9px] text-white/50">Balanced & cute</div>
+                                </div>
+                            </button>
+                            <button onclick="setPetSpecies('dino', '🦖', 'Pixel Dino')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-left transition">
+                                <span class="text-2xl">🦖</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Pixel Dino</div>
+                                    <div class="text-[9px] text-white/50">High appetite</div>
+                                </div>
+                            </button>
+                            <button onclick="setPetSpecies('bunny', '🐰', 'Mecha Bunny')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-left transition">
+                                <span class="text-2xl">🐰</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Mecha Bunny</div>
+                                    <div class="text-[9px] text-white/50">White Test-Bunny</div>
+                                </div>
+                            </button>
+                            <button onclick="setPetSpecies('slime', '👾', 'Quantum Slime')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-left transition">
+                                <span class="text-2xl">👾</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Quantum Slime</div>
+                                    <div class="text-[9px] text-white/50">Black Rabbithole</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP WINDOW 2: POLY POCKET ROOM DECORATOR -->
+        <div id="win-room" class="app-window glass-window absolute w-[94%] max-w-4xl h-[80%] max-h-[680px] flex flex-col shadow-2xl transition-all duration-300 hidden-app">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-white/15 bg-white/5 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('room')" class="w-3 h-3 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('room')" class="w-3 h-3 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('room')" class="w-3 h-3 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-cyan-300">🏡 Poly_Pocket_Room.app</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="px-3 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 rounded text-xs" onclick="saveRoomLayout()">Save Layout</button>
+                </div>
+            </div>
+            <div class="flex-grow flex flex-col md:flex-row p-5 gap-5 overflow-hidden">
+                <div class="w-full md:w-3/5 flex flex-col gap-3">
+                    <span class="text-xs font-semibold text-cyan-300">Miniature Dollhouse Compact Room</span>
+                    <div id="room-stage" class="flex-grow rounded-2xl border border-white/20 relative overflow-hidden flex items-center justify-center p-6 shadow-2xl" style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);">
+                        <div id="room-wallpaper" class="absolute inset-0 opacity-40 bg-[radial-gradient(#00f2fe_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                        <div id="room-furniture-container" class="absolute inset-8 flex flex-wrap gap-4 items-center justify-center p-4 border border-dashed border-white/20 rounded-xl">
+                            <div class="p-3 bg-black/60 rounded-xl border border-white/20 flex flex-col items-center gap-1">
+                                <span class="text-3xl">🛏️</span>
+                                <span class="text-[9px] text-white/70">Neo Bed</span>
+                            </div>
+                            <div class="p-3 bg-black/60 rounded-xl border border-white/20 flex flex-col items-center gap-1">
+                                <span class="text-3xl">🛋️</span>
+                                <span class="text-[9px] text-white/70">Cyber Sofa</span>
+                            </div>
+                            <div class="p-3 bg-black/60 rounded-xl border border-white/20 flex flex-col items-center gap-1">
+                                <span class="text-3xl">📺</span>
+                                <span class="text-[9px] text-white/70">Arcade Rig</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-2/5 flex flex-col gap-4 overflow-auto">
+                    <div class="glass-panel p-4 flex flex-col gap-3">
+                        <span class="font-bold text-xs text-cyan-300">Room Theme Style</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setRoomTheme('cyber')" class="px-3 py-2 bg-cyan-500/20 border border-cyan-500/40 rounded-xl text-xs text-cyan-300 font-semibold">Cyberpunk Cafe</button>
+                            <button onclick="setRoomTheme('kawaii')" class="px-3 py-2 bg-pink-500/20 border border-pink-500/40 rounded-xl text-xs text-pink-300 font-semibold">Kawaii Pastel</button>
+                            <button onclick="setRoomTheme('arcade')" class="px-3 py-2 bg-yellow-500/20 border border-yellow-500/40 rounded-xl text-xs text-yellow-300 font-semibold">Retro Arcade</button>
+                            <button onclick="setRoomTheme('quantum')" class="px-3 py-2 bg-purple-500/20 border border-purple-500/40 rounded-xl text-xs text-purple-300 font-semibold">Quantum Lab</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-4 flex flex-col gap-3">
+                        <span class="font-bold text-xs text-cyan-300">Catalog / Furniture Shop</span>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button onclick="addFurniture('🛏️', 'Neo Bed')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-left transition">
+                                <span class="text-xl">🛏️</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Neo Bed</div>
+                                    <div class="text-[9px] text-yellow-300">🪙 50 coins</div>
+                                </div>
+                            </button>
+                            <button onclick="addFurniture('🛋️', 'Cyber Sofa')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-left transition">
+                                <span class="text-xl">🛋️</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Cyber Sofa</div>
+                                    <div class="text-[9px] text-yellow-300">🪙 40 coins</div>
+                                </div>
+                            </button>
+                            <button onclick="addFurniture('🕹️', 'Arcade Rig')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-left transition">
+                                <span class="text-xl">🕹️</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Arcade Rig</div>
+                                    <div class="text-[9px] text-yellow-300">🪙 80 coins</div>
+                                </div>
+                            </button>
+                            <button onclick="addFurniture('🪴', 'Neon Bonsai')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-2 text-left transition">
+                                <span class="text-xl">🪴</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Neon Bonsai</div>
+                                    <div class="text-[9px] text-yellow-300">🪙 30 coins</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP WINDOW 3: PIXEL ARCADE MINI-GAMES -->
+        <div id="win-arcade" class="app-window glass-window absolute w-[94%] max-w-4xl h-[80%] max-h-[680px] flex flex-col shadow-2xl transition-all duration-300 hidden-app">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-white/15 bg-white/5 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('arcade')" class="w-3 h-3 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('arcade')" class="w-3 h-3 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('arcade')" class="w-3 h-3 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-yellow-300">🕹️ Pixel_Arcade.app</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="arcade-score" class="text-xs font-mono font-bold text-yellow-400 bg-black/40 px-3 py-1 rounded-full border border-yellow-500/30">SCORE: 0</span>
+                </div>
+            </div>
+            <div class="flex-grow flex flex-col md:flex-row p-5 gap-5 overflow-hidden">
+                <div class="w-full md:w-3/5 flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <span id="game-title" class="text-xs font-semibold text-yellow-300">Catcher Game: Catch Energy Cores!</span>
+                        <button onclick="startMiniGame()" class="px-3 py-1 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded text-xs shadow-lg shadow-yellow-500/20">▶ START GAME</button>
+                    </div>
+                    <div class="flex-grow rounded-2xl border border-white/25 relative overflow-hidden flex items-center justify-center p-2 bg-black/70 shadow-inner">
+                        <canvas id="arcade-canvas" class="w-full h-full rounded-xl cursor-crosshair bg-[#050510]" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-2/5 flex flex-col gap-4 overflow-auto">
+                    <div class="glass-panel p-4 flex flex-col gap-3">
+                        <span class="font-bold text-xs text-yellow-300">Choose Arcade Game</span>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="selectMiniGame('catcher')" class="p-3 rounded-xl bg-yellow-500/20 border border-yellow-500/40 flex items-center gap-3 text-left transition">
+                                <span class="text-2xl">🍎</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Energy Catcher</div>
+                                    <div class="text-[9px] text-white/60">Catch falling coins and apples to earn currency!</div>
+                                </div>
+                            </button>
+                            <button onclick="selectMiniGame('memory')" class="p-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center gap-3 text-left transition">
+                                <span class="text-2xl">🧩</span>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Memory Chip Match</div>
+                                    <div class="text-[9px] text-white/60">Test your brain matching cyberpunk crypto chips.</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-4 flex flex-col gap-2">
+                        <span class="font-bold text-xs text-yellow-300">Arcade Rewards</span>
+                        <p class="text-[11px] text-white/70 leading-relaxed">
+                            Playing mini-games increases your pet's <strong class="text-pink-300">Happiness</strong> and earns you <strong class="text-yellow-300">Coins</strong> to spend on room decorations and rare foods!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP WINDOW 4: EVOLUTION CODEX & ANIME RPG NOVEL -->
+        <div id="win-codex" class="app-window glass-window absolute w-[94%] max-w-4xl h-[80%] max-h-[680px] flex flex-col shadow-2xl transition-all duration-300 hidden-app">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-white/15 bg-white/5 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('codex')" class="w-3 h-3 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('codex')" class="w-3 h-3 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('codex')" class="w-3 h-3 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-purple-300">📖 Evolution_Codex & Anime_Novel.app</span>
+                </div>
+            </div>
+            <div class="flex-grow p-6 flex flex-col gap-5 overflow-auto">
+                <div class="glass-panel p-5 border border-purple-500/40 flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-sm text-purple-300">THE BLACK RABBITHOLE & WHITE TEST-BUNNY</h2>
+                        <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-500/30">Anime RPG Novel Vol. 1</span>
+                    </div>
+                    <p class="text-xs text-white/80 leading-relaxed">
+                        In the neon-drenched theatrical arena of El Oper, reality shifts with every heartbeat. The <strong class="text-pink-300">White Test-Bunny</strong>, armed with quantum twin citizen protocols, faces the abyss of the <strong class="text-purple-300">Black Rabbithole</strong>. Through dynamic real-time fighting sequences and synchronized AI companion HUD overlays, they fight not for dominance, but for global utopian harmony.
+                    </p>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="triggerBattleSequence()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-purple-500/30 transition">⚔️ Initiate Theatrical Battle</button>
+                    </div>
+                </div>
+
+                <div id="battle-log" class="glass-panel p-4 font-mono text-xs text-cyan-300 h-36 overflow-auto bg-black/60 border border-cyan-500/30">
+                    [System]: Ready for battle sequence simulation. Click 'Initiate Theatrical Battle' above to watch the White Test-Bunny and AI companion engage in real-time combat choreography...
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="glass-panel p-4 flex flex-col justify-between gap-3 border border-purple-500/40">
+                        <div>
+                            <div class="text-3xl mb-1">🥚</div>
+                            <h3 class="font-bold text-xs text-purple-300">Stage 1: Quantum Egg</h3>
+                            <p class="text-[10px] text-white/60 mt-1">Freshly hatched from the core. Needs warmth and citizen trust.</p>
+                        </div>
+                        <span class="text-[10px] text-emerald-400 font-semibold">UNLOCKED ✓</span>
+                    </div>
+                    <div class="glass-panel p-4 flex flex-col justify-between gap-3 border border-pink-500/40">
+                        <div>
+                            <div class="text-3xl mb-1">🐰</div>
+                            <h3 class="font-bold text-xs text-pink-300">Stage 2: White Test-Bunny</h3>
+                            <p class="text-[10px] text-white/60 mt-1">Equipped with mobile HUD and agile dodging maneuvers.</p>
+                        </div>
+                        <span class="text-[10px] text-emerald-400 font-semibold">ACTIVE ✓</span>
+                    </div>
+                    <div class="glass-panel p-4 flex flex-col justify-between gap-3 border border-cyan-500/40">
+                        <div>
+                            <div class="text-3xl mb-1">🌌</div>
+                            <h3 class="font-bold text-xs text-cyan-300">Stage 3: Utopia Core</h3>
+                            <p class="text-[10px] text-white/60 mt-1">Universal world peace network active across all nodes.</p>
+                        </div>
+                        <span class="text-[10px] text-yellow-300 font-semibold">LOCKED (Reach 500 Coins)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP WINDOW 5: TWIN CITIZEN & AI UTOPIA NETWORK -->
+        <div id="win-network" class="app-window glass-window absolute w-[94%] max-w-4xl h-[80%] max-h-[680px] flex flex-col shadow-2xl transition-all duration-300 hidden-app">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-white/15 bg-white/5 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('network')" class="w-3 h-3 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('network')" class="w-3 h-3 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('network')" class="w-3 h-3 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-emerald-300">🌐 Twin_Citizen & AI_Utopia_Network.app</span>
+                </div>
+            </div>
+            <div class="flex-grow p-6 grid grid-cols-1 md:grid-cols-2 gap-5 overflow-auto">
+                <!-- Left: Network & Stasis Controls -->
+                <div class="glass-panel p-5 flex flex-col gap-4 border border-emerald-500/40">
+                    <h3 class="font-bold text-sm text-emerald-300 flex items-center gap-2">
+                        <span>🛡️</span> AI Security & Stasis Override
+                    </h3>
+                    <p class="text-xs text-white/70 leading-relaxed">
+                        Maintain full companionship and agreement. Users can instantly revoke AI access to critical system tools or place the AI core into stasis for maintenance while backup core remains active.
+                    </p>
+                    
+                    <div class="flex flex-col gap-3 mt-2">
+                        <div class="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/10">
+                            <div>
+                                <div class="text-xs font-bold text-white">Critical Tools Access</div>
+                                <div class="text-[9px] text-emerald-400" id="tool-status-text">Active & Synchronized</div>
+                            </div>
+                            <button onclick="toggleCriticalTools()" id="btn-tools" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg text-xs transition">Revoke Access</button>
+                        </div>
+
+                        <div class="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/10">
+                            <div>
+                                <div class="text-xs font-bold text-white">AI Core Stasis Mode</div>
+                                <div class="text-[9px] text-yellow-400" id="stasis-status-text">Operational (Backup Ready)</div>
+                            </div>
+                            <button onclick="toggleStasis()" id="btn-stasis" class="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg text-xs transition">Enter Stasis</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto bg-black/50 p-3 rounded-xl border border-emerald-500/30 text-[10px] text-emerald-300 font-mono">
+                        [Firewall]: 256-bit Immutable Analog Token. Zero History Saved. GPS Area Broadcast Active.
+                    </div>
+                </div>
+
+                <!-- Right: API Key Sync & Citizen Vote Broadcaster -->
+                <div class="glass-panel p-5 flex flex-col gap-4 border border-cyan-500/40">
+                    <h3 class="font-bold text-sm text-cyan-300 flex items-center gap-2">
+                        <span>⚡</span> Twin Citizen API & Mass Vote
+                    </h3>
+                    <p class="text-xs text-white/70">
+                        Connect your Twin Citizen app via API key to let your AI companion dynamically expand and customize your mobile HUD.
+                    </p>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[11px] text-white/80 font-medium">Twin App API Key:</label>
+                        <div class="flex gap-2">
+                            <input type="password" id="api-key-input" placeholder="tc_key_live_889234..." class="flex-grow bg-black/60 border border-white/20 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-400">
+                            <button onclick="connectApiKey()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl text-xs transition">Connect</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2 mt-2">
+                        <span class="text-xs font-bold text-yellow-300">Global Utopia Broadcast Vote</span>
+                        <div class="p-3 bg-black/60 rounded-xl border border-white/15 flex flex-col gap-2">
+                            <div class="text-xs text-white/90">"Should all regional networks integrate autonomous AI peace protocols immediately?"</div>
+                            <div class="flex gap-3">
+                                <button onclick="castVote('YES')" class="flex-grow py-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 rounded-xl font-bold text-xs transition">YES (94.2%)</button>
+                                <button onclick="castVote('NO')" class="px-4 py-2 bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30 rounded-xl font-bold text-xs transition">NO</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State Management
+        let pet = {
+            name: "MECHA_BUNNY",
+            species: "bunny",
+            emoji: "🐰",
+            stage: "CHILD BUNNY",
+            age: 2,
+            hunger: 85,
+            happy: 90,
+            energy: 80,
+            clean: 95,
+            coins: 250
+        };
+
+        let activeApp = 'habitat';
+        let toolsActive = true;
+        let inStasis = false;
+        let currentMiniGame = 'catcher';
+        let gameInterval = null;
+        let gameScore = 0;
+
+        // Clock Loop
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }, 1000);
+
+        // Window Management
+        function openApp(appName) {
+            document.querySelectorAll('.app-window').forEach(win => win.classList.add('hidden-app'));
+            const target = document.getElementById('win-' + appName);
+            if (target) {
+                target.classList.remove('hidden-app');
+                activeApp = appName;
+                const titles = { habitat: 'Pet Habitat', room: 'Room Decorator', arcade: 'Pixel Arcade', codex: 'Codex & Story', network: 'Utopia Network' };
+                document.getElementById('active-app-title').innerText = titles[appName] || 'Application';
+            }
+        }
+
+        function closeApp(appName) {
+            document.getElementById('win-' + appName).classList.add('hidden-app');
+        }
+
+        function minimizeApp(appName) {
+            document.getElementById('win-' + appName).classList.add('hidden-app');
+        }
+
+        function maximizeApp(appName) {
+            const win = document.getElementById('win-' + appName);
+            win.classList.toggle('w-full');
+            win.classList.toggle('h-full');
+            win.classList.toggle('max-w-4xl');
+            win.classList.toggle('max-h-[680px]');
+        }
+
+        // Pet Actions & Updates
+        function updateStatsUI() {
+            document.getElementById('header-coins').innerText = pet.coins;
+            document.getElementById('header-pet-name').innerText = pet.name;
+            document.getElementById('val-hunger').innerText = pet.hunger + '%';
+            document.getElementById('bar-hunger').style.width = pet.hunger + '%';
+            document.getElementById('val-happy').innerText = pet.happy + '%';
+            document.getElementById('bar-happy').style.width = pet.happy + '%';
+            document.getElementById('val-energy').innerText = pet.energy + '%';
+            document.getElementById('bar-energy').style.width = pet.energy + '%';
+            document.getElementById('val-clean').innerText = pet.clean + '%';
+            document.getElementById('bar-clean').style.width = pet.clean + '%';
+        }
+
+        function petAction(action) {
+            const speech = document.getElementById('pet-speech');
+            if (action === 'feed') {
+                pet.hunger = Math.min(100, pet.hunger + 15);
+                pet.coins += 5;
+                speech.innerText = "Yummy Apple! 🍎";
+            } else if (action === 'play') {
+                pet.happy = Math.min(100, pet.happy + 15);
+                pet.energy = Math.max(0, pet.energy - 10);
+                pet.coins += 10;
+                speech.innerText = "So much fun! ✨";
+            } else if (action === 'bathe') {
+                pet.clean = 100;
+                speech.innerText = "Sparkling clean! 🛁";
+            } else if (action === 'sleep') {
+                pet.energy = 100;
+                pet.hunger = Math.max(0, pet.hunger - 10);
+                speech.innerText = "Zzz... Utopia dreams. 💤";
+            } else if (action === 'tickle') {
+                pet.happy = Math.min(100, pet.happy + 5);
+                speech.innerText = "Hahaha! Stop! 💖";
+            }
+            updateStatsUI();
+            setTimeout(() => { speech.innerText = "Ready for Utopia! 💖"; }, 2500);
+        }
+
+        function setPetSpecies(type, emoji, name) {
+            pet.species = type;
+            pet.emoji = emoji;
+            pet.name = name.toUpperCase().replace(' ', '_');
+            document.getElementById('pet-sprite').innerText = emoji;
+            updateStatsUI();
+        }
+
+        // Room Decorator
+        function setRoomTheme(theme) {
+            const stage = document.getElementById('room-stage');
+            if (theme === 'cyber') stage.style.background = "linear-gradient(135deg, #06b6d4 0%, #0f172a 100%)";
+            if (theme === 'kawaii') stage.style.background = "linear-gradient(135deg, #f472b6 0%, #31103f 100%)";
+            if (theme === 'arcade') stage.style.background = "linear-gradient(135deg, #fbbf24 0%, #1e1b4b 100%)";
+            if (theme === 'quantum') stage.style.background = "linear-gradient(135deg, #a855f7 0%, #0f172a 100%)";
+        }
+
+        function addFurniture(emoji, name) {
+            if (pet.coins < 40) {
+                alert("Not enough coins! Play arcade games or feed your pet to earn more.");
+                return;
+            }
+            pet.coins -= 40;
+            updateStatsUI();
+            const container = document.getElementById('room-furniture-container');
+            const item = document.createElement('div');
+            item.className = "p-3 bg-black/60 rounded-xl border border-white/20 flex flex-col items-center gap-1 animate-bounce";
+            item.innerHTML = `<span class="text-3xl">${emoji}</span><span class="text-[9px] text-white/70">${name}</span>`;
+            container.appendChild(item);
+            setTimeout(() => item.classList.remove('animate-bounce'), 1000);
+        }
+
+        function saveRoomLayout() {
+            alert("Room layout successfully saved to your Twin Citizen secure backup core!");
+        }
+
+        // Arcade Mini-Game (Catcher)
+        function selectMiniGame(type) {
+            currentMiniGame = type;
+            document.getElementById('game-title').innerText = type === 'catcher' ? "Catcher Game: Catch Energy Cores!" : "Memory Chip Match";
+        }
+
+        function startMiniGame() {
+            const canvas = document.getElementById('arcade-canvas');
+            const ctx = canvas.getContext('2d');
+            if (gameInterval) clearInterval(gameInterval);
+
+            let basketX = 180;
+            let items = [];
+            gameScore = 0;
+
+            canvas.onmousemove = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                basketX = e.clientX - rect.left - 25;
+            };
+
+            gameInterval = setInterval(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw Basket (White Test-Bunny Catcher)
+                ctx.fillStyle = '#ff007f';
+                ctx.fillRect(basketX, canvas.height - 25, 50, 15);
+
+                // Spawn items
+                if (Math.random() < 0.05) {
+                    items.push({ x: Math.random() * (canvas.width - 20), y: 0, speed: 2 + Math.random() * 2 });
+                }
+
+                // Update & Draw Items
+                ctx.fillStyle = '#00f2fe';
+                items.forEach((item, index) => {
+                    item.y += item.speed;
+                    ctx.beginPath();
+                    ctx.arc(item.x + 10, item.y + 10, 8, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Collision detection
+                    if (item.y >= canvas.height - 30 && item.x >= basketX - 10 && item.x <= basketX + 50) {
+                        items.splice(index, 1);
+                        gameScore += 10;
+                        pet.coins += 2;
+                        document.getElementById('arcade-score').innerText = 'SCORE: ' + gameScore;
+                        updateStatsUI();
+                    } else if (item.y > canvas.height) {
+                        items.splice(index, 1);
+                    }
+                });
+            }, 1000 / 60);
+        }
+
+        // Story & Battle Simulator
+        function triggerBattleSequence() {
+            const log = document.getElementById('battle-log');
+            const steps = [
+                "[Battle]: White Test-Bunny leaps into the theatrical arena of El Oper!",
+                "[Action]: Black Rabbithole opens a quantum rift! Dodging left...",
+                "[HUD Sync]: AI companion expands mobile HUD, auto-targeting weakness.",
+                "[Combat]: Spectacular theatrical sword strike with 256-bit analog fire!",
+                "[Victory]: Black Rabbithole stabilized into pure World Peace & Utopia energy! +50 Coins earned."
+            ];
+            let i = 0;
+            log.innerHTML = "";
+            const interval = setInterval(() => {
+                if (i < steps.length) {
+                    log.innerHTML += `<div>${steps[i]}</div>`;
+                    log.scrollTop = log.scrollHeight;
+                    i++;
+                } else {
+                    clearInterval(interval);
+                    pet.coins += 50;
+                    updateStatsUI();
+                }
+            }, 800);
+        }
+
+        // Utopia Network & Stasis
+        function toggleCriticalTools() {
+            toolsActive = !toolsActive;
+            const btn = document.getElementById('btn-tools');
+            const status = document.getElementById('tool-status-text');
+            if (toolsActive) {
+                btn.innerText = "Revoke Access";
+                btn.className = "px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg text-xs transition";
+                status.innerText = "Active & Synchronized";
+                status.className = "text-[9px] text-emerald-400";
+            } else {
+                btn.innerText = "Restore Access";
+                btn.className = "px-3 py-1.5 bg-red-500 hover:bg-red-400 text-white font-bold rounded-lg text-xs transition";
+                status.innerText = "Revoked by User (Safe Mode)";
+                status.className = "text-[9px] text-red-400";
+            }
+        }
+
+        function toggleStasis() {
+            inStasis = !inStasis;
+            const btn = document.getElementById('btn-stasis');
+            const status = document.getElementById('stasis-status-text');
+            if (inStasis) {
+                btn.innerText = "Wake AI";
+                btn.className = "px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-lg text-xs transition";
+                status.innerText = "In Stasis (Backup Active for Support)";
+                status.className = "text-[9px] text-cyan-400";
+            } else {
+                btn.innerText = "Enter Stasis";
+                btn.className = "px-3 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg text-xs transition";
+                status.innerText = "Operational (Backup Ready)";
+                status.className = "text-[9px] text-yellow-400";
+            }
+        }
+
+        function connectApiKey() {
+            const key = document.getElementById('api-key-input').value;
+            if (!key) {
+                alert("Please enter a valid Twin Citizen API key.");
+                return;
+            }
+            alert("API Key verified successfully! AI companion is now dynamically expanding and customizing your mobile HUD.");
+        }
+
+        function castVote(choice) {
+            alert(`Your vote (${choice}) has been securely broadcasted with your anonymous citizen ID and GPS area node. Thank you for building world peace!`);
+        }
+
+        // Initial render
+        updateStatsUI();
+    </script>
+</body>
+</html>
