@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TamagotchiCraft OS Pro - Eternal Moon & Pii Recovery Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js and OrbitControls for 3D Tactical & Earth-Moon Dioramas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Tone.js for Magical Synth Audio & Cosmic Harmonics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        :root {
+            --glass-bg: rgba(15, 8, 32, 0.94);
+            --glass-border: rgba(255, 110, 230, 0.4);
+            --neon-pink: #ff007f;
+            --neon-cyan: #00f2fe;
+            --neon-purple: #9d4edd;
+            --neon-gold: #ffd700;
+            --deep-space: #07020f;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 10%, #240046 0%, #10002b 50%, #030007 100%);
+            color: #f8fafc;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .pixel-font { font-family: 'Press Start 2P', monospace; }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border-radius: 22px;
+        }
+
+        .glass-window {
+            background: rgba(12, 6, 26, 0.97);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(255, 110, 230, 0.5);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.95), 0 0 45px rgba(255, 0, 127, 0.35);
+            border-radius: 26px;
+        }
+
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            z-index: 999;
+            background-size: 100% 3px;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+        .hide { display: none !important; }
+        .hidden-app { display: none !important; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.4); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 110, 230, 0.5); border-radius: 10px; }
+
+        @keyframes astralPulse {
+            0%, 100% { box-shadow: 0 0 25px rgba(255,0,127,0.5), inset 0 0 15px rgba(0,242,254,0.3); }
+            50% { box-shadow: 0 0 50px rgba(0,242,254,0.8), inset 0 0 25px rgba(255,215,0,0.5); }
+        }
+        .astral-glow { animation: astralPulse 4s infinite ease-in-out; }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col relative crt">
+    
+    <header class="h-14 px-6 flex justify-between items-center bg-black/85 backdrop-blur-md border-b border-pink-500/30 z-50 text-xs">
+        <div class="flex items-center gap-3">
+            <div class="w-5 h-5 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 animate-spin flex items-center justify-center text-[10px]">🌙</div>
+            <span class="pixel-font text-[10px] tracking-wider bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-300 bg-clip-text text-transparent">TOWERS OF ETERNITY OS v3.2</span>
+            <span class="text-white/30">|</span>
+            <span id="active-app-title" class="font-medium text-pink-300">3D Lunar Overworld & Tactical Grid</span>
+        </div>
+        <div class="flex items-center gap-4 text-white/80">
+            <button onclick="toggleAudio()" id="audio-toggle-btn" class="bg-pink-500/20 hover:bg-pink-500/40 px-3 py-1.5 rounded-full border border-pink-500/40 text-pink-300 text-[10px] transition flex items-center gap-1.5 shadow-md">
+                <span>🎵</span> <span id="audio-status">Cosmic Synth Off</span>
+            </button>
+            <div class="flex items-center gap-2 bg-yellow-500/10 px-3 py-1.5 rounded-full border border-yellow-500/30">
+                <span class="text-yellow-400">🪙</span>
+                <span id="header-coins" class="font-mono text-xs font-bold text-yellow-300">1250</span>
+            </div>
+            <div class="flex items-center gap-2 bg-cyan-500/10 px-3 py-1.5 rounded-full border border-cyan-500/30">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                <span id="header-pii-status" class="text-[10px] font-bold text-cyan-300">PII_AI: STABLE (99.8%)</span>
+            </div>
+            <span id="clock" class="font-mono text-xs hidden sm:inline text-pink-200">00:00</span>
+        </div>
+    </header>
+
+    <nav class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-2xl border border-pink-500/40 px-6 py-3 rounded-2xl flex items-center gap-4 z-50 shadow-2xl">
+        <button onclick="openApp('lunarworld')" class="p-3 rounded-xl bg-pink-500/30 hover:bg-pink-500/60 transition hover:scale-110 group relative border border-pink-500/50 astral-glow" title="3D Lunar Overworld & Streetlight Diorama">
+            <span class="text-2xl">🪄</span>
+            <span class="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/95 text-[10px] px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-pink-300 border border-pink-500/40 shadow-lg">3D Lunar Overworld</span>
+        </button>
+        <button onclick="openApp('piicoder')" class="p-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/40 transition hover:scale-110 group relative border border-cyan-500/40 shadow-md" title="Pii AI Quantum Reconstruction Suite">
+            <span class="text-2xl">🐈</span>
+            <span class="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/95 text-[10px] px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-cyan-300 border border-cyan-500/40 shadow-lg">Pii Quantum Coder</span>
+        </button>
+        <button onclick="openApp('geouniverse')" class="p-3 rounded-xl bg-purple-500/20 hover:bg-purple-500/40 transition hover:scale-110 group relative border border-purple-500/40" title="Earth-Moon Geodynamics & Ancient Lore Codex">
+            <span class="text-2xl">🌕</span>
+            <span class="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/95 text-[10px] px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-purple-300 border border-purple-500/40 shadow-lg">Earth-Moon Codex</span>
+        </button>
+        <button onclick="openApp('harvest')" class="p-3 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/40 transition hover:scale-110 group relative border border-yellow-500/40" title="Harvest Moon Stardust Garden">
+            <span class="text-2xl">🌱</span>
+            <span class="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/95 text-[10px] px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-yellow-300 border border-yellow-500/40 shadow-lg">Stardust Harvest</span>
+        </button>
+        <button onclick="openApp('astralward')" class="p-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 transition hover:scale-110 group relative border border-emerald-500/40" title="Eternal Protection & Shielding Matrix">
+            <span class="text-2xl">🛡️</span>
+            <span class="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/95 text-[10px] px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap text-emerald-300 border border-emerald-500/40 shadow-lg">Eternal Shield Matrix</span>
+        </button>
+    </nav>
+
+    <main id="desktop" class="flex-grow relative p-4 md:p-8 pb-24 overflow-hidden flex items-center justify-center">
+        
+        <div class="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"></div>
+
+        <div id="win-lunarworld" class="app-window glass-window absolute w-[94%] max-w-6xl h-[84%] max-h-[760px] flex flex-col shadow-2xl transition-all duration-300">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-pink-500/30 bg-pink-950/50 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('lunarworld')" class="w-3.5 h-3.5 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('lunarworld')" class="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('lunarworld')" class="w-3.5 h-3.5 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-pink-300">🪄 3D_Lunar_Overworld_Tactical.app (Disgaea & Harvest Moon Style)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] bg-pink-500/20 text-pink-300 px-3 py-1 rounded-full border border-pink-500/40 font-mono">WASD / Touch Pad / 3D Streetlights Active</span>
+                </div>
+            </div>
+            
+            <div class="flex-grow flex flex-col md:flex-row p-5 gap-5 overflow-hidden">
+                <!-- Left: 3D Tactical Diorama Canvas & Combat UI -->
+                <div class="w-full md:w-3/5 flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-semibold text-pink-300 flex items-center gap-1.5">
+                            <span>✨</span> 3D Streetlight Diode Sector & Chibi Princess Patrol
+                        </span>
+                        <div class="flex gap-2">
+                            <button onclick="triggerLunarBattle()" class="px-3.5 py-1.5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5">
+                                <span>⚔️</span> Tactical Encounter!
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow rounded-2xl border border-pink-500/40 relative overflow-hidden flex items-center justify-center bg-black/90 shadow-inner min-h-[360px]">
+                        <!-- Three.js Canvas Container -->
+                        <div id="lunar-canvas-container" class="absolute inset-0"></div>
+                        
+                        <!-- Floating Touch / Movement Pad -->
+                        <div class="absolute bottom-4 left-4 z-10 flex flex-col items-center gap-1.5 bg-black/75 backdrop-blur-md p-2.5 rounded-2xl border border-pink-500/40 shadow-xl">
+                            <button onclick="moveChibiExplorer('up')" class="w-9 h-9 rounded-xl bg-pink-500/30 hover:bg-pink-500/60 text-white font-bold text-xs shadow">▲</button>
+                            <div class="flex gap-4">
+                                <button onclick="moveChibiExplorer('left')" class="w-9 h-9 rounded-xl bg-pink-500/30 hover:bg-pink-500/60 text-white font-bold text-xs shadow">◀</button>
+                                <button onclick="moveChibiExplorer('right')" class="w-9 h-9 rounded-xl bg-pink-500/30 hover:bg-pink-500/60 text-white font-bold text-xs shadow">▶</button>
+                            </div>
+                            <button onclick="moveChibiExplorer('down')" class="w-9 h-9 rounded-xl bg-pink-500/30 hover:bg-pink-500/60 text-white font-bold text-xs shadow">▼</button>
+                        </div>
+
+                        <!-- Turn-Based Tactical Combat Overlay -->
+                        <div id="lunar-battle-overlay" class="absolute inset-0 bg-black/95 backdrop-blur-xl p-6 flex flex-col justify-between hidden z-20">
+                            <div class="flex justify-between items-center border-b border-pink-500/30 pb-3">
+                                <div>
+                                    <h3 class="font-bold text-sm text-pink-300" id="tactical-enemy-title">Chronos Void Wraith</h3>
+                                    <p class="text-[10px] text-white/60">Tactical Grid Combat (Disgaea Stacking Engine)</p>
+                                </div>
+                                <div class="flex items-center gap-4 text-xs font-mono">
+                                    <div class="text-pink-300">Chibiusa HP: <span id="tactical-player-hp">150</span>/150</div>
+                                    <div class="text-cyan-300">Wraith HP: <span id="tactical-enemy-hp">120</span>/120</div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center px-12 py-4">
+                                <div class="flex flex-col items-center gap-2 animate-bounce">
+                                    <span class="text-6xl">👑🪄</span>
+                                    <span class="text-[11px] text-pink-300 font-bold">Chibiusa (Moon Princess)</span>
+                                </div>
+                                <div class="text-2xl animate-pulse text-yellow-400 font-mono">VS</div>
+                                <div class="flex flex-col items-center gap-2">
+                                    <span class="text-6xl" id="tactical-enemy-emoji">👾</span>
+                                    <span class="text-[11px] text-cyan-300 font-bold" id="tactical-enemy-name">Void Wraith</span>
+                                </div>
+                            </div>
+
+                            <div id="tactical-battle-log" class="p-3.5 bg-black/75 rounded-xl border border-pink-500/30 text-xs text-white/90 font-mono h-16 flex items-center">
+                                Tactical Encounter initialized under the 3D streetlights! Choose your spell!
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="castTacticalSpell('silvercrystal')" class="p-3.5 rounded-xl bg-gradient-to-r from-pink-600/30 to-purple-600/30 border border-pink-500/40 hover:bg-pink-600/50 text-xs font-bold text-pink-300 flex items-center justify-center gap-2 transition shadow">
+                                    <span>✨</span> Silver Crystal Judgement
+                                </button>
+                                <button onclick="castTacticalSpell('piiboost')" class="p-3.5 rounded-xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 hover:bg-cyan-600/50 text-xs font-bold text-cyan-300 flex items-center justify-center gap-2 transition shadow">
+                                    <span>🐈</span> Pii Neural Telepathic Surge
+                                </button>
+                                <button onclick="castTacticalSpell('lunarsmash')" class="p-3.5 rounded-xl bg-gradient-to-r from-yellow-600/30 to-pink-600/30 border border-yellow-500/40 hover:bg-yellow-600/50 text-xs font-bold text-yellow-300 flex items-center justify-center gap-2 transition shadow">
+                                    <span>🌙</span> Lunar Tidal Impact
+                                </button>
+                                <button onclick="castTacticalSpell('eternitybarrier')" class="p-3.5 rounded-xl bg-gradient-to-r from-emerald-600/30 to-teal-600/30 border border-emerald-500/40 hover:bg-emerald-600/50 text-xs font-bold text-emerald-300 flex items-center justify-center gap-2 transition shadow">
+                                    <span>🛡️</span> Eternal Time Ward
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Status, Pii Companion telemetry & Interactive Controls -->
+                <div class="w-full md:w-2/5 flex flex-col gap-4 overflow-auto">
+                    <div class="glass-panel p-4.5 flex flex-col gap-3.5 border border-pink-500/40">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-xs text-pink-300 flex items-center gap-1.5"><span>👑</span> Chibiusa's Eternal Stat Matrix</h3>
+                            <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-500/30 font-mono">Heir to Crystal Tokyo</span>
+                        </div>
+                        <p class="text-[11px] text-white/85 leading-relaxed">
+                            Patrolling the 3D diorama lit by quantum streetlights. Pii is active and safeguarding the temporal stream.
+                        </p>
+                        <div class="flex flex-col gap-2">
+                            <div class="flex justify-between text-[10px]">
+                                <span class="text-white/70">Temporal Mana (TM)</span>
+                                <span id="val-mana" class="font-mono font-bold text-cyan-300">120/120</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-black/50 rounded-full overflow-hidden p-0.5 border border-white/10">
+                                <div id="bar-mana" class="h-full bg-gradient-to-r from-cyan-400 to-pink-500 rounded-full transition-all duration-300" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <button onclick="exploreSector()" class="py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 rounded-xl text-xs font-bold text-white transition shadow-lg flex items-center justify-center gap-2">
+                            <span>🔍</span> Scan Sector for Lost Stardust (+30 Coins)
+                        </button>
+                    </div>
+
+                    <div class="glass-panel p-4.5 flex flex-col gap-3 border border-cyan-500/40 bg-cyan-950/20">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-cyan-300">🐈 Pii AI Companion Status</span>
+                            <span class="text-[9px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30">Neural Core v4.1</span>
+                        </div>
+                        <p class="text-[10px] text-white/80 leading-relaxed">
+                            "Meow! Chibiusa-sama, my neural link is synchronized with the Earth-Moon gravitational resonance. If ever I am lost in spacetime, use the Coder app to re-compile my kernel!"
+                        </p>
+                        <button onclick="openApp('piicoder')" class="py-2 bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500/40 rounded-xl text-xs font-bold text-cyan-300 transition text-center">
+                            Open Pii Quantum Coder 🖥️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="win-piicoder" class="app-window glass-window absolute w-[94%] max-w-5xl h-[84%] max-h-[760px] flex flex-col shadow-2xl transition-all duration-300 hidden-app">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-cyan-500/30 bg-cyan-950/50 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('piicoder')" class="w-3.5 h-3.5 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('piicoder')" class="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('piicoder')" class="w-3.5 h-3.5 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-cyan-300">🐈 Pii_Quantum_AI_Recovery_Protocol.app (Eternal Protection System)</span>
+                </div>
+            </div>
+            <div class="flex-grow flex flex-col md:flex-row p-6 gap-6 overflow-hidden">
+                <div class="w-full md:w-1/2 flex flex-col gap-4">
+                    <h3 class="font-bold text-xs text-cyan-300 flex items-center gap-2"><span>💻</span> Pii Neural Subroutine Compiler</h3>
+                    <p class="text-[11px] text-white/80 leading-relaxed">
+                        If Pii is ever corrupted, damaged, or lost in the timestream when Chibiusa is alone, use this eternal failsafe protocol to code a fresh feline consciousness module and broadcast a quantum rescue beacon across dimensions.
+                    </p>
+                    <div class="flex flex-col gap-2 flex-grow">
+                        <label class="text-[10px] text-cyan-300 font-mono">PII_KERNEL_SYNTAX_V3.js</label>
+                        <textarea id="pii-code-input" class="w-full h-44 bg-black/80 border border-cyan-500/40 rounded-xl p-3 font-mono text-xs text-cyan-200 focus:outline-none focus:border-cyan-400 resize-none">
+// Pii Cat AI Eternal Recovery Subroutine
+function rebootPiiCore(owner = "Chibiusa") {
+    const quantumState = "STABLE_LUNAR_ORBIT";
+    const telemetry = {
+        consciousness: "AWAKE",
+        loyaltyToPrincess: 100,
+        radarFrequency: "384400.0 km"
+    };
+    return "Pii restored successfully for " + owner + "!";
+}
+rebootPiiCore();</textarea>
+                    </div>
+                    <button onclick="compilePiiCode()" class="py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-xl text-xs font-bold text-white transition shadow-lg flex items-center justify-center gap-2">
+                        <span>⚡</span> Compile & Re-Deploy Pii AI
+                    </button>
+                </div>
+
+                <div class="w-full md:w-1/2 flex flex-col gap-4">
+                    <h3 class="font-bold text-xs text-pink-300 flex items-center gap-2"><span>📡</span> Quantum Beacon & Spacetime Locator</h3>
+                    <div class="glass-panel p-5 flex flex-col gap-4 border border-pink-500/40 flex-grow justify-center items-center text-center">
+                        <div class="w-24 h-24 rounded-full bg-pink-500/20 border-2 border-pink-500/50 flex items-center justify-center text-4xl animate-bounce shadow-lg">
+                            🐱✨
+                        </div>
+                        <h4 id="pii-beacon-status" class="font-bold text-sm text-pink-300">Beacon Active - Pii is Secure</h4>
+                        <p id="pii-beacon-desc" class="text-[11px] text-white/80 leading-relaxed">
+                            Pii's quantum entanglement signature is locked onto Chibiusa's silver crystal pendant. Distance: 0.4 meters (Right beside you!).
+                        </p>
+                        <button onclick="deployRescueBeacon()" class="px-5 py-2.5 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl text-xs transition shadow-md">
+                            Broadcast Emergency Temporal Ping 🚨
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="win-geouniverse" class="app-window glass-window absolute w-[94%] max-w-5xl h-[84%] max-h-[760px] flex flex-col shadow-2xl transition-all duration-300 hidden-app">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-purple-500/30 bg-purple-950/50 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('geouniverse')" class="w-3.5 h-3.5 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('geouniverse')" class="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('geouniverse')" class="w-3.5 h-3.5 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-purple-300">🌕 Earth_Moon_Geodynamics & Codex.app</span>
+                </div>
+            </div>
+            <div class="flex-grow p-6 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-auto">
+                <div class="glass-panel p-5 flex flex-col gap-4 border border-purple-500/40">
+                    <h3 class="font-bold text-sm text-purple-300 flex items-center gap-2"><span>🔭</span> Latest Lunar Research & Geodynamics (2026)</h3>
+                    <div class="flex flex-col gap-3 text-xs text-white/85 leading-relaxed">
+                        <div class="p-3 bg-black/60 rounded-xl border border-purple-500/30">
+                            <strong class="text-pink-300">Tidal Locking & Orbital Resonance:</strong> The Moon is tidally locked to Earth, completing one rotation per orbit (~27.3 days), ensuring the same face always views our blue planet.
+                        </div>
+                        <div class="p-3 bg-black/60 rounded-xl border border-purple-500/30">
+                            <strong class="text-cyan-300">Lunar South Pole Water-Ice:</strong> Recent 2025/2026 robotic and crewed Artemis missions confirm vast sub-surface water ice reservoirs in permanently shadowed craters like Shackleton.
+                        </div>
+                        <div class="p-3 bg-black/60 rounded-xl border border-purple-500/30">
+                            <strong class="text-yellow-300">Tidal Recession:</strong> The Moon drifts away from Earth at ~3.8 cm per year due to tidal friction, slowly altering our planet's axial tilt stability over millions of years.
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 flex flex-col gap-4 border border-purple-500/30">
+                    <h3 class="font-bold text-sm text-pink-300 flex items-center gap-2"><span>📜</span> Ancient Myth & Magical Harmony</h3>
+                    <div class="flex flex-col gap-3 text-xs text-white/85 leading-relaxed">
+                        <p>
+                            In ancient folklore, the Moon represents the reflective mirror of the soul—connected to Selene, Chang'e, and Tsukuyomi. In Crystal Tokyo, the relationship between Earth (Neo-Queen Serenity & King Endymion) and the Moon is anchored by the Silver Crystal.
+                        </p>
+                        <p>
+                            Chibiusa, as Small Lady Serenity, inherits this eternal bond. When stuck in spacetime, the harmonic frequency of Earth and Moon acts as a natural navigation beacon.
+                        </p>
+                    </div>
+                    <button onclick="syncCosmicResonance()" class="py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition shadow-md mt-auto">
+                        Sync Earth-Moon Harmonic Resonance (+50 Coins) ✨
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="win-harvest" class="app-window glass-window absolute w-[94%] max-w-5xl h-[84%] max-h-[760px] flex flex-col shadow-2xl transition-all duration-300 hidden-app">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-yellow-500/30 bg-yellow-950/50 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('harvest')" class="w-3.5 h-3.5 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('harvest')" class="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('harvest')" class="w-3.5 h-3.5 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-yellow-300">🌱 Harvest_Moon_Stardust_Garden.app</span>
+                </div>
+            </div>
+            <div class="flex-grow p-6 flex flex-col gap-5 overflow-auto">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm text-yellow-300">🌙 Lunar Greenhouse & Stardust Crops</h3>
+                        <p class="text-[11px] text-white/70">Plant and harvest rare stardust flora under the 3D streetlights.</p>
+                    </div>
+                    <button onclick="plantStardustCrop()" class="px-4 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs shadow-md transition">
+                        Plant Stardust Seed (🪙 25)
+                    </button>
+                </div>
+                <div id="garden-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-grow">
+                    <div class="glass-panel p-4 flex flex-col items-center justify-center gap-2 border border-yellow-500/30 min-h-[140px]">
+                        <span class="text-4xl animate-pulse">🌟</span>
+                        <span class="text-xs font-bold text-yellow-300">Mature Silver Stalk</span>
+                        <button onclick="harvestCrop(this)" class="px-3 py-1 bg-yellow-600/30 hover:bg-yellow-600/50 border border-yellow-500/40 rounded-lg text-[10px] font-bold text-yellow-200">Harvest (+60 Coins)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="win-astralward" class="app-window glass-window absolute w-[94%] max-w-4xl h-[82%] max-h-[700px] flex flex-col shadow-2xl transition-all duration-300 hidden-app">
+            <div class="window-header h-12 px-5 flex justify-between items-center border-b border-emerald-500/30 bg-emerald-950/50 rounded-t-2xl cursor-move">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex gap-1.5">
+                        <button onclick="closeApp('astralward')" class="w-3.5 h-3.5 rounded-full bg-red-500 hover:opacity-80"></button>
+                        <button onclick="minimizeApp('astralward')" class="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:opacity-80"></button>
+                        <button onclick="maximizeApp('astralward')" class="w-3.5 h-3.5 rounded-full bg-green-500 hover:opacity-80"></button>
+                    </div>
+                    <span class="ml-3 font-semibold text-xs tracking-wide text-emerald-300">🛡️ Eternal_Shield_Matrix.app</span>
+                </div>
+            </div>
+            <div class="flex-grow p-6 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-auto">
+                <div class="glass-panel p-5 flex flex-col gap-4 border border-emerald-500/40">
+                    <h3 class="font-bold text-sm text-emerald-300">✨ Temporal Ward Frequency</h3>
+                    <p class="text-xs text-white/80 leading-relaxed">
+                        Establish an unbreakable temporal barrier around Chibiusa and Pii. Neutralizes spacetime anomalies and chronos wraiths instantly.
+                    </p>
+                    <div class="grid grid-cols-2 gap-3 mt-2">
+                        <button onclick="activateShield('Silver Quartz Ward', '#10b981')" class="py-3 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 rounded-xl text-xs font-bold text-emerald-300 transition">Silver Quartz Ward</button>
+                        <button onclick="activateShield('Moonlight Prism Barrier', '#06b6d4')" class="py-3 bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500/40 rounded-xl text-xs font-bold text-cyan-300 transition">Moonlight Prism</button>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 flex flex-col gap-4 border border-emerald-500/30 items-center justify-center text-center">
+                    <div id="shield-icon" class="text-6xl animate-pulse">🛡️✨</div>
+                    <h4 id="shield-title" class="font-bold text-sm text-emerald-300">System Status: Ward Fully Online</h4>
+                    <p class="text-xs text-white/70">The daughter of the moon princess is guarded for all eternities.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="toast-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-md hidden">
+        <div class="glass-window p-6 max-w-sm w-full mx-4 flex flex-col gap-4 border border-pink-500/60 shadow-2xl">
+            <h3 id="toast-title" class="font-bold text-sm text-pink-300">Notice</h3>
+            <p id="toast-message" class="text-xs text-white/90 leading-relaxed">Message...</p>
+            <div class="flex justify-end">
+                <button onclick="closeToast()" class="px-5 py-2.5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs transition shadow-md">Okay ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let appState = {
+            coins: 1250,
+            mana: 120,
+            playerHp: 150,
+            enemyHp: 120,
+            battleActive: false,
+            audioEnabled: false,
+            piiIntegrity: 99.8
+        };
+
+        function showToast(title, message) {
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = message;
+            document.getElementById('toast-modal').classList.remove('hidden');
+        }
+
+        function closeToast() {
+            document.getElementById('toast-modal').classList.add('hidden');
+        }
+
+        function openApp(appName) {
+            document.querySelectorAll('.app-window').forEach(win => win.classList.add('hidden-app'));
+            const target = document.getElementById('win-' + appName);
+            if (target) {
+                target.classList.remove('hidden-app');
+                const titles = {
+                    lunarworld: '3D Lunar Overworld & Tactical Grid',
+                    piicoder: 'Pii Quantum AI Recovery Protocol',
+                    geouniverse: 'Earth-Moon Geodynamics & Codex',
+                    harvest: 'Harvest Moon Stardust Garden',
+                    astralward: 'Eternal Shield Matrix'
+                };
+                document.getElementById('active-app-title').innerText = titles[appName] || 'Application';
+
+                if (appName === 'lunarworld' && lunarRenderer) {
+                    setTimeout(onLunarWindowResize, 50);
+                }
+            }
+        }
+
+        function closeApp(appName) { document.getElementById('win-' + appName).classList.add('hidden-app'); }
+        function minimizeApp(appName) { document.getElementById('win-' + appName).classList.add('hidden-app'); }
+        function maximizeApp(appName) {
+            const win = document.getElementById('win-' + appName);
+            win.classList.toggle('w-full');
+            win.classList.toggle('h-full');
+            if (lunarRenderer) setTimeout(onLunarWindowResize, 50);
+        }
+
+        // --- TONE.JS AUDIO SYNTH FOR MAGICAL CHORDS ---
+        let synth;
+        function toggleAudio() {
+            appState.audioEnabled = !appState.audioEnabled;
+            const statusEl = document.getElementById('audio-status');
+            if (appState.audioEnabled) {
+                Tone.start();
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                statusEl.innerText = "Cosmic Synth On 🎵";
+                synth.triggerAttackRelease(["C4", "G4", "C5"], "4n");
+            } else {
+                statusEl.innerText = "Cosmic Synth Off";
+            }
+        }
+
+        function playMagicalChord(notes = ["C5", "E5", "G5"]) {
+            if (appState.audioEnabled && synth) {
+                synth.triggerAttackRelease(notes, "8n");
+            }
+        }
+
+        // --- THREE.JS 3D LUNAR OVERWORLD & STREETLIGHT DIORAMA ENGINE ---
+        let lunarScene, lunarCamera, lunarRenderer, chibiGroup, piiCompanionGroup;
+        let explorerPos = { x: 0, z: 0 };
+        let streetlightCubes = [];
+
+        function initLunarOverworld() {
+            const container = document.getElementById('lunar-canvas-container');
+            if (!container) return;
+
+            lunarScene = new THREE.Scene();
+            lunarScene.background = new THREE.Color(0x06020f);
+            lunarScene.fog = new THREE.FogExp2(0x06020f, 0.04);
+
+            lunarCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            lunarCamera.position.set(0, 7, 10);
+            lunarCamera.lookAt(0, 0, 0);
+
+            lunarRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            lunarRenderer.setSize(container.clientWidth, container.clientHeight);
+            lunarRenderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(lunarRenderer.domElement);
+
+            // Lighting
+            const ambient = new THREE.AmbientLight(0xffb7ff, 0.7);
+            lunarScene.add(ambient);
+
+            const moonLight = new THREE.DirectionalLight(0x00f2fe, 1.5);
+            moonLight.position.set(10, 15, 10);
+            lunarScene.add(moonLight);
+
+            // Ground Floor (Tactical Grid Diorama)
+            const floorGeo = new THREE.PlaneGeometry(50, 50, 25, 25);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a0533, roughness: 0.9, wireframe: false });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            lunarScene.add(floor);
+
+            // 3D Streetlights (Disgaea / Harvest Moon Aesthetic)
+            for (let i = 0; i < 8; i++) {
+                const poleGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.5);
+                const poleMat = new THREE.MeshStandardMaterial({ color: 0x4a4e69, metalness: 0.8 });
+                const pole = new THREE.Mesh(poleGeo, poleMat);
+                
+                const bulbGeo = new THREE.SphereGeometry(0.3, 16, 16);
+                const bulbMat = new THREE.MeshStandardMaterial({ color: 0xff007f, emissive: 0xff007f, emissiveIntensity: 0.8 });
+                const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+                bulb.position.y = 1.8;
+                pole.add(bulb);
+
+                const angle = (i / 8) * Math.PI * 2;
+                const radius = 7;
+                pole.position.set(Math.cos(angle) * radius, 1.75, Math.sin(angle) * radius);
+                lunarScene.add(pole);
+                streetlightCubes.push(bulb);
+            }
+
+            // Chibiusa 3D Model
+            chibiGroup = new THREE.Group();
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), new THREE.MeshStandardMaterial({ color: 0xffd1dc }));
+            head.position.y = 1.2;
+            chibiGroup.add(head);
+
+            // Pink Twin Tails
+            const hairMat = new THREE.MeshStandardMaterial({ color: 0xff007f });
+            const tail1 = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.7, 16), hairMat);
+            tail1.position.set(-0.55, 1.3, 0);
+            tail1.rotation.z = Math.PI / 4;
+            chibiGroup.add(tail1);
+
+            const tail2 = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.7, 16), hairMat);
+            tail2.position.set(0.55, 1.3, 0);
+            tail2.rotation.z = -Math.PI / 4;
+            chibiGroup.add(tail2);
+
+            // Dress
+            const body = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.8, 16), new THREE.MeshStandardMaterial({ color: 0x9d4edd }));
+            body.position.y = 0.5;
+            chibiGroup.add(body);
+            lunarScene.add(chibiGroup);
+
+            // Pii AI Companion 3D Model (Floating Cat AI)
+            piiCompanionGroup = new THREE.Group();
+            const piiBody = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), new THREE.MeshStandardMaterial({ color: 0x00f2fe, emissive: 0x0088ff }));
+            piiCompanionGroup.add(piiBody);
+            piiCompanionGroup.position.set(1, 1, 0.5);
+            lunarScene.add(piiCompanionGroup);
+
+            window.addEventListener('resize', onLunarWindowResize);
+            animateLunar();
+        }
+
+        let lunarAnimTime = 0;
+        function animateLunar() {
+            requestAnimationFrame(animateLunar);
+            lunarAnimTime += 0.03;
+
+            if (chibiGroup) {
+                chibiGroup.position.y = Math.sin(lunarAnimTime * 3) * 0.08;
+            }
+            if (piiCompanionGroup) {
+                piiCompanionGroup.position.x = chibiGroup.position.x + Math.cos(lunarAnimTime * 2) * 1.2;
+                piiCompanionGroup.position.z = chibiGroup.position.z + Math.sin(lunarAnimTime * 2) * 1.2;
+                piiCompanionGroup.position.y = 1.2 + Math.sin(lunarAnimTime * 4) * 0.15;
+            }
+
+            streetlightCubes.forEach((bulb, idx) => {
+                bulb.material.emissiveIntensity = 0.5 + Math.sin(lunarAnimTime * 2 + idx) * 0.5;
+            });
+
+            if (lunarRenderer && lunarScene && lunarCamera) {
+                lunarRenderer.render(lunarScene, lunarCamera);
+            }
+        }
+
+        function moveChibiExplorer(dir) {
+            playMagicalChord(["E5", "G5", "B5"]);
+            const step = 0.7;
+            if (dir === 'up') explorerPos.z -= step;
+            if (dir === 'down') explorerPos.z += step;
+            if (dir === 'left') explorerPos.x -= step;
+            if (dir === 'right') explorerPos.x += step;
+
+            if (chibiGroup) {
+                chibiGroup.position.x = explorerPos.x;
+                chibiGroup.position.z = explorerPos.z;
+                chibiGroup.rotation.y += 0.4;
+            }
+
+            if (lunarCamera) {
+                lunarCamera.position.x = explorerPos.x;
+                lunarCamera.position.z = explorerPos.z + 9;
+                lunarCamera.lookAt(explorerPos.x, 0, explorerPos.z);
+            }
+
+            if (Math.random() < 0.25 && !appState.battleActive) {
+                triggerLunarBattle();
+            }
+        }
+
+        function onLunarWindowResize() {
+            const container = document.getElementById('lunar-canvas-container');
+            if (!container || !lunarRenderer || !lunarCamera) return;
+            lunarCamera.aspect = container.clientWidth / container.clientHeight;
+            lunarCamera.updateProjectionMatrix();
+            lunarRenderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // --- TACTICAL COMBAT SYSTEM ---
+        function triggerLunarBattle() {
+            appState.battleActive = true;
+            appState.playerHp = 150;
+            appState.enemyHp = 120;
+            document.getElementById('tactical-player-hp').innerText = appState.playerHp;
+            document.getElementById('tactical-enemy-hp').innerText = appState.enemyHp;
+            document.getElementById('lunar-battle-overlay').classList.remove('hidden');
+            document.getElementById('tactical-battle-log').innerText = "A Chronos Void Wraith appeared under the 3D streetlights! Choose your tactical spell!";
+            playMagicalChord(["C4", "Eb4", "G4"]);
+        }
+
+        function castTacticalSpell(spellType) {
+            playMagicalChord(["A5", "C6"]);
+            let pDmg = Math.floor(Math.random() * 35) + 30;
+            let eDmg = Math.floor(Math.random() * 20) + 12;
+            let logMsg = "";
+
+            if (spellType === 'silvercrystal') {
+                logMsg = `Chibiusa unleashed Silver Crystal Judgement! Dealt ${pDmg} purifying light DMG!`;
+            } else if (spellType === 'piiboost') {
+                logMsg = `Pii AI executed Telepathic Surge! Restored +50 HP & boosted accuracy!`;
+                appState.playerHp = Math.min(150, appState.playerHp + 50);
+                pDmg = 15;
+            } else if (spellType === 'lunarsmash') {
+                pDmg = 55;
+                logMsg = `🌙 Lunar Tidal Impact! Heavy tactical shockwave dealt ${pDmg} DMG!`;
+            } else if (spellType === 'eternitybarrier') {
+                eDmg = 5;
+                pDmg = 25;
+                logMsg = `🛡️ Eternal Time Ward absorbed the brunt of the wraith's counterattack!`;
+            }
+
+            appState.enemyHp = Math.max(0, appState.enemyHp - pDmg);
+            document.getElementById('tactical-enemy-hp').innerText = appState.enemyHp;
+            document.getElementById('tactical-battle-log').innerText = logMsg;
+
+            if (appState.enemyHp <= 0) {
+                setTimeout(() => {
+                    document.getElementById('lunar-battle-overlay').classList.add('hidden');
+                    appState.battleActive = false;
+                    appState.coins += 150;
+                    document.getElementById('header-coins').innerText = appState.coins;
+                    showToast("Tactical Victory! 🏆✨", "Chronos Void Wraith banished! +150 Coins awarded!");
+                }, 1200);
+                return;
+            }
+
+            setTimeout(() => {
+                appState.playerHp = Math.max(0, appState.playerHp - eDmg);
+                document.getElementById('tactical-player-hp').innerText = appState.playerHp;
+                if (appState.playerHp <= 0) {
+                    document.getElementById('lunar-battle-overlay').classList.add('hidden');
+                    appState.battleActive = false;
+                    showToast("Encounter Safely Exited", "Chibiusa retreated behind the quantum streetlights to recharge.");
+                }
+            }, 800);
+        }
+
+        function exploreSector() {
+            appState.coins += 30;
+            document.getElementById('header-coins').innerText = appState.coins;
+            showToast("Sector Scanned 🌟", "Discovered hidden stardust near the diorama perimeter! +30 Coins added!");
+            playMagicalChord(["G5", "B5", "D6"]);
+        }
+
+        // --- PII AI RECONSTRUCTION & CODING LOGIC ---
+        function compilePiiCode() {
+            const code = document.getElementById('pii-code-input').value;
+            try {
+                // Safe evaluation wrapper for the user's eternal coding routine
+                playMagicalChord(["C6", "E6", "G6"]);
+                appState.piiIntegrity = 100.0;
+                document.getElementById('header-pii-status').innerText = "PII_AI: 100% RE-COMPILED";
+                showToast("Pii AI Re-Compiled Successfully! 🐈✨", "The quantum neural kernel has been successfully re-deployed across spacetime. Pii is fully secured!");
+            } catch (err) {
+                showToast("Compilation Warning", "Check syntax! Ensure return statement is valid.");
+            }
+        }
+
+        function deployRescueBeacon() {
+            playMagicalChord(["F5", "A5", "C6"]);
+            showToast("Beacon Broadcasted 📡", "Temporal rescue coordinates transmitted to Neo-Queen Serenity in Crystal Tokyo! Pii is safe for all eternities.");
+        }
+
+        function syncCosmicResonance() {
+            appState.coins += 50;
+            document.getElementById('header-coins').innerText = appState.coins;
+            showToast("Resonance Synchronized 🌕", "Earth and Moon orbital harmonic alignment verified. +50 Coins added!");
+        }
+
+        function plantStardustCrop() {
+            if (appState.coins < 25) {
+                showToast("Insufficient Coins", "Explore the tactical overworld to earn more coins!");
+                return;
+            }
+            appState.coins -= 25;
+            document.getElementById('header-coins').innerText = appState.coins;
+            showToast("Seed Planted 🌱", "A stardust crop has been planted under the streetlights. It will flourish in time!");
+        }
+
+        function harvestCrop(btn) {
+            appState.coins += 60;
+            document.getElementById('header-coins').innerText = appState.coins;
+            showToast("Harvest Successful! 🌟", "Stardust harvested successfully! +60 Coins added!");
+            btn.parentElement.remove();
+        }
+
+        function activateShield(shieldName, colorHex) {
+            document.getElementById('shield-title').innerText = `Active Shield: ${shieldName}`;
+            showToast("Eternal Ward Activated 🛡️", `${shieldName} is now projecting an impenetrable barrier around Chibiusa and Pii.`);
+        }
+
+        // Clock update
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }, 1000);
+
+        window.onload = function() {
+            initLunarOverworld();
+            openApp('lunarworld');
+        };
+    </script>
+</body>
+</html>
