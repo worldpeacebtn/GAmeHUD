@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>St. Pauli AR - Der Rote Faden JRPG v10 • Cyberdeck Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; touch-action: manipulation; overflow: hidden; background-color: #020617; color: #f8fafc; margin: 0; padding: 0; width: 100vw; height: 100vh; position: fixed; }
+        .fairytale-font { font-family: 'Cinzel', serif; }
+        .pixel-font { font-family: 'Press Start 2P', monospace; }
+        @keyframes neonPulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(236, 72, 153, 0.5), inset 0 0 10px rgba(6, 182, 212, 0.4); }
+            50% { box-shadow: 0 0 35px rgba(236, 72, 153, 0.9), inset 0 0 20px rgba(6, 182, 212, 0.7); }
+        }
+        .glow-cyber { animation: neonPulse 4s infinite; }
+        @keyframes floatHolo { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+        .float-holo { animation: floatHolo 3s ease-in-out infinite; }
+        .scanlines::before {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px; z-index: 4; pointer-events: none;
+        }
+        canvas { image-rendering: pixelated; touch-action: none; display: block; width: 100%; height: 100%; }
+        .glass-panel { background: rgba(10, 15, 30, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(236, 72, 153, 0.35); }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #ec4899; border-radius: 3px; }
+        .sprite-portrait {
+            width: clamp(90px, 22vw, 180px); height: clamp(135px, 33vw, 270px);
+            object-fit: cover; border-radius: 12px; border: 2px solid rgba(236, 72, 153, 0.6);
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.4); flex-shrink: 0;
+        }
+        .quest-item {
+            display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 10px;
+            border: 1px solid rgba(100, 116, 139, 0.4); background: rgba(15, 23, 42, 0.8);
+            font-size: 11px; font-family: monospace; margin-bottom: 6px; transition: all 0.2s; cursor: pointer;
+        }
+        .quest-item:hover { border-color: rgba(236, 72, 153, 0.6); background: rgba(30, 41, 59, 0.9); }
+        .quest-item.completed { border-color: rgba(34, 197, 94, 0.6); background: rgba(6, 78, 59, 0.5); opacity: 0.7; }
+        .tag-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; }
+        .jrpg-battle-frame { border: 3px solid rgba(236, 72, 153, 0.7); border-radius: 18px; box-shadow: 0 0 40px rgba(236, 72, 153, 0.4), inset 0 0 30px rgba(6, 182, 212, 0.15); }
+        .scene-transition { animation: sceneFade 0.5s ease-in-out; }
+        @keyframes sceneFade { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        .skill-slot { border: 2px solid rgba(236, 72, 153, 0.5); border-radius: 10px; padding: 10px; background: rgba(15, 23, 42, 0.8); cursor: pointer; transition: all 0.25s; text-align: center; }
+        .skill-slot:hover { border-color: #ec4899; box-shadow: 0 0 20px rgba(236, 72, 153, 0.3); transform: translateY(-2px); }
+        .skill-slot.equipped { border-color: #34d399; background: rgba(6, 78, 59, 0.5); }
+        .skill-slot.locked { opacity: 0.4; cursor: not-allowed; border-color: #64748b; }
+        .tv-channel-btn { padding: 8px 12px; border-radius: 8px; font-size: 10px; font-family: monospace; font-weight: bold; border: 1px solid; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .tv-channel-btn.active { box-shadow: 0 0 15px rgba(6, 182, 212, 0.5); }
+        .evidence-card { border: 1px solid rgba(236, 72, 153, 0.4); border-radius: 12px; padding: 12px; background: rgba(15, 23, 42, 0.85); transition: all 0.2s; cursor: pointer; }
+        .evidence-card:hover { border-color: rgba(236, 72, 153, 0.8); box-shadow: 0 0 20px rgba(236, 72, 153, 0.2); }
+        .sai-hud-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.92); z-index: 55; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; backdrop-filter: blur(8px); }
+        .sai-path-line { stroke-dasharray: 8 4; animation: dashMove 1s linear infinite; }
+        @keyframes dashMove { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -24; } }
+    </style>
+</head>
+<body class="h-full flex flex-col items-center justify-between p-0 m-0 overflow-hidden select-none">
+
+    <header class="w-full border-b border-pink-900/40 bg-slate-950/95 backdrop-blur-md px-3 py-2 flex items-center justify-between z-40 shrink-0">
+        <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-full bg-pink-950 border border-pink-500 flex items-center justify-center shadow-lg animate-pulse">
+                <span class="text-xs">🐇</span>
+            </div>
+            <div>
+                <h1 class="fairytale-font text-xs sm:text-sm font-bold text-pink-400 tracking-wider flex items-center gap-1.5">
+                    DREAM STATE AR <span class="text-cyan-400 text-[9px] pixel-font">v10.0 ZELDA x POKÉMON</span>
+                </h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-1.5 overflow-x-auto py-1">
+            <button onclick="toggleNeuralChat()" class="px-2.5 py-1 rounded-lg bg-cyan-950/90 border border-cyan-500/70 text-[11px] font-bold text-cyan-300 hover:bg-cyan-900 transition flex items-center gap-1 shadow-[0_0_12px_rgba(6,182,212,0.3)] cursor-pointer whitespace-nowrap">🤖 Neural AI</button>
+            <button onclick="toggleWolfFiles()" class="px-2 py-1 rounded-lg bg-red-950/80 border border-red-500/60 text-[10px] font-mono text-red-300 hover:bg-red-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🐺 Wolf Files</button>
+            <button onclick="toggleSkillMenu()" class="px-2 py-1 rounded-lg bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono text-emerald-300 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">⚔️ Skills</button>
+            <button onclick="toggleQuestLog()" class="px-2 py-1 rounded-lg bg-amber-950/80 border border-amber-500/60 text-[10px] font-mono text-amber-300 hover:bg-amber-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">📋 Quests</button>
+            <button onclick="toggleSAIHUD()" class="px-2 py-1 rounded-lg bg-fuchsia-950/80 border border-fuchsia-500/60 text-[10px] font-mono text-fuchsia-300 hover:bg-fuchsia-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🧭 SAi HUD</button>
+            <button onclick="openCyberdeck()" class="px-2.5 py-1 rounded-lg bg-pink-950/90 border border-pink-500/70 text-[11px] font-bold text-pink-300 hover:bg-pink-900 transition flex items-center gap-1 shadow-[0_0_12px_rgba(236,72,153,0.3)] cursor-pointer whitespace-nowrap">📲 Cyberdeck</button>
+            <button onclick="toggleCharacterDeck()" class="px-2.5 py-1 rounded-lg bg-violet-950/90 border border-violet-500/70 text-[11px] font-bold text-violet-300 hover:bg-violet-900 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">🃏 Hybrid Deck</button>
+            <button onclick="toggleProjectLaptop()" class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-cyan-500/60 text-[11px] font-bold text-cyan-300 hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer whitespace-nowrap">💻 GAme Novel</button>
+            <button onclick="toggleSettings()" class="px-2 py-1 rounded-lg bg-slate-800/90 border border-slate-500/70 text-[10px] font-mono text-slate-300 hover:bg-slate-700 transition cursor-pointer whitespace-nowrap">⚙️ API</button>
+        </div>
+    </header>
+
+    <main class="relative flex-1 w-full max-w-6xl bg-black border-y sm:border border-pink-900/40 shadow-2xl overflow-hidden scanlines flex flex-col justify-center items-center">
+        <canvas id="gameCanvas"></canvas>
+        <div id="hitboxOverlay" class="absolute inset-0 z-[6] pointer-events-none"></div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="absolute inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center backdrop-blur-2xl p-6 pointer-events-auto">
+            <div class="w-20 h-20 rounded-full bg-pink-950 border-2 border-pink-500 flex items-center justify-center text-4xl shadow-[0_0_40px_rgba(236,72,153,0.8)] mb-4 animate-bounce">🐇</div>
+            <div class="inline-block px-3 py-1 rounded-full bg-pink-950/80 border border-pink-500 text-[9px] pixel-font text-pink-300 mb-3 shadow-[0_0_15px_rgba(236,72,153,0.3)]">DREAM STATE • ZELDA X POKÉMON • CYBERTHRILLER</div>
+            <h1 class="fairytale-font text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-300 font-bold mb-2 text-center">WITNESS X: DER ROTE FADEN</h1>
+            <p class="text-cyan-300 text-xs sm:text-sm mb-3 max-w-lg text-center font-mono">"GAme — Es ist kein Spiel, es ist unser Leben"</p>
+            <p class="text-slate-400 text-xs mb-4 max-w-md text-center italic">Erkunde die Woodlands im Dream State, entdecke tierische Hybrid-Charaktere, nutze dein Cyberdeck und entlarve das Netzwerk der Raubtiere.</p>
+            <p class="text-pink-400 text-[10px] pixel-font mb-4 animate-pulse">⚙️ API KEY IN EINSTELLUNGEN • WICHTIG FÜR NEURALEN CHAT & LIVE DOSSIER</p>
+            <button id="startBtn" class="px-8 py-3.5 bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600 hover:scale-105 text-white pixel-font text-xs rounded-xl shadow-[0_0_30px_rgba(236,72,153,0.7)] border border-pink-300 transition cursor-pointer">ABENTEUER STARTEN 🚀</button>
+        </div>
+
+        <!-- Dialogue Box with Sprite -->
+        <div id="dialogueBox" class="absolute bottom-16 left-1/2 -translate-x-1/2 w-[94%] max-w-2xl glass-panel p-4 rounded-2xl shadow-2xl z-30 hidden border border-cyan-500/50 pointer-events-auto scene-transition">
+            <div class="flex gap-3 sm:gap-4 items-start">
+                <div id="spritePortraitContainer" class="hidden sm:block flex-shrink-0">
+                    <img id="spritePortrait" src="" alt="Charakter" class="sprite-portrait" onerror="this.style.display='none'">
+                    <p id="spriteNameLabel" class="text-[8px] font-mono text-cyan-400 text-center mt-1"></p>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-center mb-1.5 border-b border-pink-900/40 pb-1">
+                        <span id="speakerName" class="text-xs font-bold text-pink-400 pixel-font">WITNESS X</span>
+                        <div class="flex items-center gap-2">
+                            <button id="btnReadSpeech" onclick="speakCurrentText()" class="text-[10px] bg-cyan-950 border border-cyan-500/70 px-2 py-0.5 rounded text-cyan-300 hover:bg-cyan-800 cursor-pointer">🔊 Vorlesen</button>
+                        </div>
+                    </div>
+                    <p id="dialogueText" class="text-slate-100 text-xs sm:text-sm leading-relaxed font-mono min-h-[52px]"></p>
+                    <div id="dialogueChoices" class="mt-2.5 flex flex-wrap gap-2 justify-end"></div>
+                    <div class="mt-2 flex justify-end items-center gap-3">
+                        <span id="sceneHint" class="text-[9px] text-amber-400 font-mono"></span>
+                        <span class="text-pink-400 text-[11px] pixel-font animate-pulse cursor-pointer" onclick="advanceDialogue()">[WEITER ➔]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BATTLE UI (Pokémon / Zelda hybrid style) -->
+        <div id="battleUI" class="absolute inset-0 bg-slate-950/98 z-30 hidden flex-col justify-between p-4 sm:p-6 backdrop-blur-2xl pointer-events-auto">
+            <div class="text-center pt-2">
+                <span class="text-[9px] pixel-font text-pink-400">⚔️ DREAM STATE ENCOUNTER • WOLF SYNDIKAT</span>
+                <h2 class="fairytale-font text-2xl sm:text-3xl text-red-400 font-bold">SCHATTEN-BLOCKADE</h2>
+            </div>
+            <div class="flex justify-around items-center w-full max-w-lg mx-auto my-3 sm:my-4">
+                <div class="text-center w-1/3 glass-panel p-3 rounded-2xl border border-pink-500/40 jrpg-battle-frame">
+                    <div class="text-4xl mb-1">🐇</div>
+                    <p class="text-white text-xs font-bold">Witness X (Bunny)</p>
+                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden mt-2 border border-slate-700">
+                        <div id="playerHP" class="bg-gradient-to-r from-emerald-500 to-green-400 h-full transition-all duration-500" style="width:100%"></div>
+                    </div>
+                    <p class="text-[9px] text-emerald-400 mt-1 font-mono" id="playerHPLabel">HP: 100/100</p>
+                    <p class="text-[8px] text-amber-400 font-mono" id="playerSPLabel">SP: 3/3</p>
+                </div>
+                <div class="text-xl font-bold text-pink-500 fairytale-font">VS</div>
+                <div class="text-center w-1/3 glass-panel p-3 rounded-2xl border border-purple-500/40 jrpg-battle-frame">
+                    <div class="text-4xl mb-1" id="battleEnemySprite">🐺</div>
+                    <p class="text-white text-xs font-bold" id="enemyName">Corporate Wolf</p>
+                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden mt-2 border border-slate-700">
+                        <div id="enemyHP" class="bg-gradient-to-r from-red-600 to-pink-500 h-full transition-all duration-500" style="width:100%"></div>
+                    </div>
+                    <p class="text-[9px] text-red-400 mt-1 font-mono" id="enemyHPLabel">HP: 100/100</p>
+                </div>
+            </div>
+            <div class="text-center text-xs font-mono text-cyan-300 min-h-[40px] flex items-center justify-center bg-slate-900/50 rounded-xl mx-auto max-w-lg w-full px-4 py-2 border border-slate-700/50" id="battleLog">
+                ⚔️ Der Wolf setzt Desinformation ein! Wähle deine Aktion mit Humor & Physik-Logik!
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 max-w-lg mx-auto w-full pb-4 sm:pb-6" id="battleActionButtons">
+                <button onclick="executeBattleAction('attack')" class="py-3 bg-blue-950/90 border border-blue-400/80 rounded-xl hover:bg-blue-900 text-cyan-200 font-bold font-mono text-xs shadow-lg cursor-pointer">🗣️ Argument</button>
+                <button onclick="executeBattleAction('dance')" class="py-3 bg-purple-950/90 border border-purple-400/80 rounded-xl hover:bg-purple-900 text-purple-200 font-bold font-mono text-xs shadow-lg cursor-pointer">🕺 Quantum Flashmob</button>
+                <button onclick="executeBattleAction('heal')" id="btnHealSkill" class="py-3 bg-emerald-950/90 border border-emerald-400/80 rounded-xl hover:bg-emerald-900 text-emerald-200 font-bold font-mono text-xs shadow-lg cursor-pointer">💚 Heilen (1SP)</button>
+                <button onclick="executeBattleAction('card')" class="py-3 bg-pink-950/90 border border-pink-400/80 rounded-xl hover:bg-pink-900 text-pink-200 font-bold font-mono text-xs shadow-lg cursor-pointer">🃏 Roter Faden</button>
+                <button onclick="executeBattleAction('defend')" class="py-3 bg-slate-800/90 border border-slate-400/80 rounded-xl hover:bg-slate-700 text-slate-200 font-bold font-mono text-xs shadow-lg cursor-pointer">🛡️ Verteidigen</button>
+                <button onclick="executeBattleAction('evidence')" id="btnEvidenceSkill" class="py-3 bg-amber-950/90 border border-amber-400/80 rounded-xl hover:bg-amber-900 text-amber-200 font-bold font-mono text-xs shadow-lg cursor-pointer">📁 Beweis</button>
+            </div>
+            <div class="text-center text-[9px] font-mono text-slate-400 pb-2">Ausgerüstete Skills: <span id="equippedSkillsDisplay" class="text-emerald-300">Keine</span></div>
+        </div>
+
+        <!-- Neural Chat Modal -->
+        <div id="neuralChatModal" class="absolute inset-y-0 right-0 w-full sm:w-[450px] bg-slate-950/98 border-l border-cyan-500/50 z-40 hidden flex-col p-4 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-cyan-900/50 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🤖</span>
+                    <div><h3 class="fairytale-font text-sm font-bold text-cyan-400">NEURAL AI • WITNESS X</h3><p class="text-[9px] text-slate-400 font-mono" id="neuralStatus">Gemini API: Nicht konfiguriert</p></div>
+                </div>
+                <button onclick="toggleNeuralChat()" class="px-2.5 py-1 bg-cyan-950 rounded-lg text-xs font-bold border border-cyan-500 text-cyan-300 cursor-pointer">✕</button>
+            </div>
+            <div id="chatMessagesContainer" class="flex-1 overflow-y-auto space-y-3 pr-1 font-mono text-xs mb-3"></div>
+            <div class="flex gap-2 shrink-0">
+                <input type="text" id="chatInput" placeholder="Frage an Witness X (z.B. Physikwitze oder Verschwörung)..." class="flex-1 bg-slate-900 border border-cyan-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter')sendNeuralMessage()">
+                <button onclick="sendNeuralMessage()" class="px-4 py-2 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 rounded-xl font-bold text-xs cursor-pointer shadow">Senden</button>
+            </div>
+        </div>
+
+        <!-- Wolf Files Modal -->
+        <div id="wolfFilesModal" class="absolute inset-y-0 right-0 w-full sm:w-96 bg-slate-950/98 border-l border-red-500/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-red-900/50 mb-4">
+                <div class="flex items-center gap-2"><span class="text-xl">🐺</span><h3 class="fairytale-font text-sm font-bold text-red-400">WOLF FILES & MEMORY CORE</h3></div>
+                <button onclick="toggleWolfFiles()" class="px-2.5 py-1 bg-red-950 rounded-lg text-xs font-bold border border-red-500 text-red-300 cursor-pointer">✕</button>
+            </div>
+            <div class="space-y-3 font-mono text-xs overflow-y-auto flex-1 pr-1">
+                <div class="bg-red-950/30 p-3 rounded-xl border border-red-500/40">
+                    <p class="text-red-400 font-bold mb-1">🎯 DIE VORWÜRFE GEGEN DAS WOLF-SYNDIKAT:</p>
+                    <ul class="text-slate-300 text-[11px] list-disc list-inside space-y-1">
+                        <li>Weltweites Netzwerk von Raubtieren & Bad Actors</li>
+                        <li>Urban Legends, die sich in den Nachrichten als wahr erwiesen</li>
+                        <li>Mietenwahn, Algorithmen-Spekulation & Desinformation</li>
+                    </ul>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl border border-red-500/50 space-y-2">
+                    <p class="text-yellow-400 font-bold">🌐 Live Search Dossier</p>
+                    <button onclick="fetchLiveDossier()" id="btnLiveDossier" class="w-full py-2 bg-red-900 hover:bg-red-800 text-red-100 font-bold rounded-lg text-[11px] cursor-pointer">WOLF DOSSIER ABFRAGEN</button>
+                    <div id="dossierResult" class="text-[11px] text-slate-200 mt-2 hidden max-h-40 overflow-y-auto bg-slate-950 p-2 rounded"></div>
+                </div>
+                <div id="collectedEvidenceList" class="space-y-2"><p class="text-slate-500 text-[10px]">📂 Gesammelte Beweise & Memory Core Einträge...</p></div>
+                <button onclick="triggerSuccess()" class="w-full py-2 bg-pink-900 hover:bg-pink-800 text-pink-200 font-bold rounded-lg text-[11px] cursor-pointer">📤 BEWEISE AN OMA GERTRUDE ÜBERGEBEN</button>
+            </div>
+        </div>
+
+        <!-- Skill Menu Modal -->
+        <div id="skillMenuModal" class="absolute inset-0 bg-slate-950/98 z-[55] hidden flex-col p-5 backdrop-blur-2xl pointer-events-auto overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-emerald-900/50 mb-4">
+                <div class="flex items-center gap-2"><span class="text-xl">⚔️</span><h3 class="fairytale-font text-sm font-bold text-emerald-400">SKILL SYSTEM (ZELDA x POKÉMON STYLE)</h3></div>
+                <button onclick="toggleSkillMenu()" class="px-2.5 py-1 bg-emerald-950 rounded-lg text-xs font-bold border border-emerald-500 text-emerald-300 cursor-pointer">✕</button>
+            </div>
+            <div class="space-y-3 font-mono text-xs">
+                <div class="p-3 bg-slate-900 rounded-xl border border-emerald-500/40">
+                    <p class="font-bold text-emerald-300 mb-1">🎯 AUSGERÜSTETE SKILLS (max 3):</p>
+                    <div id="equippedSkillsContainer" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl border border-slate-700">
+                    <p class="font-bold text-slate-300 mb-2">📚 ALLE ENTDECKTEN SKILLS:</p>
+                    <div id="allSkillsContainer" class="space-y-2"></div>
+                </div>
+                <p class="text-[9px] text-slate-500">💡 Finde neue Skills durch Detektiv-Arbeit in der Holz-Dorfwelt und im Pixel-Office.</p>
+            </div>
+        </div>
+
+        <!-- TV / SmartDevice Stream Modal -->
+        <div id="tvModal" class="absolute inset-0 bg-slate-950/98 z-[62] hidden flex-col items-center justify-center p-4 backdrop-blur-2xl pointer-events-auto">
+            <div class="bg-slate-900 border border-cyan-500/60 rounded-2xl max-w-2xl w-full p-4 shadow-2xl">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-800 mb-3">
+                    <span class="text-xs font-mono text-cyan-300 font-bold">📲 SMARTDEVICE STREAM • KANAL WÄHLEN</span>
+                    <button onclick="closeTV()" class="px-3 py-1 bg-red-950 text-red-300 rounded-lg text-xs font-bold border border-red-500/50 cursor-pointer">✕</button>
+                </div>
+                <div id="tvChannelsBar" class="flex gap-1.5 overflow-x-auto pb-2 mb-3"></div>
+                <div id="tvScreenArea" class="w-full aspect-video bg-black rounded-xl flex items-center justify-center relative border border-slate-700">
+                    <div id="tvScreenContent" class="text-center text-slate-500 font-mono text-xs p-4">Wähle einen Kanal auf deinem Smartdevice aus...</div>
+                </div>
+                <div class="mt-3 flex gap-2 items-center">
+                    <input type="file" id="tvMediaUpload" accept="video/*,image/*,audio/*" class="text-[10px] text-slate-300 bg-slate-900 border border-slate-700 rounded-lg p-1 flex-1">
+                    <button onclick="uploadToCurrentTVChannel()" class="px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 rounded-lg text-[10px] font-bold cursor-pointer">📤 Live Stream</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAI HUD Overlay -->
+        <div id="saiHUDOverlay" class="sai-hud-overlay hidden">
+            <div class="bg-slate-900 border border-fuchsia-500/60 rounded-2xl p-5 max-w-2xl w-full mx-4">
+                <div class="flex justify-between items-center pb-3 border-b border-fuchsia-900/50 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🧭</span>
+                        <div><h3 class="fairytale-font text-sm font-bold text-fuchsia-400">PIXEL OFFICE 3D HUB • NEON GRID</h3><p class="text-[9px] text-slate-400 font-mono">Situation Awareness Interface (SAi)</p></div>
+                    </div>
+                    <button onclick="toggleSAIHUD()" class="px-3 py-1 bg-fuchsia-950 rounded-lg text-xs font-bold border border-fuchsia-500 text-fuchsia-300 cursor-pointer">✕</button>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-3 bg-slate-950 rounded-xl border border-fuchsia-500/40">
+                        <p class="text-[10px] text-fuchsia-300 font-bold mb-2">🗺️ 3D HUB & NEON GLOWING GRID WALLS:</p>
+                        <svg viewBox="0 0 300 100" class="w-full h-24">
+                            <path d="M20,80 C60,20 120,80 150,50 C180,20 240,80 280,50" stroke="#ec4899" stroke-width="2.5" fill="none" class="sai-path-line"/>
+                            <circle cx="20" cy="80" r="5" fill="#ec4899" class="animate-pulse"/>
+                            <circle cx="150" cy="50" r="5" fill="#38bdf8" class="animate-pulse"/>
+                            <circle cx="280" cy="50" r="5" fill="#f472b6" class="animate-pulse"/>
+                            <text x="10" y="95" fill="#f8fafc" font-size="8" font-family="monospace">Pixel Office</text>
+                            <text x="135" y="40" fill="#f8fafc" font-size="8" font-family="monospace">Dream Woodlands</text>
+                            <text x="250" y="40" fill="#f8fafc" font-size="8" font-family="monospace">Wolf Syndicate</text>
+                        </svg>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="p-2 bg-slate-950 rounded-lg border border-slate-700"><p class="text-[9px] text-slate-400">HUB STAGE</p><p class="text-sm font-bold text-emerald-400">3D/2D Hybrid</p></div>
+                        <div class="p-2 bg-slate-950 rounded-lg border border-slate-700"><p class="text-[9px] text-slate-400">BEWEISE</p><p class="text-xl font-bold text-pink-400" id="saiEvidenceCount">0</p></div>
+                        <div class="p-2 bg-slate-950 rounded-lg border border-slate-700"><p class="text-[9px] text-slate-400">SKILLS</p><p class="text-xl font-bold text-cyan-400" id="saiSkillCount">2</p></div>
+                    </div>
+                    <p class="text-[9px] text-slate-500 font-mono text-center">🐰 Bunny Detektiv Tools: Lupen-Scanner, Quantum Faden, SmartDevice Stream.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Media Viewer Modal -->
+        <div id="mediaViewerModal" class="absolute inset-0 bg-black/95 z-[80] hidden flex-col items-center justify-center p-4 backdrop-blur-xl pointer-events-auto">
+            <div class="bg-slate-900 border border-cyan-500/60 rounded-2xl max-w-2xl w-full p-4 flex flex-col shadow-2xl">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-800 mb-3">
+                    <span id="viewerTitle" class="text-xs font-mono text-cyan-300 font-bold truncate">Memory Core Viewer</span>
+                    <button onclick="closeMediaViewer()" class="px-3 py-1 bg-red-950 text-red-300 rounded-lg text-xs font-bold border border-red-500/50 cursor-pointer">✕</button>
+                </div>
+                <div id="viewerContentArea" class="w-full aspect-video bg-black rounded-xl flex items-center justify-center overflow-hidden relative"></div>
+                <div id="viewerExplanation" class="mt-2 text-[10px] font-mono text-slate-400 p-2 bg-slate-800/50 rounded-lg"></div>
+            </div>
+        </div>
+
+        <!-- CYBERDECK / CHARACTER CARD GAME (Hybrid Animal Characters) -->
+        <div id="characterDeckModal" class="absolute inset-0 bg-slate-950/98 z-[68] hidden flex-col p-4 sm:p-6 backdrop-blur-2xl pointer-events-auto overflow-y-auto">
+            <div class="max-w-5xl w-full mx-auto">
+                <div class="flex justify-between items-center pb-3 border-b border-violet-900/50 mb-4 sticky top-0 bg-slate-950/95 z-10 py-2">
+                    <div><h3 class="fairytale-font text-lg font-bold text-violet-300">📲 CYBERDECK • HYBRID ANIMAL ARCHIVE</h3><p class="text-[9px] text-slate-400 font-mono">Menschen und tierische Hybrid-Charaktere im Dream State Woodlands.</p></div>
+                    <button onclick="toggleCharacterDeck()" class="px-3 py-1 bg-violet-950 rounded-lg text-xs font-bold border border-violet-500 text-violet-300 cursor-pointer">✕</button>
+                </div>
+                <div class="grid lg:grid-cols-[1fr_320px] gap-4">
+                    <div>
+                        <div class="flex gap-2 overflow-x-auto pb-2 mb-3" id="characterFilters"></div>
+                        <div id="characterCardsGrid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="p-4 bg-slate-900 rounded-2xl border border-violet-500/40">
+                            <p class="text-[10px] text-violet-300 font-bold">⚡ SIGNAL CLASH</p>
+                            <p class="text-[9px] text-slate-400 mb-3">Wähle einen Hybrid-Charakter und spiele eine Signal-Runde.</p>
+                            <div id="selectedCharacterPanel" class="text-xs font-mono text-slate-300">Noch keine Karte ausgewählt.</div>
+                            <button onclick="playCharacterClash()" class="w-full mt-3 py-2 bg-violet-950 hover:bg-violet-900 border border-violet-400 text-violet-200 rounded-xl text-[10px] font-bold cursor-pointer">🃏 SIGNAL CLASH STARTEN</button>
+                        </div>
+                        <div class="p-4 bg-slate-900 rounded-2xl border border-amber-500/30">
+                            <p class="text-[10px] text-amber-300 font-bold">🎒 DETEKTIV WERKZEUGE & RELIKTE</p>
+                            <div id="equipmentCollection" class="space-y-2 mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROJECT LAPTOP (GAme Novel) -->
+        <div id="projectLaptopModal" class="absolute inset-0 bg-black/95 z-[69] hidden flex-col items-center justify-center p-4 backdrop-blur-xl pointer-events-auto">
+            <div class="max-w-2xl w-full bg-slate-950 border border-cyan-500/60 rounded-3xl shadow-2xl overflow-hidden">
+                <div class="p-4 border-b border-cyan-900/50 flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] text-cyan-400 font-mono">CYBERTHRILLER GAME NOVEL • GAme</p>
+                        <h3 class="fairytale-font text-lg text-cyan-200">💻 "GAme — Es ist kein Spiel, es ist unser Leben"</h3>
+                    </div>
+                    <button onclick="toggleProjectLaptop()" class="px-3 py-1 bg-slate-900 border border-cyan-500 rounded-lg text-xs text-cyan-300">✕</button>
+                </div>
+                <div class="p-4 space-y-3">
+                    <p class="text-xs text-slate-300 font-mono leading-relaxed">
+                        Die Recherchen von Witness X über offene Verschwörungen, urbane Legenden und das weltweite Netzwerk von Raubtieren und Bad Actors haben sich in den Nachrichten als blutige Realität herausgestellt. Dieser Cyberthriller verbindet Manga/Anime-Kultur, Nerd-Witze in Physik & Programmieren mit der Aufdeckung der ultimativen Wahrheit.
+                    </p>
+                    <div id="projectLinksList" class="grid sm:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quest Log Modal -->
+        <div id="questLogModal" class="absolute inset-y-0 left-0 w-full sm:w-96 bg-slate-950/98 border-r border-amber-500/40 z-40 hidden flex-col p-5 backdrop-blur-2xl shadow-2xl pointer-events-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-amber-900/50 mb-4">
+                <div class="flex items-center gap-2"><span class="text-xl">📋</span><h3 class="fairytale-font text-sm font-bold text-amber-400">DREAM STATE MISSIONS</h3></div>
+                <button onclick="toggleQuestLog()" class="px-2.5 py-1 bg-amber-950 rounded-lg text-xs font-bold border border-amber-500 text-amber-300 cursor-pointer">✕</button>
+            </div>
+            <div id="questLogContent" class="space-y-2.5 font-mono text-xs overflow-y-auto flex-1 pr-1"></div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="absolute inset-0 bg-slate-950/98 z-[65] hidden flex-col items-center justify-center p-4 backdrop-blur-2xl pointer-events-auto">
+            <div class="glass-panel p-6 rounded-2xl max-w-md w-full border border-pink-500/50 shadow-2xl">
+                <div class="flex justify-between items-center pb-3 border-b border-pink-900/50 mb-4">
+                    <h3 class="fairytale-font text-base font-bold text-pink-400">⚙️ GEMINI API EINSTELLUNGEN</h3>
+                    <button onclick="toggleSettings()" class="px-3 py-1 bg-pink-950 rounded-lg text-xs font-bold border border-pink-500 text-pink-300 cursor-pointer">✕</button>
+                </div>
+                <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-cyan-500/50 rounded-xl px-4 py-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400 mb-3" oninput="saveApiKey(this.value)">
+                <p id="apiModeLabel" class="text-[10px] text-slate-300 font-mono mb-3">🔴 Nicht konfiguriert</p>
+                <div class="flex gap-2">
+                    <button onclick="testApiConnection()" class="flex-1 py-2.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 font-bold rounded-xl text-xs cursor-pointer font-mono">🔌 TESTEN</button>
+                    <button onclick="toggleSettings()" class="flex-1 py-2.5 bg-pink-950 hover:bg-pink-900 border border-pink-500 text-pink-200 font-bold rounded-xl text-xs cursor-pointer font-mono">FERTIG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="successModal" class="fixed inset-0 bg-black/95 backdrop-blur-xl z-[90] flex items-center justify-center p-4 hidden pointer-events-auto">
+            <div class="bg-slate-900 border border-pink-500 rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative glow-cyber scene-transition">
+                <div class="w-16 h-16 bg-pink-950 border border-pink-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner animate-bounce">🐰🛡️</div>
+                <h3 class="fairytale-font text-xl font-bold text-pink-400 mb-1">Wolf Syndikat Entlarvt!</h3>
+                <p class="text-xs text-cyan-200 leading-relaxed font-mono">Die Beweise wurden im Dream State gesichert. Das Netzwerk der Bad Actors ist offengelegt.</p>
+                <p class="text-[10px] text-amber-300 font-mono" id="successXpText">+250 XP</p>
+                <div class="space-y-2">
+                    <button onclick="continueAfterSuccess()" class="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:scale-105 text-white rounded-xl font-medium text-xs pixel-font shadow-lg cursor-pointer transition">▶️ WEITER SPIELEN</button>
+                    <button onclick="location.reload()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium text-[10px] font-mono cursor-pointer">🔄 NEU STARTEN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile D-Pad -->
+        <div class="absolute bottom-3 left-3 grid grid-cols-3 gap-1 z-25 sm:hidden opacity-95 pointer-events-auto">
+            <div></div><button id="btnUp" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 text-base">▲</button><div></div>
+            <button id="btnLeft" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 text-base">◀</button>
+            <button id="btnDown" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 text-base">▼</button>
+            <button id="btnRight" class="w-10 h-10 bg-slate-900/95 border border-pink-500/60 rounded-2xl flex justify-center items-center text-pink-300 active:bg-pink-700 text-base">▶</button>
+        </div>
+        <div class="absolute bottom-3 right-3 z-25 sm:hidden opacity-95 pointer-events-auto">
+            <button id="btnAction" class="w-14 h-14 bg-gradient-to-r from-pink-600 to-red-600 border-2 border-pink-300 rounded-full flex justify-center items-center text-white font-bold text-lg active:scale-95 pixel-font shadow-[0_0_20px_rgba(236,72,153,0.7)]">A</button>
+        </div>
+    </main>
+
+    <script>
+        let geminiApiKey = localStorage.getItem('sp_gemini_api_key') || '';
+        let currentArea = 'woodlands'; // 'woodlands', 'pixel_office', 'village', 'boss_arena'
+        let gameStarted = false;
+        let battleActive = false;
+        let dialogueLock = false;
+        let player = { x: 120, y: 240, speed: 3.5 };
+        let keys = {};
+        let playerHP = 100;
+        let playerMaxHP = 100;
+        let playerSP = 3;
+        let playerMaxSP = 5;
+        let playerXP = 150;
+        let playerLevel = 2;
+        let enemyHP = 100;
+        let enemyMaxHP = 100;
+        let enemyDefending = false;
+        let playerDefending = false;
+        let battleTurn = 'player';
+        let collectedEvidence = [];
+        let unlockedSkills = ['heal', 'evidence'];
+        let equippedSkills = ['heal', 'evidence'];
+        const SAVE_KEY = 'dream_state_save_v10';
+        let visitedAreas = new Set(['woodlands']);
+        let discoveredCharacters = ['witness', 'granny_bunny', 'cybersquirrel'];
+        let equipment = ['deck', 'thread_pin'];
+        let selectedCharacterId = 'witness';
+        let projectVisited = false;
+        let chatHistory = [];
+        let currentTVChannel = 0;
+
+        const characterCards = [
+            {id:'witness',name:'Witness X',icon:'🐇',role:'BUNNY DETECTIVE',rarity:'Legendär',power:10,quote:'Die Quantenphysik beweist: Beobachtung ändert den Zustand des Raubtiers.',desc:'Der Held mit Ohren, Cyberdeck und nerdigem Humor in Physik & Anime.'},
+            {id:'granny_bunny',name:'Oma Gertrude',icon:'👵🐇',role:'VILLAGE ELDER',rarity:'Episch',power:8,quote:'Ich koche Möhrensuppe und überliste jede Firewall.',desc:'Hüterin des Memory Core in den Dream State Woodlands.'},
+            {id:'cybersquirrel',name:'Byte Squirrel',icon:'🐿️💻',role:'PROGRAMMER HYBRID',rarity:'Selten',power:7,quote:'const wolfSyndicate = null; // Problem solved!',desc:'Nerdiges Eichhörnchen, das in C++ und React denkt.'},
+            {id:'fox_agent',name:'Kitsune Agent',icon:'🦊🕶️',role:'INFORMANT',rarity:'Selten',power:7,quote:'Die Wahrheit liegt im Quellcode.',desc:'Anime-liebender Fuchs mit Neon-Brille.'},
+            {id:'wolf_boss',name:'Alpha Wolf',icon:'🐺👔',role:'PREDATOR BOSS',rarity:'Boss',power:10,quote:'Ihr könnt GAme nicht stoppen. Es ist euer System.',desc:'Der Anführer des Netzwerks, das sich als reale Bedrohung entlarvt hat.'}
+        ];
+
+        const equipmentCatalog = [
+            {id:'deck',name:'SmartDevice Cyberdeck',icon:'📲',desc:'Zelda-artiges Shiekah Slate des Future-Dreams.',bonus:'+2 Signal'},
+            {id:'thread_pin',name:'Quantum Red Thread Pin',icon:'🧵',desc:'Verbindet Pixel-Office mit 3D-Hubs.',bonus:'+3 Faden'},
+            {id:'magnifier',name:'Detektiv Lupe',icon:'🔎',desc:'Enttarnt versteckte Hitboxes und Nerd-Jokes.',bonus:'+1 Analyse'}
+        ];
+
+        let tvChannels = [
+            { id: 0, name: 'STREAM: GAme Novel', icon: '📺', mediaUrl: null, mediaType: null, description: 'Live-Stream über das kommende Cyberthriller-Buch GAme.' },
+            { id: 1, name: 'CHIP TUNES & LORE', icon: '🎵', mediaUrl: null, mediaType: null, description: 'Hintergrundmusik & Chiptune-Vibes für Dream State.' },
+            { id: 2, name: 'NEON GRID MAPS', icon: '🗺️', mediaUrl: null, mediaType: null, description: 'Simulation der 3D-Hubs mit neonleuchtenden Gittern.' },
+            { id: 3, name: 'MEMORY CORE', icon: '💾', mediaUrl: null, mediaType: null, description: 'Gespeicherte Erinnerungen und Open Conspiracy Wahrheiten.' }
+        ];
+
+        let currentAreaHitboxes = {
+            woodlands: [
+                { id: 'village_hut', x: 220, y: 110, w: 120, h: 100, label: 'Dorf-Hütte', icon: '🏡', action: 'hut' },
+                { id: 'granny_npc', x: 140, y: 180, w: 45, h: 55, label: 'Oma Gertrude', icon: '👵🐇', action: 'granny' },
+                { id: 'squirrel_npc', x: 420, y: 150, w: 40, h: 50, label: 'Byte Squirrel', icon: '🐿️', action: 'squirrel' },
+                { id: 'red_thread_item', x: 350, y: 220, w: 35, h: 35, label: 'Roter Faden', icon: '🧵', action: 'redthread' },
+                { id: 'to_office', x: 560, y: 160, w: 50, h: 80, label: 'Zum Pixel Office', icon: '🏢', action: 'to_office' }
+            ],
+            pixel_office: [
+                { id: 'neon_map', x: 100, y: 100, w: 140, h: 120, label: 'Neon Grid Maps (3D Hub)', icon: '🗺️', action: 'neon_map' },
+                { id: 'cyber_terminal', x: 320, y: 140, w: 90, h: 80, label: 'Cyber Terminal', icon: '💻', action: 'terminal' },
+                { id: 'smartdevice', x: 460, y: 170, w: 50, h: 50, label: 'SmartDevice', icon: '📲', action: 'smartdevice' },
+                { id: 'exit_office', x: 560, y: 160, w: 50, h: 80, label: 'Zurück in Woodlands', icon: '🌲', action: 'to_woodlands' }
+            ]
+        };
+
+        let quests = [
+            { id: 1, name: "Den Roten Faden finden", desc: "Erkunde die Woodlands und finde den Roten Faden.", status: 'active', xp: 50 },
+            { id: 2, name: "Byte Squirrel treffen", desc: "Besprich Programmier-Jokes mit dem Hybrid-Eichhörnchen.", status: 'active', xp: 40 },
+            { id: 3, name: "Pixel Office betreten", desc: "Finde das Pixel Office mit den neonleuchtenden Gitterwänden.", status: 'active', xp: 60 },
+            { id: 4, name: "Wolf Dossier entschlüsseln", desc: "Nutze das SmartDevice für Live-Dossiers.", status: 'active', xp: 100 },
+            { id: 5, name: "GAme Novel entdecken", desc: "Öffne das Projekt-Laptop über den Cyberthriller.", status: 'active', xp: 80 }
+        ];
+
+        let skills = [
+            { id: 'heal', name: '💚 Karotten-Heilung', desc: 'Heilt 30 HP. Kostet 1 SP.', cost: 1, effect: 'heal', power: 30, unlocked: true },
+            { id: 'evidence', name: '📁 Quantum Beweis', desc: 'Richtet 50 Schaden an. Kostet 2 SP.', cost: 2, effect: 'damage', power: 50, unlocked: true },
+            { id: 'quantum_shield', name: '🛡️ Heisenberg Schild', desc: 'Schützt vor nächstem Angriff (Superposition). Kostet 1 SP.', cost: 1, effect: 'shield', power: 0, unlocked: false }
+        ];
+
+        function serializeGameState() {
+            return { currentArea, player, playerHP, playerMaxHP, playerSP, playerMaxSP, playerXP, playerLevel, collectedEvidence, equippedSkills, quests, visitedAreas:[...visitedAreas], discoveredCharacters, equipment, projectVisited, chatHistory };
+        }
+        function saveGameState() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(serializeGameState())); } catch(e){} }
+        function loadGameState() {
+            try {
+                const raw = localStorage.getItem(SAVE_KEY);
+                if (!raw) return;
+                const s = JSON.parse(raw);
+                if (s.currentArea) currentArea = s.currentArea;
+                if (s.player) Object.assign(player, s.player);
+                if (Number.isFinite(s.playerHP)) playerHP = s.playerHP;
+                if (Number.isFinite(s.playerMaxHP)) playerMaxHP = s.playerMaxHP;
+                if (Number.isFinite(s.playerSP)) playerSP = s.playerSP;
+                if (Number.isFinite(s.playerMaxSP)) playerMaxSP = s.playerMaxSP;
+                if (Number.isFinite(s.playerXP)) playerXP = s.playerXP;
+                if (Number.isFinite(s.playerLevel)) playerLevel = s.playerLevel;
+                if (Array.isArray(s.collectedEvidence)) collectedEvidence = s.collectedEvidence;
+                if (Array.isArray(s.equippedSkills)) equippedSkills = s.equippedSkills;
+                if (Array.isArray(s.quests)) quests = s.quests;
+                if (Array.isArray(s.visitedAreas)) visitedAreas = new Set(s.visitedAreas);
+                if (Array.isArray(s.discoveredCharacters)) discoveredCharacters = s.discoveredCharacters;
+                if (Array.isArray(s.equipment)) equipment = s.equipment;
+                projectVisited = !!s.projectVisited;
+                chatHistory = Array.isArray(s.chatHistory) ? s.chatHistory : [];
+            } catch(e){}
+        }
+
+        function saveApiKey(key) {
+            geminiApiKey = key.trim();
+            localStorage.setItem('sp_gemini_api_key', geminiApiKey);
+            updateApiModeLabel();
+        }
+
+        function updateApiModeLabel() {
+            const label = document.getElementById('apiModeLabel');
+            const ns = document.getElementById('neuralStatus');
+            if (geminiApiKey) {
+                label.textContent = '🟢 Konfiguriert — AI aktiv';
+                label.className = 'text-[10px] text-emerald-400 font-mono';
+                ns.textContent = 'Gemini API: Aktiv ✓';
+            } else {
+                label.textContent = '🔴 Nicht konfiguriert';
+                label.className = 'text-[10px] text-slate-300 font-mono';
+                ns.textContent = 'Gemini API: Nicht konfiguriert';
+            }
+        }
+
+        async function testApiConnection() {
+            if (!geminiApiKey) { showToast('⚠️ Bitte API Key eingeben!'); return; }
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: 'Test connection' }] }] })
+                });
+                if (r.ok) showToast('✅ API Verbindung erfolgreich!');
+                else showToast('❌ API Fehler: ' + r.status);
+            } catch(e) { showToast('❌ Fehler: ' + e.message); }
+        }
+
+        async function sendNeuralMessage() {
+            const input = document.getElementById('chatInput');
+            const container = document.getElementById('chatMessagesContainer');
+            const text = input.value.trim();
+            if (!text) return;
+            if (!geminiApiKey) {
+                container.innerHTML += `<div class="bg-red-950/40 p-3 rounded-xl border border-red-500/30 text-red-200">⚠️ API Key fehlt! Bitte in den Einstellungen eintragen.</div>`;
+                input.value = ''; return;
+            }
+            container.innerHTML += `<div class="bg-cyan-950/40 p-3 rounded-xl border border-cyan-500/30 ml-4"><p class="text-pink-400 font-bold mb-1">Du:</p>${text}</div>`;
+            input.value = '';
+            const loadingId = 'l' + Date.now();
+            container.innerHTML += `<div id="${loadingId}" class="bg-slate-900/90 p-3 rounded-xl border border-cyan-500/30 text-slate-400 animate-pulse">🤖 Witness X analysiert Quanten-Logik...</div>`;
+            container.scrollTop = container.scrollHeight;
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: text }] }],
+                        systemInstruction: { parts: [{ text: "Du bist Witness X, ein cleverer Bunny Detektiv im Dream State (Zelda x Pokémon Stil). Du liebst Physikwitze (Schrödingers Katze, Quantenverschränkung), Programmierwitze (Nullpointer, Async/Await), Anime/Manga Referenzen und erzählst vom Cyberthriller GAme über das Wolf-Syndikat. Antworte charmant, humorvoll und prägnant auf Deutsch." }] }
+                    })
+                });
+                const d = await r.json();
+                document.getElementById(loadingId).remove();
+                const aiText = d.candidates?.[0]?.content?.parts?.[0]?.text || "Signal gestört durch Heisenberg-Unschärfe.";
+                container.innerHTML += `<div class="bg-slate-900/90 p-3 rounded-xl border border-cyan-500/30 text-slate-200"><p class="text-cyan-400 font-bold mb-1">🤖 Witness X:</p>${aiText}</div>`;
+            } catch(e) {
+                document.getElementById(loadingId).remove();
+                container.innerHTML += `<div class="bg-red-950/40 p-3 rounded-xl border border-red-500/30 text-red-200">⚠️ Fehler: ${e.message}</div>`;
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function fetchLiveDossier() {
+            const btn = document.getElementById('btnLiveDossier');
+            const resultBox = document.getElementById('dossierResult');
+            if (!geminiApiKey) { resultBox.classList.remove('hidden'); resultBox.innerHTML = '<span class="text-red-400">⚠️ API Key für Live Dossier erforderlich!</span>'; return; }
+            btn.innerText = "ABFRAGE LÄUFT...";
+            btn.disabled = true;
+            resultBox.classList.remove('hidden');
+            resultBox.innerHTML = "Durchsuche Dream State Frequenzen & Netzwerke...";
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Analysiere Berichte über urbane Legenden und offene Verschwörungen, die sich als reale Netzwerke von Bad Actors herausgestellt haben." }] }],
+                        tools: [{ "google_search": {} }]
+                    })
+                });
+                const d = await r.json();
+                const txt = d.candidates?.[0]?.content?.parts?.[0]?.text || "Keine Netz-Daten gefunden.";
+                resultBox.innerHTML = `<p class="text-slate-200">${txt}</p>`;
+                completeQuest(4);
+            } catch(e) { resultBox.innerHTML = `<span class="text-red-400">Fehler: ${e.message}</span>`; }
+            finally { btn.innerText = "WOLF DOSSIER ABFRAGEN"; btn.disabled = false; }
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = 'fixed top-16 left-1/2 -translate-x-1/2 bg-slate-900 border border-pink-500 text-pink-300 px-4 py-2 rounded-xl text-xs font-mono shadow-2xl z-[100] animate-bounce';
+            t.innerText = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        // ==================== DIALOGUE SYSTEM ====================
+        let currentDialogue = null;
+        let dialogueIndex = 0;
+
+        function startDialogue(speaker, text, choices=[], hint='') {
+            dialogueLock = true;
+            const box = document.getElementById('dialogueBox');
+            document.getElementById('speakerName').innerText = speaker;
+            document.getElementById('dialogueText').innerText = text;
+            document.getElementById('sceneHint').innerText = hint;
+            const choicesContainer = document.getElementById('dialogueChoices');
+            choicesContainer.innerHTML = '';
+            choices.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500 text-cyan-200 text-xs font-mono rounded-lg cursor-pointer';
+                btn.innerText = c.text;
+                btn.onclick = () => { c.action(); };
+                choicesContainer.appendChild(btn);
+            });
+            box.classList.remove('hidden');
+        }
+
+        function advanceDialogue() {
+            document.getElementById('dialogueBox').classList.add('hidden');
+            dialogueLock = false;
+        }
+
+        function speakCurrentText() {
+            const txt = document.getElementById('dialogueText').innerText;
+            if ('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(txt);
+                u.lang = 'de-DE';
+                window.speechSynthesis.speak(u);
+            } else { showToast('Sprachausgabe nicht verfügbar'); }
+        }
+
+        // ==================== BATTLE SYSTEM ====================
+        function startBattle(enemyNameStr = 'Corporate Wolf') {
+            battleActive = true;
+            enemyHP = 100;
+            enemyMaxHP = 100;
+            document.getElementById('enemyName').innerText = enemyNameStr;
+            document.getElementById('battleUI').classList.remove('hidden');
+            document.getElementById('battleUI').classList.add('flex');
+            updateBattleHUD();
+        }
+
+        function updateBattleHUD() {
+            document.getElementById('playerHP').style.width = `${Math.max(0, (playerHP / playerMaxHP) * 100)}%`;
+            document.getElementById('playerHPLabel').innerText = `HP: ${playerHP}/${playerMaxHP}`;
+            document.getElementById('playerSPLabel').innerText = `SP: ${playerSP}/${playerMaxSP}`;
+            document.getElementById('enemyHP').style.width = `${Math.max(0, (enemyHP / enemyMaxHP) * 100)}%`;
+            document.getElementById('enemyHPLabel').innerText = `HP: ${enemyHP}/${enemyMaxHP}`;
+        }
+
+        function executeBattleAction(action) {
+            if (battleTurn !== 'player') return;
+            const log = document.getElementById('battleLog');
+            if (action === 'attack') {
+                const dmg = 25 + Math.floor(Math.random() * 15);
+                enemyHP -= dmg;
+                log.innerHTML = `🐰 Witness X zitiert die Heisenberg-Unschärfe und trifft den Wolf für ${dmg} Schaden! (Wie ein perfekter Anime-Plot-Twist)`;
+            } else if (action === 'dance') {
+                const dmg = 35;
+                enemyHP -= dmg;
+                log.innerHTML = `💃 Witness X führt einen Quanten-Flashmob auf! Wolf erleidet ${dmg} Programmier-Schaden (Segmentation Fault)!`;
+            } else if (action === 'heal') {
+                if (playerSP < 1) { log.innerHTML = `⚠️ Nicht genug SP!`; return; }
+                playerSP -= 1;
+                playerHP = Math.min(playerMaxHP, playerHP + 30);
+                log.innerHTML = `💚 Karotten-Smoothie getrunken! +30 HP geheilt.`;
+            } else if (action === 'card') {
+                const dmg = 45;
+                enemyHP -= dmg;
+                log.innerHTML = `🃏 Roter Faden zieht sich zusammen! Der Wolf strauchelt unter der Wucht der Wahrheit (-${dmg} HP).`;
+            } else if (action === 'defend') {
+                playerDefending = true;
+                log.innerHTML = `🛡️ Witness X geht in Quantum-Superposition (Verteidigung aktiv)!`;
+            } else if (action === 'evidence') {
+                if (playerSP < 2) { log.innerHTML = `⚠️ Nicht genug SP (braucht 2)!`; return; }
+                playerSP -= 2;
+                const dmg = 55;
+                enemyHP -= dmg;
+                log.innerHTML = `📁 Wolf Dossier geöffnet! Die Fakten treffen den Boss für ${dmg} Schaden!`;
+            }
+            updateBattleHUD();
+            if (enemyHP <= 0) {
+                setTimeout(() => {
+                    document.getElementById('battleUI').classList.add('hidden');
+                    document.getElementById('battleUI').classList.remove('flex');
+                    battleActive = false;
+                    playerXP += 100;
+                    showToast('🎉 Kampf gewonnen! +100 XP');
+                    checkLevelUp();
+                }, 1500);
+                return;
+            }
+            battleTurn = 'enemy';
+            setTimeout(() => {
+                let enemyDmg = 20 + Math.floor(Math.random() * 15);
+                if (playerDefending) { enemyDmg = Math.floor(enemyDmg / 2); playerDefending = false; }
+                playerHP -= enemyDmg;
+                log.innerHTML = `🐺 Der Alpha Wolf kontert mit Desinformation! Witness X verliert ${enemyDmg} HP.`;
+                updateBattleHUD();
+                if (playerHP <= 0) {
+                    log.innerHTML = `💀 Witness X wurde überwältigt... Aber im Dream State respawned man mit Code!`;
+                    playerHP = playerMaxHP;
+                }
+                battleTurn = 'player';
+            }, 1200);
+        }
+
+        // ==================== MODALS & APPS ====================
+        function toggleNeuralChat() { const m = document.getElementById('neuralChatModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); }
+        function toggleWolfFiles() { const m = document.getElementById('wolfFilesModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); renderEvidenceList(); }
+        function toggleQuestLog() { const m = document.getElementById('questLogModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); renderQuestLog(); }
+        function toggleSkillMenu() { const m = document.getElementById('skillMenuModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); renderSkillMenu(); }
+        function toggleSAIHUD() { document.getElementById('saiHUDOverlay').classList.toggle('hidden'); }
+        function openCyberdeck() { toggleCharacterDeck(); }
+        function toggleCharacterDeck() { const m = document.getElementById('characterDeckModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); if(!m.classList.contains('hidden')) renderCharacterDeck(); }
+        function toggleProjectLaptop() { const m = document.getElementById('projectLaptopModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); if(!m.classList.contains('hidden')) { document.getElementById('projectLinksList').innerHTML = `<a href="https://github.com/worldpeacebtn/GAmeHUD" target="_blank" rel="noopener noreferrer" onclick="projectVisited=true;completeQuest(5);saveGameState();" class="block p-4 rounded-2xl bg-slate-900 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition"><p class="font-bold text-cyan-200 text-xs">🌐 GAmeHUD auf GitHub</p><p class="text-[9px] text-slate-400 mt-1">Erkunde das Open Source Cyberthriller Repository.</p><p class="text-[8px] text-cyan-500 mt-2">SIGNAL ÖFFNEN ↗</p></a>`; } }
+        function toggleSettings() { const m = document.getElementById('settingsModal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); }
+        function triggerSuccess() { document.getElementById('successModal').classList.remove('hidden'); }
+        function continueAfterSuccess() { document.getElementById('successModal').classList.add('hidden'); }
+
+        function renderCharacterDeck() {
+            const grid = document.getElementById('characterCardsGrid');
+            const panel = document.getElementById('selectedCharacterPanel');
+            const eq = document.getElementById('equipmentCollection');
+            if(!grid) return;
+            grid.innerHTML = characterCards.map(c => {
+                const found = discoveredCharacters.includes(c.id);
+                return `<div class="p-3 rounded-2xl border ${found?'border-violet-500/60 bg-violet-950/30':'border-slate-700 bg-slate-900/60'} cursor-pointer hover:scale-[1.02] transition" onclick="selectCharacterCard('${c.id}')"><div class="flex items-start gap-3"><div class="text-3xl">${found?c.icon:'❔'}</div><div class="flex-1"><p class="font-bold text-violet-200 text-xs">${found?c.name:'UNBEKANNT'}</p><p class="text-[8px] text-cyan-400 font-mono">${found?c.role:'VERSCHLÜSSELT'}</p><p class="text-[9px] text-slate-400 mt-1">${found?c.desc:'Hybrid Charakter im Dream State.'}</p></div></div><div class="mt-2 text-[8px] font-mono text-amber-300">${found?`⚡ ${c.power} • ${c.rarity}`:'🔒 gesperrt'}</div></div>`;
+            }).join('');
+            const c = characterCards.find(x => x.id === selectedCharacterId);
+            panel.innerHTML = c && discoveredCharacters.includes(c.id) ? `<div class="text-2xl">${c.icon}</div><p class="font-bold text-violet-200">${c.name}</p><p class="text-[9px] text-cyan-300">${c.role} • ⚡${c.power}</p><p class="text-[10px] text-slate-300 mt-2">„${c.quote}“</p>` : 'Keine Karte ausgewählt.';
+            eq.innerHTML = equipment.map(id => {
+                const e = equipmentCatalog.find(x => x.id === id);
+                return e ? `<div class="p-2 rounded-lg bg-slate-950 border border-amber-500/30"><span>${e.icon} <b class="text-amber-200">${e.name}</b></span><p class="text-[8px] text-slate-400">${e.desc} • ${e.bonus}</p></div>` : '';
+            }).join('');
+        }
+
+        function selectCharacterCard(id) {
+            if(!discoveredCharacters.includes(id)) { showToast('🔒 Karte noch nicht entschlüsselt.'); return; }
+            selectedCharacterId = id;
+            renderCharacterDeck();
+        }
+
+        function playCharacterClash() {
+            const c = characterCards.find(x => x.id === selectedCharacterId);
+            if(!c) { showToast('Wähle eine Karte!'); return; }
+            const roll = Math.floor(Math.random()*6) + 1 + c.power;
+            showToast(`🎲 Signal Clash Roll: ${roll}! Kiez-Faden stabilisiert.`);
+            playerXP += 25;
+            checkLevelUp();
+        }
+
+        function renderSkillMenu() {
+            const allContainer = document.getElementById('allSkillsContainer');
+            const eqContainer = document.getElementById('equippedSkillsContainer');
+            allContainer.innerHTML = '';
+            eqContainer.innerHTML = '';
+            skills.forEach(s => {
+                const div = document.createElement('div');
+                div.className = `skill-slot ${equippedSkills.includes(s.id)?'equipped':''} ${!s.unlocked?'locked':''}`;
+                div.innerHTML = `<p class="text-sm font-bold">${s.name}</p><p class="text-[9px] text-slate-400">${s.desc}</p><p class="text-[8px] text-amber-400">SP: ${s.cost}</p>`;
+                if(s.unlocked && equippedSkills.includes(s.id)) {
+                    div.onclick = () => { equippedSkills = equippedSkills.filter(id => id !== s.id); renderSkillMenu(); };
+                } else if(s.unlocked && equippedSkills.length < 3) {
+                    div.onclick = () => { if(!equippedSkills.includes(s.id)) { equippedSkills.push(s.id); renderSkillMenu(); } };
+                }
+                allContainer.appendChild(div);
+            });
+            equippedSkills.forEach(sid => {
+                const s = skills.find(sk => sk.id === sid);
+                if(s) {
+                    const chip = document.createElement('span');
+                    chip.className = 'tag-badge bg-emerald-900 text-emerald-300 cursor-pointer';
+                    chip.innerText = s.name;
+                    eqContainer.appendChild(chip);
+                }
+            });
+        }
+
+        function renderQuestLog() {
+            const c = document.getElementById('questLogModal');
+            document.getElementById('questLogContent').innerHTML = quests.map(q =>
+                `<div class="quest-item ${q.status==='completed'?'completed':''}"><span class="text-base">${q.status==='completed'?'✅':'⏳'}</span><div><p class="font-bold text-slate-200">${q.name}</p><p class="text-[10px] text-slate-400">${q.desc}</p><p class="text-[9px] text-amber-400">+${q.xp} XP</p></div></div>`
+            ).join('');
+        }
+
+        function completeQuest(id) {
+            const q = quests.find(q => q.id === id);
+            if(q && q.status !== 'completed') {
+                q.status = 'completed';
+                playerXP += q.xp;
+                checkLevelUp();
+                showToast(`✅ Quest geschafft: ${q.name} (+${q.xp} XP)`);
+                saveGameState();
+            }
+        }
+
+        function checkLevelUp() {
+            while(playerXP >= playerLevel * 200) {
+                playerLevel++;
+                playerMaxHP += 25;
+                playerHP = playerMaxHP;
+                playerMaxSP = Math.min(8, playerMaxSP + 1);
+                playerSP = playerMaxSP;
+                showToast(`⬆️ Level Up! Level ${playerLevel} • HP+25 • SP+1`);
+            }
+        }
+
+        function renderEvidenceList() {
+            const container = document.getElementById('collectedEvidenceList');
+            if(!container) return;
+            if(collectedEvidence.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-[10px]">📂 Noch keine Beweise im Memory Core gesammelt...</p>';
+                return;
+            }
+            container.innerHTML = collectedEvidence.map(e =>
+                `<div class="evidence-card"><p class="font-bold text-pink-300 text-[10px]">${e.icon} ${e.name}</p><p class="text-[9px] text-slate-400">${e.desc}</p></div>`
+            ).join('');
+        }
+
+        function collectEvidence(item) {
+            if(!collectedEvidence.find(e => e.id === item.id)) {
+                collectedEvidence.push(item);
+                document.getElementById('saiEvidenceCount').innerText = collectedEvidence.length;
+                showToast(`📂 Memory Core Eintrag: ${item.name}`);
+                saveGameState();
+            }
+        }
+
+        // ==================== CANVAS GAME LOOP ====================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width || window.innerWidth;
+            canvas.height = rect.height || 450;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        window.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault();
+        });
+        window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+        // Mobile D-Pad listeners
+        ['Up','Down','Left','Right','Action'].forEach(dir => {
+            const btn = document.getElementById('btn' + dir);
+            if(btn) {
+                btn.addEventListener('touchstart', e => { e.preventDefault(); keys[dir.toLowerCase() === 'action' ? ' ' : 'arrow' + dir.toLowerCase()] = true; if(dir==='Action') checkInteraction(); });
+                btn.addEventListener('touchend', e => { e.preventDefault(); keys[dir.toLowerCase() === 'action' ? ' ' : 'arrow' + dir.toLowerCase()] = false; });
+                btn.addEventListener('mousedown', e => { keys[dir.toLowerCase() === 'action' ? ' ' : 'arrow' + dir.toLowerCase()] = true; if(dir==='Action') checkInteraction(); });
+                btn.addEventListener('mouseup', e => { keys[dir.toLowerCase() === 'action' ? ' ' : 'arrow' + dir.toLowerCase()] = false; });
+            }
+        });
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('startScreen').style.display = 'none';
+            gameStarted = true;
+            loadGameState();
+            startDialogue('Witness X', 'Willkommen im Dream State! Als Bunny Detektiv steuern wir durch die Woodlands, das Pixel Office mit neonleuchtenden Gitterwänden und entlarven das Wolf Syndikat im Cyberthriller GAme.', [
+                { text: 'Los geht es! 🚀', action: () => advanceDialogue() }
+            ], 'Drücke WASD oder die Pfeiltasten zum Bewegen');
+        });
+
+        function updatePlayer() {
+            if(dialogueLock || battleActive) return;
+            let dx = 0, dy = 0;
+            if(keys['arrowleft'] || keys['a']) dx -= player.speed;
+            if(keys['arrowright'] || keys['d']) dx += player.speed;
+            if(keys['arrowup'] || keys['w']) dy -= player.speed;
+            if(keys['arrowdown'] || keys['s']) dy += player.speed;
+
+            player.x += dx;
+            player.y += dy;
+
+            // Boundaries
+            player.x = Math.max(30, Math.min(canvas.width - 60, player.x));
+            player.y = Math.max(60, Math.min(canvas.height - 70, player.y));
+        }
+
+        function checkInteraction() {
+            if(dialogueLock) { advanceDialogue(); return; }
+            const hitboxes = currentAreaHitboxes[currentArea] || [];
+            for(let hb of hitboxes) {
+                if(Math.abs(player.x - hb.x) < 55 && Math.abs(player.y - hb.y) < 55) {
+                    handleHitboxAction(hb.action);
+                    return;
+                }
+            }
+        }
+
+        function handleHitboxAction(action) {
+            if(action === 'granny') {
+                startDialogue('Oma Gertrude (Bunny Hybrid)', 'Hallo Enkelchen! Ich koche Karotten-Suppe und behüte den Memory Core. Die Wolf Syndikat Bosse versuchen unsere Erinnerungen zu löschen!', [
+                    { text: 'Beweise übergeben', action: () => { advanceDialogue(); triggerSuccess(); completeQuest(4); } },
+                    { text: 'Plaudern über Physik', action: () => { advanceDialogue(); startDialogue('Witness X', 'Oma, hast du gewusst, dass Quantenverschränkung wie unser Kiez-Zusammenhalt ist? Man misst an einem Ort und spürt es überall!'); } }
+                ], 'Drücke A zum Interagieren');
+                discoverCharacter('granny_bunny');
+            } else if(action === 'squirrel') {
+                startDialogue('Byte Squirrel', 'const success = await exploreDreamState(); // Wenn das Wolf-Netzwerk uns blockiert, refactoren wir einfach die Realität mit C++ und React!', [
+                    { text: 'Skill freischalten', action: () => { advanceDialogue(); unlockSkill('quantum_shield'); completeQuest(2); } },
+                    { text: 'Schliessen', action: () => advanceDialogue() }
+                ]);
+                discoverCharacter('cybersquirrel');
+            } else if(action === 'redthread') {
+                collectEvidence({id:'thread_evidence', name:'Der Rote Faden', icon:'🧵', desc:'Verbindet alle Story-Fäden des Dream State.'});
+                completeQuest(1);
+                startDialogue('Witness X', 'Du hast den Roten Faden gefunden! Dieser verbindet die 2D-Holzwelt mit den 3D-Neon-Hubs des Pixel Office.', [{text:'Super!', action:() => advanceDialogue()}]);
+            } else if(action === 'to_office') {
+                currentArea = 'pixel_office';
+                player.x = 100; player.y = 200;
+                visitedAreas.add('pixel_office');
+                completeQuest(3);
+                showToast('🏢 Betrete das Pixel Office mit neonleuchtenden Gitterwänden!');
+            } else if(action === 'to_woodlands') {
+                currentArea = 'woodlands';
+                player.x = 500; player.y = 200;
+                showToast('🌲 Zurück in die Dream State Woodlands!');
+            } else if(action === 'neon_map') {
+                toggleSAIHUD();
+            } else if(action === 'terminal') {
+                toggleWolfFiles();
+            } else if(action === 'smartdevice') {
+                openCyberdeck();
+            } else if(action === 'hut') {
+                startDialogue('Dorf-Hütte', 'Hier ruhen die Erinnerungen des Dream State. Ein sicherer Zufluchtsort vor dem Wolf Syndikat.', [{text:'Weiter', action:()=>advanceDialogue()}]);
+            }
+        }
+
+        function unlockSkill(id) {
+            const s = skills.find(sk => sk.id === id);
+            if(s && !s.unlocked) {
+                s.unlocked = true;
+                showToast(`⚔️ Neuer Skill freigeschaltet: ${s.name}!`);
+                if(!equippedSkills.includes(id) && equippedSkills.length < 3) equippedSkills.push(id);
+            }
+        }
+
+        function renderGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if(currentArea === 'woodlands') {
+                // Background Woodlands (Zelda / Pokémon style)
+                ctx.fillStyle = '#064e3b';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Grass patches
+                ctx.fillStyle = '#047857';
+                for(let i=50; i<canvas.width; i+=120) {
+                    ctx.fillRect(i, 80, 70, 40);
+                    ctx.fillRect(i+40, 260, 80, 50);
+                }
+                // Woodland Trees
+                ctx.fillStyle = '#022c22';
+                ctx.beginPath(); ctx.arc(100, 70, 45, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(350, 70, 50, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(520, 70, 40, 0, Math.PI*2); ctx.fill();
+
+                // Village Hut
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(220, 110, 120, 80);
+                ctx.fillStyle = '#991b1b';
+                ctx.beginPath(); ctx.moveTo(210, 110); ctx.lineTo(280, 60); ctx.lineTo(350, 110); ctx.fill();
+
+            } else if(currentArea === 'pixel_office') {
+                // Pixel Office with Neon Glowing Grid Walls
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Neon glowing grid lines
+                ctx.strokeStyle = 'rgba(236, 72, 153, 0.35)';
+                ctx.lineWidth = 1.5;
+                for(let x=0; x<canvas.width; x+=40) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+                }
+                for(let y=0; y<canvas.height; y+=40) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+                }
+                // Neon glowing 3D hub portal
+                ctx.strokeStyle = '#06b6d4';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(90, 90, 160, 140);
+            }
+
+            // Render Hitboxes & Icons
+            const hitboxes = currentAreaHitboxes[currentArea] || [];
+            let nearAny = false;
+            hitboxes.forEach(hb => {
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
+                ctx.fillRect(hb.x, hb.y, hb.w, hb.h);
+                ctx.strokeStyle = '#ec4899';
+                ctx.strokeRect(hb.x, hb.y, hb.w, hb.h);
+                ctx.font = '22px monospace';
+                ctx.fillText(hb.icon, hb.x + hb.w/2 - 12, hb.y + hb.h/2 + 8);
+
+                if(Math.abs(player.x - hb.x) < 55 && Math.abs(player.y - hb.y) < 55) {
+                    nearAny = true;
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.font = 'bold 11px monospace';
+                    ctx.fillText(`[A / Tap] ${hb.label}`, hb.x, hb.y - 8);
+                }
+            });
+
+            // Render Player (Bunny Detective Witness X)
+            ctx.fillStyle = '#f472b6';
+            ctx.beginPath();
+            ctx.arc(player.x + 20, player.y + 20, 18, 0, Math.PI*2);
+            ctx.fill();
+            ctx.strokeStyle = '#db2777';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Bunny Ears
+            ctx.fillStyle = '#f472b6';
+            ctx.fillRect(player.x + 10, player.y - 6, 6, 16);
+            ctx.fillRect(player.x + 24, player.y - 6, 6, 16);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px monospace';
+            ctx.fillText('Witness X 🐇', player.x - 10, player.y - 14);
+
+            // Random Battle Trigger (Zelda/Pokémon style encounter in Woodlands)
+            if(currentArea === 'woodlands' && (Math.abs(player.x - 300) > 150) && Math.random() < 0.0012 && !battleActive && !dialogueLock) {
+                startBattle('Corporate Wolf Enforcer');
+            }
+        }
+
+        function gameLoop() {
+            if(gameStarted) {
+                updatePlayer();
+                renderGame();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+        requestAnimationFrame(gameLoop);
+
+        // Load saved state on start
+        loadGameState();
+        updateApiModeLabel();
+    </script>
+</body>
+</html>
