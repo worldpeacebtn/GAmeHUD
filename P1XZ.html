@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CYBER-PIXEL STUDIO // CyberGlitch & Gamebook HUD v7.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#0a0b10',
+                            card: '#131520',
+                            border: '#2a2f45',
+                            neonPink: '#ff2a6d',
+                            neonBlue: '#05d9e8',
+                            neonYellow: '#fffc00',
+                            neonGreen: '#00ff66',
+                            neonPurple: '#b5179e',
+                            darkBlue: '#01012b'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"Courier New"', 'Courier', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap');
+        
+        .font-pixel { font-family: 'Press Start 2P', monospace; }
+        .font-tech { font-family: 'Share Tech Mono', monospace; }
+        
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #131520; }
+        ::-webkit-scrollbar-thumb { background: #2a2f45; border-radius: 2px; }
+
+        .checkerboard {
+            background-image: linear-gradient(45deg, #1f2438 25%, transparent 25%), 
+                              linear-gradient(-45deg, #1f2438 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #1f2438 75%), 
+                              linear-gradient(-45deg, transparent 75%, #1f2438 75%);
+            background-size: 12px 12px;
+            background-position: 0 0, 0 6px, 6px -6px, -6px 0px;
+            background-color: #121522;
+        }
+
+        body { overscroll-behavior: none; touch-action: manipulation; }
+        
+        /* Film Negative Style Timeline */
+        .film-negative {
+            background: #111;
+            border: 2px dashed #333;
+            position: relative;
+        }
+        .film-negative::before, .film-negative::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; height: 4px;
+            background: repeating-linear-gradient(90deg, #000, #000 6px, #444 6px, #444 12px);
+            z-index: 5;
+        }
+        .film-negative::before { top: 1px; }
+        .film-negative::after { bottom: 1px; }
+
+        .speech-bubble {
+            position: relative;
+            background: #131520;
+            border: 2px solid #05d9e8;
+            border-radius: 6px;
+            padding: 4px 8px;
+            color: #fff;
+            font-size: 9px;
+            font-family: 'Press Start 2P', monospace;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0;
+            border-style: solid;
+            border-color: #05d9e8 transparent;
+            display: block;
+            width: 0;
+        }
+
+        /* CyberGlitch FX */
+        .cyber-glitch-active {
+            animation: glitch-anim 0.3s steps(2) infinite, color-invert 0.2s ease-in-out;
+            filter: invert(100%) hue-rotate(180deg) contrast(200%);
+        }
+
+        @keyframes glitch-anim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-3px, 3px); }
+            40% { transform: translate(-3px, -3px); }
+            60% { transform: translate(3px, 3px); }
+            80% { transform: translate(3px, -3px); }
+            100% { transform: translate(0); }
+        }
+
+        /* Virtual Wheel Sliders */
+        .wheel-slider {
+            background: radial-gradient(circle, #1f2438 0%, #0a0b10 100%);
+            border: 2px solid #05d9e8;
+            border-radius: 9999px;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="bg-cyber-bg text-gray-100 font-tech h-screen w-screen overflow-hidden flex flex-col selection:bg-cyber-neonPink selection:text-white relative">
+
+    <!-- Top Retro Header Bar -->
+    <header class="bg-cyber-card border-b-2 border-cyber-border px-3 py-1.5 flex items-center justify-between shadow-lg z-30 flex-shrink-0">
+        <div class="flex items-center space-x-2">
+            <span class="text-lg animate-pulse">🐱‍💻</span>
+            <div>
+                <h1 class="font-pixel text-[9px] text-cyber-neonBlue tracking-wider">CYBER_STUDIO <span class="text-cyber-neonYellow">v7.0</span></h1>
+                <p class="text-[7px] text-gray-400 font-mono">SCHRÖDINGER CAT // GAMEBOOK EDITION</p>
+            </div>
+        </div>
+
+        <!-- Top Controls -->
+        <div class="flex items-center space-x-1.5">
+            <button onclick="triggerFloppySaveAll()" class="px-2 py-1 bg-cyber-neonGreen text-cyber-bg text-[8px] font-pixel font-bold rounded border border-green-400 shadow flex items-center space-x-1">
+                <span>💾 SAVE</span>
+            </button>
+            <span class="text-base">🐰⚡</span>
+        </div>
+    </header>
+
+    <!-- Film-Negative Timeline Strip -->
+    <div class="bg-cyber-card border-b border-cyber-border px-2 py-1 z-20 flex-shrink-0">
+        <div class="flex justify-between items-center mb-1">
+            <div class="flex items-center space-x-2">
+                <span class="font-pixel text-[8px] text-cyber-neonYellow">🎞️ FILM NEGATIVES (<span id="layer-count">0</span>)</span>
+                <label class="text-[8px] font-mono text-gray-400 flex items-center space-x-1 cursor-pointer">
+                    <input type="checkbox" id="vid-stream-toggle" onchange="toggleVideoStream()" class="accent-cyber-neonPink">
+                    <span>MP4 STREAM</span>
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="document.getElementById('sprite-upload-input').click()" class="text-[8px] font-pixel text-cyber-neonBlue hover:underline">+ UPLOAD MP4/SHEET</button>
+                <input type="file" id="sprite-upload-input" class="hidden" accept="image/*,.gif,video/mp4" onchange="handleSpriteUpload(event)">
+            </div>
+        </div>
+        <div id="film-roll-container" class="film-negative flex space-x-2 overflow-x-auto py-1.5 px-2 rounded min-h-[52px] items-center">
+            <span class="text-[8px] text-gray-500 font-mono px-2">Upload character sheets or MP4s to stream frames into film negatives.</span>
+        </div>
+    </div>
+
+    <!-- MAIN FIXED CANVAS VIEWPORT (With Spherical Wheel Dials on Frame Border) -->
+    <main class="flex-1 w-full flex flex-col items-center justify-center p-1.5 relative overflow-hidden z-10">
+        
+        <div id="canvas-card-box" class="w-full max-w-sm bg-cyber-card border border-cyber-border rounded-xl p-2 shadow-2xl relative flex flex-col items-center">
+            
+            <!-- Canvas Tool Sub-Header -->
+            <div class="w-full flex justify-between items-center mb-1 px-1">
+                <div class="flex items-center space-x-1">
+                    <span class="font-pixel text-[8px] text-cyber-neonPink">GRID</span>
+                    <select id="canvas-size-select" onchange="resizeCanvasFromSelect()" class="bg-cyber-bg border border-cyber-border text-[8px] rounded p-0.5 text-white">
+                        <option value="16">16x16</option>
+                        <option value="24">24x24</option>
+                        <option value="32" selected>32x32</option>
+                        <option value="64">64x64</option>
+                        <option value="128">128x128</option>
+                    </select>
+                </div>
+                
+                <!-- Tools -->
+                <div class="flex items-center space-x-1 font-pixel text-[7px]">
+                    <button onclick="adjustZoom(-0.25)" class="px-1 py-0.5 bg-cyber-border text-gray-300 rounded">🔍-</button>
+                    <span id="zoom-level-label" class="text-[7px] text-cyber-neonYellow font-mono">1.0x</span>
+                    <button onclick="adjustZoom(0.25)" class="px-1 py-0.5 bg-cyber-border text-gray-300 rounded">🔍+</button>
+                    <button onclick="setBrushShape('pixel')" id="tool-shape-pixel" class="px-1.5 py-0.5 bg-cyber-neonBlue text-cyber-bg font-bold rounded">✏️</button>
+                    <button onclick="setBrushShape('circle')" id="tool-shape-circle" class="px-1.5 py-0.5 bg-cyber-border text-gray-300 rounded">⚪</button>
+                    <button onclick="demaskStickerBackground()" class="px-1.5 py-0.5 bg-purple-900/80 text-purple-200 border border-purple-500 rounded" title="Demask Sticker Cutout">✂️ DEMASK</button>
+                    <button onclick="clearCanvas()" class="px-1 py-0.5 bg-red-900/60 text-red-200 rounded">CLR</button>
+                </div>
+            </div>
+
+            <!-- Canvas Viewport with Border Orbital Wheels -->
+            <div class="w-full flex flex-col items-center justify-center bg-cyber-bg p-1.5 rounded-lg border border-cyber-border relative overflow-hidden">
+                
+                <!-- Video Source element -->
+                <video id="bg-video-element" class="hidden" loop muted playsinline></video>
+                
+                <!-- Left Virtual Orbital Dial Slider (X/Y Shift) -->
+                <div id="wheel-dial-xy" class="wheel-slider absolute left-1 top-1/2 transform -translate-y-1/2 w-8 h-20 z-20 flex flex-col items-center justify-between p-1 opacity-75 hover:opacity-100 cursor-ns-resize" title="Swipe X/Y Frame Shift">
+                    <span class="text-[6px] text-cyber-neonBlue font-pixel">Y</span>
+                    <div class="w-3 h-3 rounded-full bg-cyber-neonBlue animate-ping"></div>
+                    <span class="text-[6px] text-cyber-neonBlue font-pixel">X</span>
+                </div>
+
+                <!-- Right Virtual Orbital Dial Slider (Zoom/Scale) -->
+                <div id="wheel-dial-scale" class="wheel-slider absolute right-1 top-1/2 transform -translate-y-1/2 w-8 h-20 z-20 flex flex-col items-center justify-between p-1 opacity-75 hover:opacity-100 cursor-ns-resize" title="Swipe Layer Scale">
+                    <span class="text-[6px] text-cyber-neonYellow font-pixel">MAX</span>
+                    <div class="w-3 h-3 rounded-full bg-cyber-neonYellow animate-pulse"></div>
+                    <span class="text-[6px] text-cyber-neonYellow font-pixel">MIN</span>
+                </div>
+
+                <div id="canvas-zoom-container" class="checkerboard rounded flex items-center justify-center shadow-inner relative transition-transform duration-150 origin-center max-w-full" style="width:260px; height:260px;">
+                    <!-- Layer 1: Background Reference / Video Frame -->
+                    <canvas id="reference-canvas" class="absolute pointer-events-none opacity-40 image-rendering-pixelated" width="260" height="260"></canvas>
+                    <!-- Layer 2: Main Interactive Pixel Canvas -->
+                    <canvas id="pixel-canvas" class="cursor-crosshair shadow-2xl border border-cyber-border touch-none relative z-10" width="260" height="260"></canvas>
+                </div>
+
+                <!-- Speech Overlay -->
+                <div id="canvas-speech-overlay" class="hidden absolute top-2 left-1/2 transform -translate-x-1/2 z-20 speech-bubble max-w-[200px] text-center shadow-2xl">
+                    <span id="speech-overlay-text">Cyber note linked!</span>
+                </div>
+
+                <!-- Canvas Info Bar -->
+                <div class="w-full flex justify-between items-center text-[8px] text-gray-400 px-1 mt-1 font-mono">
+                    <span>X:<strong id="cursor-x" class="text-cyber-neonBlue">0</strong> Y:<strong id="cursor-y" class="text-cyber-neonBlue">0</strong> Shift:<strong id="shift-offset-label" class="text-cyber-neonYellow">0,0</strong></span>
+                    <span>Tool: <span id="active-tool-label" class="text-cyber-neonYellow">PIXEL BRUSH</span></span>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ================= OVERLAY 1: TAMAGOTCHI STAGE SIMULATION ================= -->
+    <div id="overlay-sim" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-40 p-3 flex flex-col items-center justify-center">
+        <div class="bg-cyber-card border-2 border-cyber-neonGreen rounded-xl p-3 max-w-sm w-full shadow-2xl space-y-2 relative">
+            <div class="flex justify-between items-center border-b border-cyber-border pb-1.5">
+                <h2 class="font-pixel text-[9px] text-cyber-neonGreen">🕹️ TAMAGOTCHI STAGE ROOM</h2>
+                <button onclick="toggleOverlay('sim')" class="text-gray-400 hover:text-white font-pixel text-xs">✕</button>
+            </div>
+
+            <!-- Stage Room Canvas -->
+            <div id="sim-room-container" class="w-full h-52 checkerboard rounded-lg border-2 border-cyber-border relative overflow-hidden">
+                <div onclick="triggerTamagotchiAction('SLEEP', 30, 30)" class="absolute top-3 left-3 w-10 h-10 border-2 border-green-400 bg-green-500/20 rounded flex items-center justify-center text-[7px] font-pixel text-green-300 cursor-pointer">
+                    🛏️ BED
+                </div>
+                <div onclick="triggerTamagotchiAction('WORK', 180, 30)" class="absolute top-3 right-3 w-10 h-10 border-2 border-green-400 bg-green-500/20 rounded flex items-center justify-center text-[7px] font-pixel text-green-300 cursor-pointer">
+                    💻 DESK
+                </div>
+                <div onclick="triggerTamagotchiAction('EAT', 30, 120)" class="absolute bottom-3 left-3 w-10 h-10 border-2 border-green-400 bg-green-500/20 rounded flex items-center justify-center text-[7px] font-pixel text-green-300 cursor-pointer">
+                    🍕 EAT
+                </div>
+                <div onclick="triggerTamagotchiAction('GAME', 180, 120)" class="absolute bottom-3 right-3 w-10 h-10 border-2 border-green-400 bg-green-500/20 rounded flex items-center justify-center text-[7px] font-pixel text-green-300 cursor-pointer">
+                    🎮 GAME
+                </div>
+
+                <div id="sim-avatar" class="absolute w-10 h-10 transition-all duration-700 ease-in-out flex flex-col items-center" style="top: 80px; left: 110px;">
+                    <div id="sim-speech-bubble" class="hidden speech-bubble -top-7 text-[6px] whitespace-nowrap">Zzz...</div>
+                    <img id="sim-avatar-img" src="" class="w-full h-full object-contain image-rendering-pixelated">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-1 font-pixel text-[7px]">
+                <button onclick="triggerTamagotchiAction('SLEEP', 30, 30)" class="py-1.5 bg-cyber-border text-cyber-neonYellow rounded">BED</button>
+                <button onclick="triggerTamagotchiAction('WORK', 180, 30)" class="py-1.5 bg-cyber-border text-cyber-neonBlue rounded">DESK</button>
+                <button onclick="triggerTamagotchiAction('EAT', 30, 120)" class="py-1.5 bg-cyber-border text-cyber-neonGreen rounded">EAT</button>
+                <button onclick="triggerTamagotchiAction('GAME', 180, 120)" class="py-1.5 bg-cyber-border text-cyber-neonPink rounded">GAME</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= OVERLAY 2: SHEET AUTO-SLICER & CLASSIFIED LIBRARY ================= -->
+    <div id="overlay-scanner" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-40 p-3 flex flex-col items-center justify-center">
+        <div class="bg-cyber-card border-2 border-cyber-neonPurple rounded-xl p-3 max-w-sm w-full shadow-2xl space-y-2 relative">
+            <div class="flex justify-between items-center border-b border-cyber-border pb-1.5">
+                <h2 class="font-pixel text-[9px] text-cyber-neonPurple">📦 X00-X48 AUTO-SORTER & SLICER</h2>
+                <button onclick="toggleOverlay('scanner')" class="text-gray-400 hover:text-white font-pixel text-xs">✕</button>
+            </div>
+
+            <p class="text-[8px] text-gray-400">Classifies uploaded sprite sheets into named banks (Portraits X00-X03, Outfits X04-X07, Emotions X08-X16, Mini Poses X17-X24, Assets X33-X48).</p>
+
+            <button onclick="runAutoGridSlicer()" class="w-full py-2 bg-gradient-to-r from-cyber-neonPurple via-cyber-neonPink to-cyber-neonBlue text-white font-pixel text-[8px] font-bold rounded shadow">
+                ⚡ AUTO-SLICE & CLASSIFY TO LIBRARY
+            </button>
+
+            <div class="space-y-1.5 max-h-52 overflow-y-auto">
+                <h3 class="font-pixel text-[7px] text-gray-300">NAMED SPRITE LIBRARY</h3>
+                <div id="sliced-poses-grid" class="grid grid-cols-4 gap-1.5 checkerboard p-1.5 rounded border border-cyber-border">
+                    <div class="col-span-full text-center py-6 text-gray-500 font-pixel text-[7px]">NO SHEET SORTED YET. UPLOAD & RUN.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= OVERLAY 3: CYBER DIARY ================= -->
+    <div id="overlay-diary" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-40 p-3 flex flex-col items-center justify-center">
+        <div class="bg-cyber-card border-2 border-cyber-neonYellow rounded-xl p-3 max-w-sm w-full shadow-2xl space-y-2 relative">
+            <div class="flex justify-between items-center border-b border-cyber-border pb-1.5">
+                <h2 class="font-pixel text-[9px] text-cyber-neonYellow">📓 CYBER DIARY OVERLAY</h2>
+                <button onclick="toggleOverlay('diary')" class="text-gray-400 hover:text-white font-pixel text-xs">✕</button>
+            </div>
+
+            <textarea id="diary-input-text" placeholder="Type log entry, lore, or speech bubble text..." class="w-full h-16 bg-cyber-bg border border-cyber-border rounded p-1.5 text-xs text-white font-tech focus:border-cyber-neonYellow outline-none resize-none"></textarea>
+            
+            <div class="flex space-x-1.5">
+                <button onclick="saveDiaryNote()" class="flex-1 py-1.5 bg-cyber-neonYellow text-cyber-bg font-pixel text-[8px] font-bold rounded shadow">
+                    💾 SAVE NOTE
+                </button>
+                <button onclick="attachDiaryToSpeechOverlay()" class="flex-1 py-1.5 bg-cyber-neonBlue text-cyber-bg font-pixel text-[8px] font-bold rounded shadow">
+                    💬 SPEECH BUBBLE
+                </button>
+            </div>
+
+            <div id="diary-entries-list" class="space-y-1 max-h-36 overflow-y-auto pr-1"></div>
+        </div>
+    </div>
+
+    <!-- ================= OVERLAY 4: 3-SLOT RPG GAMEBOOK & STAT SHEET ================= -->
+    <div id="overlay-gamebook" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-40 p-3 flex flex-col items-center justify-center">
+        <div class="bg-cyber-card border-2 border-cyber-neonPink rounded-xl p-3 max-w-sm w-full shadow-2xl space-y-2 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-cyber-border pb-1.5">
+                <h2 class="font-pixel text-[9px] text-cyber-neonPink">🎮 RPG GAMEBOOK & 3 CHARACTER SLOTS</h2>
+                <button onclick="toggleOverlay('gamebook')" class="text-gray-400 hover:text-white font-pixel text-xs">✕</button>
+            </div>
+
+            <!-- Character Slot Tabs -->
+            <div class="grid grid-cols-3 gap-1 font-pixel text-[7px]">
+                <button onclick="selectCharSlot(0)" id="btn-char-slot-0" class="py-1.5 bg-cyber-neonPink text-white font-bold rounded">CHAR #1</button>
+                <button onclick="selectCharSlot(1)" id="btn-char-slot-1" class="py-1.5 bg-cyber-border text-gray-300 rounded">CHAR #2</button>
+                <button onclick="selectCharSlot(2)" id="btn-char-slot-2" class="py-1.5 bg-cyber-border text-gray-300 rounded">CHAR #3</button>
+            </div>
+
+            <!-- Character Stats Form -->
+            <div class="bg-cyber-bg p-2 rounded border border-cyber-border space-y-1.5 text-xs font-mono">
+                <div>
+                    <label class="text-[8px] text-cyber-neonBlue block">CHARACTER NAME & TITLE</label>
+                    <input type="text" id="char-name-input" value="Cyber Hood Girl X01" class="w-full bg-cyber-card border border-cyber-border rounded p-1 text-white text-[10px]">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[8px] text-cyber-neonYellow block">DROP RATE %</label>
+                        <input type="number" id="char-droprate-input" value="25" min="1" max="100" class="w-full bg-cyber-card border border-cyber-border rounded p-1 text-white text-[10px]">
+                    </div>
+                    <div>
+                        <label class="text-[8px] text-cyber-neonGreen block">ENERGY / TV %</label>
+                        <input type="number" id="char-energy-input" value="90" min="1" max="100" class="w-full bg-cyber-card border border-cyber-border rounded p-1 text-white text-[10px]">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[8px] text-gray-400 block">GAMEBOOK LORE & INTERACTION TALK</label>
+                    <textarea id="char-lore-input" class="w-full h-12 bg-cyber-card border border-cyber-border rounded p-1 text-white text-[9px] resize-none">OutofTheB0X character profile. Equipped with X00-X48 suit matrix.</textarea>
+                </div>
+                <button onclick="saveCurrentCharSlot()" class="w-full py-1.5 bg-cyber-neonPink text-white font-pixel text-[8px] font-bold rounded">
+                    💾 SAVE CHARACTER STATS & EXPORT X00-X48
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BOTTOM GAMING CONTROLLER HUD ================= -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-cyber-card/95 backdrop-blur border-t-2 border-cyber-border p-1.5 z-40 shadow-2xl flex-shrink-0">
+        <div class="max-w-md mx-auto grid grid-cols-7 gap-1 items-center">
+            
+            <!-- 1. Red Joystick ("Roten Faden"): Snap + Demask + Redraw + Keyframe -->
+            <div class="flex flex-col items-center bg-cyber-bg/90 p-0.5 rounded border border-cyber-border relative">
+                <div class="absolute -top-2 w-3 h-3 rounded-full bg-red-600 border border-white animate-pulse shadow-[0_0_8px_#ff0000]" title="Roten Faden"></div>
+                <span class="font-pixel text-[4px] text-red-400 mb-0.5">RED SNAP</span>
+                <button onclick="triggerRedJoystickAction()" class="w-full py-1 bg-red-600 hover:bg-red-500 text-white font-pixel text-[6px] font-bold rounded active:scale-95 transition">
+                    📸 SNAP
+                </button>
+            </div>
+
+            <!-- 2. Green Solo Redraw Button -->
+            <div class="flex flex-col items-center bg-cyber-bg/90 p-0.5 rounded border border-cyber-border">
+                <span class="font-pixel text-[4px] text-cyber-neonGreen mb-0.5">SOLO</span>
+                <button onclick="autoRedrawCurrentReference()" class="w-full py-1 bg-green-600 hover:bg-green-500 text-white font-pixel text-[6px] font-bold rounded shadow active:scale-95 transition">
+                    ⚡ REDRAW
+                </button>
+            </div>
+
+            <!-- 3. Purple Button: Auto-Sort Sprite Library (X00-X48) -->
+            <div class="flex flex-col items-center bg-cyber-bg/90 p-0.5 rounded border border-cyber-border">
+                <span class="font-pixel text-[4px] text-cyber-neonPurple mb-0.5">X00-X48</span>
+                <button onclick="triggerPurpleAutoSort()" class="w-full py-1 bg-cyber-neonPurple hover:opacity-90 text-white font-pixel text-[6px] font-bold rounded shadow active:scale-95 transition">
+                    🔮 SORT
+                </button>
+            </div>
+
+            <!-- 4. Rainbow Color Picker & Opacity Slider -->
+            <div class="col-span-2 flex flex-col items-center bg-cyber-bg/90 p-0.5 rounded border border-cyber-border">
+                <div class="flex justify-between w-full mb-0.5">
+                    <span class="font-pixel text-[4px] text-cyber-neonBlue">RAINBOW</span>
+                    <span id="alpha-val-label" class="text-[5px] font-mono text-gray-400">100%</span>
+                </div>
+                <div class="flex items-center space-x-0.5 w-full">
+                    <input type="color" id="hud-color-input" value="#ff2a6d" onchange="selectColor(this.value)" class="w-7 h-3.5 bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 cursor-pointer rounded border border-cyber-border">
+                    <input type="range" id="hud-opacity-slider" min="0.1" max="1" step="0.1" value="1" oninput="updateOpacity(this.value)" class="flex-1 accent-cyber-neonBlue h-1">
+                </div>
+            </div>
+
+            <!-- 5. Eraser Toggle -->
+            <div class="flex flex-col items-center bg-cyber-bg/90 p-0.5 rounded border border-cyber-border">
+                <span class="font-pixel text-[4px] text-cyber-neonYellow mb-0.5">ERASER</span>
+                <button onclick="toggleEraser()" id="hud-eraser-btn" class="w-full py-1 bg-cyber-border text-gray-300 font-pixel text-[6px] font-bold rounded">
+                    🧹 MASK
+                </button>
+            </div>
+
+            <!-- 6. Gaming PAD Overlay Switcher -->
+            <div class="flex flex-col items-center bg-cyber-bg/90 p-0.5 rounded border border-cyber-border">
+                <span class="font-pixel text-[4px] text-cyber-neonGreen mb-0.5">PAD HUD</span>
+                <div class="grid grid-cols-2 gap-0.5 w-full">
+                    <button onclick="toggleOverlay('sim')" class="bg-cyber-neonGreen text-cyber-bg font-pixel text-[5px] py-0.5 rounded font-bold" title="Stage Room">🎮</button>
+                    <button onclick="toggleOverlay('gamebook')" class="bg-cyber-neonPink text-white font-pixel text-[5px] py-0.5 rounded font-bold" title="Gamebook RPG">📓</button>
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-14 left-1/2 transform -translate-x-1/2 bg-cyber-card border-2 border-cyber-neonBlue text-cyber-neonBlue px-3 py-1 rounded-lg shadow-2xl font-pixel text-[8px] z-50 transition-all duration-300 opacity-0 pointer-events-none">
+        NOTIFICATION
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // --- GLOBAL APP STATE ---
+        let canvasSize = 32;
+        let pixelData = []; 
+        let isDrawingActive = true;
+        let isEraserActive = false;
+        let activeBrushShape = 'pixel'; 
+        let currentColor = '#ff2a6d';
+        let currentAlpha = 1.0;
+        let zoomLevel = 1.0;
+        let undoStack = [];
+        let isDrawing = false;
+        let circleCenter = null;
+        let shiftX = 0, shiftY = 0;
+        
+        let spriteLayers = []; // Film negative timeline frames
+        let activeLayerIndex = null;
+        let diaryEntries = [];
+        let videoStreamInterval = null;
+
+        // 3 Character RPG Slots
+        let activeCharSlot = 0;
+        let charSlots = [
+            { name: "Cyber Hood Girl X01", dropRate: 25, energy: 90, lore: "OutofTheB0X character profile X01." },
+            { name: "Rabbit Suit Suit X04", dropRate: 50, energy: 100, lore: "White/Red Bunny Hoodie Suit agent." },
+            { name: "Schrödinger CyberCat", dropRate: 80, energy: 75, lore: "Quantum glitch cat mascot." }
+        ];
+
+        const SHEET_CATEGORIES = [
+            { code: "X00-X03", name: "PORTRAIT / HOOD" },
+            { code: "X04-X07", name: "FULL OUTFIT / SUIT" },
+            { code: "X08-X16", name: "EMOTIONS / EXPRESSIONS" },
+            { code: "X17-X24", name: "MINI POSES / ACTIONS" },
+            { code: "X33-X48", name: "SMALL ASSETS / GADGETS" }
+        ];
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initEditorCanvas();
+            initVirtualWheelDials();
+            loadInitialData();
+            showToast("🐱‍💻 STUDIO v7.0 READY // SCHRÖDINGER CAT ACTIVE");
+        });
+
+        function toggleOverlay(overlayId) {
+            const el = document.getElementById(`overlay-${overlayId}`);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if (overlayId === 'sim') renderSimAvatar();
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast-notification');
+            t.innerText = msg;
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 2500);
+        }
+
+        function triggerGlitchEffect() {
+            const card = document.getElementById('canvas-card-box');
+            card.classList.add('cyber-glitch-active');
+            setTimeout(() => card.classList.remove('cyber-glitch-active'), 350);
+        }
+
+        // --- FIXED CANVAS ENGINE WITH ZOOMING & SHIFT DIALS ---
+        function initEditorCanvas() {
+            pixelData = Array(canvasSize).fill().map(() => Array(canvasSize).fill(null));
+            const canvas = document.getElementById('pixel-canvas');
+            canvas.width = 260; canvas.height = 260;
+            const refCanvas = document.getElementById('reference-canvas');
+            refCanvas.width = 260; refCanvas.height = 260;
+
+            canvas.onpointerdown = (e) => { 
+                isDrawing = true; 
+                saveState(); 
+                const coords = getCoords(e);
+                if (activeBrushShape === 'circle') circleCenter = coords;
+                drawAtCoords(e); 
+            };
+            canvas.onpointermove = (e) => { 
+                if (isDrawing) drawAtCoords(e); 
+                updateCursor(e); 
+            };
+            window.onpointerup = () => { isDrawing = false; circleCenter = null; };
+            drawCanvas();
+        }
+
+        function adjustZoom(delta) {
+            zoomLevel = Math.max(0.75, Math.min(3.0, zoomLevel + delta));
+            document.getElementById('canvas-zoom-container').style.transform = `scale(${zoomLevel})`;
+            document.getElementById('zoom-level-label').innerText = `${zoomLevel.toFixed(1)}x`;
+        }
+
+        function resizeCanvasFromSelect() {
+            canvasSize = parseInt(document.getElementById('canvas-size-select').value);
+            initEditorCanvas();
+            showToast(`📐 CANVAS RESIZED TO ${canvasSize}x${canvasSize}`);
+        }
+
+        function setBrushShape(shape) {
+            activeBrushShape = shape;
+            document.getElementById('tool-shape-pixel').className = shape==='pixel' ? "px-1.5 py-0.5 bg-cyber-neonBlue text-cyber-bg font-bold rounded" : "px-1.5 py-0.5 bg-cyber-border text-gray-300 rounded";
+            document.getElementById('tool-shape-circle').className = shape==='circle' ? "px-1.5 py-0.5 bg-cyber-neonBlue text-cyber-bg font-bold rounded" : "px-1.5 py-0.5 bg-cyber-border text-gray-300 rounded";
+            document.getElementById('active-tool-label').innerText = shape==='circle' ? "PIXEL CIRCLE" : "PIXEL BRUSH";
+        }
+
+        function updateCursor(e) {
+            const canvas = document.getElementById('pixel-canvas');
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor(((e.clientX - rect.left) / rect.width) * canvasSize);
+            const y = Math.floor(((e.clientY - rect.top) / rect.height) * canvasSize);
+            document.getElementById('cursor-x').innerText = Math.max(0, Math.min(canvasSize-1, x));
+            document.getElementById('cursor-y').innerText = Math.max(0, Math.min(canvasSize-1, y));
+        }
+
+        function getCoords(e) {
+            const canvas = document.getElementById('pixel-canvas');
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor(((e.clientX - rect.left) / rect.width) * canvasSize);
+            const y = Math.floor(((e.clientY - rect.top) / rect.height) * canvasSize);
+            return { x: Math.max(0, Math.min(canvasSize - 1, x)), y: Math.max(0, Math.min(canvasSize - 1, y)) };
+        }
+
+        function drawAtCoords(e) {
+            if (!isDrawingActive) return;
+            const c = getCoords(e);
+
+            if (activeBrushShape === 'circle' && circleCenter) {
+                const radius = Math.floor(Math.hypot(c.x - circleCenter.x, c.y - circleCenter.y));
+                drawPixelCircle(circleCenter.x, circleCenter.y, radius, isEraserActive ? null : hexToRGBA(currentColor, currentAlpha));
+            } else {
+                if (isEraserActive) {
+                    pixelData[c.y][c.x] = null;
+                } else {
+                    pixelData[c.y][c.x] = hexToRGBA(currentColor, currentAlpha);
+                }
+            }
+            drawCanvas();
+        }
+
+        function drawPixelCircle(xc, yc, r, fillVal) {
+            let x = 0, y = r;
+            let d = 3 - 2 * r;
+            const plot = (px, py) => {
+                if (px >= 0 && px < canvasSize && py >= 0 && py < canvasSize) {
+                    pixelData[py][px] = fillVal;
+                }
+            };
+            while (y >= x) {
+                plot(xc + x, yc + y); plot(xc - x, yc + y);
+                plot(xc + x, yc - y); plot(xc - x, yc - y);
+                plot(xc + y, yc + x); plot(xc - y, yc + x);
+                plot(xc + y, yc - x); plot(xc - y, yc - x);
+                x++;
+                if (d > 0) { y--; d = d + 4 * (x - y) + 10; }
+                else { d = d + 4 * x + 6; }
+            }
+        }
+
+        function hexToRGBA(hex, alpha) {
+            let c = hex.replace('#','');
+            if(c.length===3) c = c.split('').map(x => x+x).join('');
+            const num = parseInt(c,16);
+            return `rgba(${num>>16},${(num>>8)&255},${num&255},${alpha})`;
+        }
+
+        function drawCanvas() {
+            const canvas = document.getElementById('pixel-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const tileSize = canvas.width / canvasSize;
+            for (let y = 0; y < canvasSize; y++) {
+                for (let x = 0; x < canvasSize; x++) {
+                    if (pixelData[y][x]) {
+                        ctx.fillStyle = pixelData[y][x];
+                        ctx.fillRect((x + shiftX) * tileSize, (y + shiftY) * tileSize, tileSize, tileSize);
+                    }
+                    ctx.strokeStyle = '#2a2f45';
+                    ctx.lineWidth = 0.3;
+                    ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                }
+            }
+        }
+
+        function saveState() {
+            undoStack.push(JSON.stringify(pixelData));
+            if (undoStack.length > 15) undoStack.shift();
+        }
+
+        function clearCanvas() {
+            saveState();
+            pixelData = Array(canvasSize).fill().map(() => Array(canvasSize).fill(null));
+            drawCanvas();
+            showToast("🗑️ CANVAS CLEARED");
+        }
+
+        // --- VIRTUAL WHEEL DIALS CONTROL ---
+        function initVirtualWheelDials() {
+            const dialXY = document.getElementById('wheel-dial-xy');
+            let startY = 0;
+            dialXY.onpointerdown = (e) => { startY = e.clientY; };
+            dialXY.onpointermove = (e) => {
+                if (e.buttons === 1) {
+                    const delta = Math.sign(e.clientY - startY);
+                    shiftY = Math.max(-10, Math.min(10, shiftY + delta));
+                    document.getElementById('shift-offset-label').innerText = `${shiftX},${shiftY}`;
+                    drawCanvas();
+                }
+            };
+
+            const dialScale = document.getElementById('wheel-dial-scale');
+            dialScale.onpointerdown = (e) => { startY = e.clientY; };
+            dialScale.onpointermove = (e) => {
+                if (e.buttons === 1) {
+                    const delta = (startY - e.clientY) * 0.01;
+                    adjustZoom(delta);
+                }
+            };
+        }
+
+        // --- STICKER CUTOUT / AUTO DEMASK TOOL WITH CYBERGLITCH ---
+        function demaskStickerBackground() {
+            saveState();
+            triggerGlitchEffect();
+            let bgCol = pixelData[0][0]; 
+            let removedCount = 0;
+            for (let y = 0; y < canvasSize; y++) {
+                for (let x = 0; x < canvasSize; x++) {
+                    if (pixelData[y][x] === bgCol || pixelData[y][x] === null) {
+                        pixelData[y][x] = null;
+                        removedCount++;
+                    }
+                }
+            }
+            drawCanvas();
+            showToast(`✂️ STICKER DEMASKED WITH CYBERGLITCH!`);
+        }
+
+        // --- HUD CONTROLS ---
+        function selectColor(hex) {
+            currentColor = hex;
+            isEraserActive = false;
+            document.getElementById('hud-color-input').value = hex;
+            document.getElementById('hud-eraser-btn').classList.remove('bg-cyber-neonBlue');
+        }
+
+        function toggleEraser() {
+            isEraserActive = !isEraserActive;
+            const btn = document.getElementById('hud-eraser-btn');
+            if (isEraserActive) {
+                btn.classList.add('bg-cyber-neonBlue', 'text-cyber-bg');
+                showToast("🧹 ERASER ACTIVE");
+            } else {
+                btn.classList.remove('bg-cyber-neonBlue', 'text-cyber-bg');
+                showToast("✏️ BRUSH ACTIVE");
+            }
+        }
+
+        function updateOpacity(val) {
+            currentAlpha = parseFloat(val);
+            document.getElementById('alpha-val-label').innerText = `${Math.round(currentAlpha*100)}%`;
+        }
+
+        // --- RED JOYSTICK ("ROTEN FADEN"): SNAP + DEMASK + REDRAW + KEYFRAME ---
+        function triggerRedJoystickAction() {
+            saveCanvasToTimeline();
+            demaskStickerBackground();
+            autoRedrawCurrentReference();
+            showToast("📸 ROTEN FADEN: SNAPPED, DEMASKED & REDRAWN!");
+        }
+
+        function triggerPurpleAutoSort() {
+            toggleOverlay('scanner');
+            runAutoGridSlicer();
+            showToast("🔮 AUTO-SORTING SPRITES INTO NAMED LIBRARIES");
+        }
+
+        // --- FILM NEGATIVES & MP4 VIDEO STREAMING ---
+        function handleSpriteUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.type.includes('video')) {
+                const videoEl = document.getElementById('bg-video-element');
+                videoEl.src = URL.createObjectURL(file);
+                videoEl.muted = true;
+                const playPromise = videoEl.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(err => {
+                        console.log("Autoplay prevented:", err);
+                    });
+                }
+                showToast("📹 MP4 VIDEO LOADED FOR SCANNING");
+            } else {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    spriteLayers.push({
+                        id: Math.random().toString(36).substring(2, 9),
+                        src: event.target.result
+                    });
+                    activeLayerIndex = spriteLayers.length - 1;
+                    renderFilmRoll();
+                    updateReferenceCanvas();
+                    showToast("🎞️ TIMELINE NEGATIVE ADDED");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function toggleVideoStream() {
+            const enabled = document.getElementById('vid-stream-toggle').checked;
+            if (enabled) {
+                const videoEl = document.getElementById('bg-video-element');
+                videoStreamInterval = setInterval(() => {
+                    if (videoEl.paused || videoEl.ended) return;
+                    const c = document.createElement('canvas');
+                    c.width = canvasSize; c.height = canvasSize;
+                    const ctx = c.getContext('2d');
+                    ctx.drawImage(videoEl, 0, 0, canvasSize, canvasSize);
+                    spriteLayers.push({
+                        id: Math.random().toString(36).substring(2, 9),
+                        src: c.toDataURL()
+                    });
+                    activeLayerIndex = spriteLayers.length - 1;
+                    renderFilmRoll();
+                    updateReferenceCanvas();
+                }, 1000);
+                showToast("⚡ MP4 STREAM SCANNING ACTIVE (1s)");
+            } else {
+                if (videoStreamInterval) clearInterval(videoStreamInterval);
+                showToast("⏹ MP4 STREAM PAUSED");
+            }
+        }
+
+        function renderFilmRoll() {
+            const container = document.getElementById('film-roll-container');
+            document.getElementById('layer-count').innerText = spriteLayers.length;
+            if (spriteLayers.length === 0) {
+                container.innerHTML = '<span class="text-[8px] text-gray-500 font-mono px-2">Upload character sheets or MP4s to stream frames into film negatives.</span>';
+                return;
+            }
+            container.innerHTML = '';
+            spriteLayers.forEach((layer, idx) => {
+                const div = document.createElement('div');
+                div.className = `flex-shrink-0 w-10 h-10 checkerboard rounded border ${activeLayerIndex === idx ? 'border-cyber-neonPink shadow-[0_0_8px_#ff2a6d]' : 'border-cyber-border'} relative cursor-pointer overflow-hidden`;
+                div.onclick = () => { activeLayerIndex = idx; renderFilmRoll(); updateReferenceCanvas(); };
+                div.innerHTML = `<img src="${layer.src}" class="w-full h-full object-contain image-rendering-pixelated">
+                                 <span class="absolute bottom-0 right-0 text-[6px] bg-black/80 text-cyber-neonBlue px-0.5">#${idx+1}</span>`;
+                container.appendChild(div);
+            });
+        }
+
+        function updateReferenceCanvas() {
+            if (activeLayerIndex === null || !spriteLayers[activeLayerIndex]) return;
+            const refCanvas = document.getElementById('reference-canvas');
+            const ctx = refCanvas.getContext('2d');
+            ctx.clearRect(0, 0, refCanvas.width, refCanvas.height);
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, refCanvas.width, refCanvas.height);
+            };
+            img.src = spriteLayers[activeLayerIndex].src;
+        }
+
+        function autoRedrawCurrentReference() {
+            if (activeLayerIndex === null || !spriteLayers[activeLayerIndex]) {
+                showToast("⚠️ SELECT A NEGATIVE FRAME FIRST");
+                return;
+            }
+            const img = new Image();
+            img.onload = function() {
+                const tempC = document.createElement('canvas');
+                tempC.width = canvasSize; tempC.height = canvasSize;
+                const tCtx = tempC.getContext('2d');
+                tCtx.imageSmoothingEnabled = false;
+                tCtx.drawImage(img, 0, 0, canvasSize, canvasSize);
+                const imgData = tCtx.getImageData(0, 0, canvasSize, canvasSize);
+                
+                saveState();
+                for (let y = 0; y < canvasSize; y++) {
+                    for (let x = 0; x < canvasSize; x++) {
+                        const i = (y * canvasSize + x) * 4;
+                        const r = imgData.data[i], g = imgData.data[i+1], b = imgData.data[i+2], a = imgData.data[i+3];
+                        if (a > 30) {
+                            pixelData[y][x] = `rgba(${r},${g},${b},1)`;
+                        }
+                    }
+                }
+                drawCanvas();
+                showToast("✨ SOLO AUTO-REDRAW COMPLETE!");
+            };
+            img.src = spriteLayers[activeLayerIndex].src;
+        }
+
+        function saveCanvasToTimeline() {
+            const canvas = document.getElementById('pixel-canvas');
+            spriteLayers.push({
+                id: Math.random().toString(36).substring(2, 9),
+                src: canvas.toDataURL()
+            });
+            activeLayerIndex = spriteLayers.length - 1;
+            renderFilmRoll();
+            updateReferenceCanvas();
+        }
+
+        // --- TAMAGOTCHI STAGE & NODES ---
+        function triggerTamagotchiAction(action, targetX, targetY) {
+            const avatar = document.getElementById('sim-avatar');
+            const bubble = document.getElementById('sim-speech-bubble');
+            
+            avatar.style.left = targetX + 'px';
+            avatar.style.top = targetY + 'px';
+
+            bubble.classList.remove('hidden');
+            if (action === 'SLEEP') bubble.innerText = "Zzz... Sleeping";
+            else if (action === 'WORK') bubble.innerText = "Typing code...";
+            else if (action === 'EAT') bubble.innerText = "Nom nom!";
+            else if (action === 'GAME') bubble.innerText = "Gaming 4K!";
+
+            setTimeout(() => bubble.classList.add('hidden'), 2500);
+            showToast(`🕹️ TAMAGOTCHI: ${action} NODE TRIGGERED`);
+        }
+
+        function renderSimAvatar() {
+            const imgEl = document.getElementById('sim-avatar-img');
+            if (spriteLayers.length > 0) {
+                imgEl.src = spriteLayers[activeLayerIndex]?.src || spriteLayers[0].src;
+            } else {
+                imgEl.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' fill='%23ff2a6d'/></svg>";
+            }
+        }
+
+        // --- NAMED AUTOMATIC SHEET SLICER (X00-X48) ---
+        function runAutoGridSlicer() {
+            const grid = document.getElementById('sliced-poses-grid');
+            grid.innerHTML = '';
+            
+            SHEET_CATEGORIES.forEach((cat, idx) => {
+                const div = document.createElement('div');
+                div.className = 'border border-cyber-border rounded p-1 bg-black/40 text-center cursor-pointer hover:border-cyber-neonPurple transition';
+                const imgSrc = spriteLayers.length > 0 ? spriteLayers[0].src : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' fill='%23b5179e'/></svg>";
+                
+                div.innerHTML = `
+                    <img src="${imgSrc}" class="w-full aspect-square object-contain image-rendering-pixelated mb-1">
+                    <span class="block text-[6px] font-pixel text-cyber-neonYellow">${cat.code}</span>
+                    <span class="block text-[5px] font-tech text-gray-300 truncate">${cat.name}</span>
+                `;
+                grid.appendChild(div);
+            });
+            showToast("✨ SPRITE SHEET CLASSIFIED INTO LIBRARIES");
+        }
+
+        // --- 3 RPG CHARACTER SLOTS & GAMEBOOK ---
+        function selectCharSlot(slotIdx) {
+            activeCharSlot = slotIdx;
+            for (let i = 0; i < 3; i++) {
+                const b = document.getElementById(`btn-char-slot-${i}`);
+                if (i === slotIdx) {
+                    b.className = "py-1.5 bg-cyber-neonPink text-white font-bold rounded";
+                } else {
+                    b.className = "py-1.5 bg-cyber-border text-gray-300 rounded";
+                }
+            }
+            const c = charSlots[slotIdx];
+            document.getElementById('char-name-input').value = c.name;
+            document.getElementById('char-droprate-input').value = c.dropRate;
+            document.getElementById('char-energy-input').value = c.energy;
+            document.getElementById('char-lore-input').value = c.lore;
+        }
+
+        function saveCurrentCharSlot() {
+            const c = charSlots[activeCharSlot];
+            c.name = document.getElementById('char-name-input').value;
+            c.dropRate = document.getElementById('char-droprate-input').value;
+            c.energy = document.getElementById('char-energy-input').value;
+            c.lore = document.getElementById('char-lore-input').value;
+            showToast(`💾 CHAR SLOT #${activeCharSlot+1} SAVED & FORMATTED FOR GAME DEV`);
+        }
+
+        // --- DIARY NOTES & SPEECH BUBBLES ---
+        function saveDiaryNote() {
+            const text = document.getElementById('diary-input-text').value.trim();
+            if (!text) return;
+            diaryEntries.unshift({ date: new Date().toLocaleTimeString(), content: text });
+            document.getElementById('diary-input-text').value = '';
+            renderDiaryNotes();
+            showToast("📓 NOTE SAVED");
+        }
+
+        function renderDiaryNotes() {
+            const list = document.getElementById('diary-entries-list');
+            list.innerHTML = diaryEntries.map(e => `
+                <div class="bg-cyber-bg p-1.5 rounded border border-cyber-border text-[8px] font-mono">
+                    <span class="text-cyber-neonYellow">[${e.date}]</span>
+                    <p class="text-gray-200">${e.content}</p>
+                </div>
+            `).join('');
+        }
+
+        function attachDiaryToSpeechOverlay() {
+            if (diaryEntries.length === 0) {
+                showToast("⚠️ WRITE A DIARY NOTE FIRST");
+                return;
+            }
+            const txt = diaryEntries[0].content;
+            document.getElementById('speech-overlay-text').innerText = txt;
+            const overlay = document.getElementById('canvas-speech-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('hidden'), 4000);
+            toggleOverlay('diary');
+            showToast("💬 SPEECH BUBBLE LINKED TO CANVAS");
+        }
+
+        function triggerFloppySaveAll() {
+            const canvas = document.getElementById('pixel-canvas');
+            const link = document.createElement('a');
+            link.download = 'cyber_studio_sprite.png';
+            link.href = canvas.toDataURL();
+            link.click();
+            showToast("💾 FLOPPY SAVE: EXPORT SUCCESSFUL!");
+        }
+
+        function loadInitialData() {
+            diaryEntries.push({ date: new Date().toLocaleTimeString(), content: "SYSTEM BOOT: Schrödinger's Cat v7.0 Ready." });
+            renderDiaryNotes();
+        }
+    </script>
+</body>
+</html>
