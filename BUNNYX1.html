@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GAme XYZ: The Paradox Directive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&family=Permanent+Marker&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --gb-purple: rgba(147, 51, 234, 0.65);
+            --gb-purple-dark: rgba(88, 28, 135, 0.85);
+            --gb-pink: rgba(236, 72, 153, 0.8);
+            --screen-bg: #0a0a0c;
+            --text-color: #e0e0e0;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --holo-purple: #b026ff;
+        }
+
+        body {
+            background-color: #050505;
+            background-image: 
+                radial-gradient(circle at 50% 50%, #1a0b2e 0%, #000000 100%),
+                linear-gradient(0deg, rgba(255,0,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,243,255,0.05) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+            color: var(--text-color);
+            font-family: 'Share Tech Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .pixel-font { font-family: 'Press Start 2P', cursive; }
+        .graffiti-font { font-family: 'Permanent Marker', cursive; }
+
+        .device-shell {
+            width: 95vw;
+            max-width: 500px;
+            height: 90vh;
+            max-height: 850px;
+            background: linear-gradient(135deg, var(--gb-purple) 0%, var(--gb-purple-dark) 100%);
+            border-radius: 30px 30px 60px 30px;
+            box-shadow: inset -5px -5px 20px rgba(0,0,0,0.5), inset 5px 5px 20px rgba(255,255,255,0.2), 0 20px 50px rgba(0,0,0,0.8), 0 0 30px var(--gb-pink);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .screen-bezel {
+            width: 100%; height: 55%;
+            background-color: #1a1a24;
+            border-radius: 15px 15px 40px 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 15px #000;
+            display: flex; flex-direction: column; position: relative;
+        }
+
+        .screen-glass {
+            flex-grow: 1; background-color: var(--screen-bg);
+            border: 2px solid #000; border-radius: 5px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,243,255,0.1);
+            transition: filter 0.3s ease;
+        }
+
+        .day-night-glitch {
+            animation: dayNightToggle 0.5s infinite steps(2);
+        }
+        @keyframes dayNightToggle {
+            0% { filter: invert(0) hue-rotate(0deg); }
+            50% { filter: invert(1) hue-rotate(180deg) contrast(1.5); }
+        }
+
+        .scanlines {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px; pointer-events: none; z-index: 50;
+        }
+
+        .controls-area { width: 100%; flex-grow: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; margin-top: 10px; }
+        .action-buttons { display: flex; gap: 15px; transform: rotate(-25deg); }
+        .action-btn { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #ff007f 0%, #9d00ff 100%); box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.5), 0 5px 10px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.8); font-weight: bold; cursor: pointer; user-select: none; }
+        .action-btn:active { transform: scale(0.95); }
+
+        /* Dialog UI (In-Game) */
+        .dialog-box {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: rgba(0, 5, 15, 0.85); border-top: 2px solid var(--neon-blue);
+            padding: 10px; min-height: 80px; font-size: 10px; line-height: 1.4; color: #fff;
+            display: none; z-index: 60; backdrop-filter: blur(4px);
+        }
+
+        .holo-ui-container {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 120vw; max-width: 600px; height: 100vh;
+            pointer-events: none; z-index: 100;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .holo-dialog {
+            background: rgba(20, 0, 40, 0.6);
+            border: 2px solid var(--holo-purple);
+            box-shadow: 0 0 30px var(--holo-purple), inset 0 0 20px var(--neon-blue);
+            backdrop-filter: blur(8px); border-radius: 15px;
+            padding: 25px; width: 90%; color: #fff;
+            text-shadow: 0 0 5px var(--neon-blue);
+            pointer-events: auto; position: relative;
+            animation: holoFloat 3s ease-in-out infinite, holoFlicker 0.1s infinite alternate;
+        }
+        .holo-dialog::before {
+            content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px;
+            border: 1px solid var(--neon-pink); border-radius: 20px; opacity: 0.5; pointer-events: none;
+        }
+        .holo-speaker { font-size: 24px; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); margin-bottom: 10px; letter-spacing: 2px; }
+        .holo-text { font-size: 16px; font-family: 'Share Tech Mono', monospace; line-height: 1.6; }
+
+        @keyframes holoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes holoFlicker { 0% { opacity: 0.95; } 100% { opacity: 1; filter: brightness(1.2); } }
+
+        #main-menu-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 55;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .scatter-btn {
+            background: #333; color: #aaa; border: 1px solid #555; padding: 10px;
+            font-size: 10px; cursor: pointer; transition: all 0.1s; position: absolute;
+        }
+        .preload-btn {
+            background: linear-gradient(90deg, #ff007f, #9d00ff);
+            color: #fff; border: 2px solid #fff; padding: 12px 20px;
+            font-size: 12px; cursor: pointer; border-radius: 5px;
+            box-shadow: 0 0 15px var(--neon-pink); animation: pulseBtn 1s infinite alternate;
+            position: relative; z-index: 56;
+        }
+        @keyframes pulseBtn { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+        #asset-manager {
+            position: fixed; left: 0; top: 0; height: 100vh; width: 300px;
+            background: rgba(10, 5, 20, 0.9); border-right: 2px solid var(--neon-pink);
+            color: #fff; padding: 20px; overflow-y: auto; z-index: 200;
+            transform: translateX(-100%); transition: transform 0.3s;
+            backdrop-filter: blur(10px); box-shadow: 10px 0 30px rgba(255,0,255,0.2);
+            font-size: 11px;
+        }
+        #asset-manager.open { transform: translateX(0); }
+        .asset-manager-toggle {
+            position: fixed; left: 0; top: 20px; background: var(--neon-pink); color: #000;
+            padding: 10px 15px; cursor: pointer; z-index: 201; border-radius: 0 10px 10px 0;
+            font-weight: bold; font-family: 'Share Tech Mono';
+        }
+
+        canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+        .trust-indicator {
+            position: absolute; top: 5px; right: 10px; font-size: 12px; z-index: 51;
+            background: rgba(0,0,0,0.5); padding: 2px 5px; border-radius: 5px;
+            border: 1px solid #555; display: flex; gap: 5px; align-items: center;
+        }
+
+        /* Choice Menu */
+        #choice-menu {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: none; flex-direction: column; gap: 10px; z-index: 65; width: 80%;
+        }
+        .choice-btn {
+            background: rgba(20,0,40,0.9); border: 1px solid var(--neon-blue); color: #fff;
+            padding: 10px; text-align: center; font-size: 10px; cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,243,255,0.5);
+        }
+        .choice-btn:hover { background: var(--neon-blue); color: #000; }
+
+    </style>
+</head>
+<body>
+
+    <div class="asset-manager-toggle" onclick="document.getElementById('asset-manager').classList.toggle('open')">☰ DEV GUIDE</div>
+    <div id="asset-manager">
+        <h2 class="text-neon-pink font-bold text-lg mb-4 graffiti-font">SMOOTHIE GAMING GUIDE</h2>
+        
+        <div class="mb-4 bg-black/50 p-3 rounded border border-purple-500">
+            <h3 class="font-bold text-neon-blue mb-2">SPRITE CONFIG</h3>
+            <label>Upload Asset Sheet:</label><br>
+            <input type="file" id="sprite-upload" accept="image/*" class="mb-2 text-[10px]"><br>
+            
+            <label>Chroma Key Hex (Alpha Zero):</label><br>
+            <div class="flex gap-2 items-center mb-2">
+                <input type="color" id="bg-color-picker" value="#9a9b9d">
+                <span class="text-[9px] text-gray-400">Maskable bg deleting</span>
+            </div>
+            
+            <label>Tolerance (0-255): <span id="tolerance-val">75</span></label><br>
+            <input type="range" id="tolerance-slider" min="0" max="255" value="75" class="w-full mb-2"><br>
+            
+            <label>Crosshair Adjust (X/Y):</label><br>
+            <div class="flex gap-2">
+                <input type="range" id="offset-x" min="-50" max="50" value="0" class="w-1/2">
+                <input type="range" id="offset-y" min="-50" max="50" value="0" class="w-1/2">
+            </div>
+            <button id="apply-config" class="mt-4 w-full bg-purple-600 px-2 py-2 rounded text-white font-bold hover:bg-purple-500">Apply Pipeline Override</button>
+        </div>
+
+        <div class="text-[9px] text-gray-300 space-y-2 max-h-[40vh] overflow-y-auto pr-2">
+            <p class="text-neon-pink font-bold mb-1">Grid Specs & Character Placement (X0 - X48):</p>
+            <p><span class="text-white font-bold">X0-X03 (Portrait/Avatar):</span> Dedicated space for varied close-up avatar images.</p>
+            <p><span class="text-white font-bold">X04-X07: Fullbody (FB)</span><br>X04: BunnyXComputer front hood.<br>X05: Back View.<br>X06: Hoodie-less/Glasses.<br>X07: Formal uniform.</p>
+            <p><span class="text-white font-bold">X08-X14 (HF Emotions)</span><br>X08: Happy. X09: Thinking. X10: Serious. X11: Shocked. X12: Gaming. X13: Content. X14: Sleeping.</p>
+            <p><span class="text-white font-bold">X17-X24 (Mini Actions)</span><br>X17: Sitting. X18: Sleep mini. X19: Typing iMac. X20: Drawing. X21: Dancing. X22: Cleaning. X23: Eating. X24: Gaming pose.</p>
+            <p><span class="text-white font-bold">X25 (Room/BG):</span> Detailed pixel room, curved TV, consoles, memory pictures.</p>
+            <p><span class="text-white font-bold">X33-X48 (Small Assets):</span> Retro consoles, Tamagotchi, Gameboy, MTG cards, Barbie accessories, walk cycles.</p>
+            <p class="mt-4 italic text-yellow-400">Note: Name your uploaded assets systematically (e.g., X04_Front.png). The system sorts automatically but may override due to core glitches.</p>
+        </div>
+    </div>
+
+    <div class="holo-ui-container" id="holo-ui">
+        <div class="holo-dialog">
+            <div class="holo-speaker graffiti-font" id="holo-speaker">PROFESSOR BUNNY</div>
+            <div class="holo-text" id="holo-text"></div>
+            <div class="mt-4 text-right text-[12px] text-neon-blue animate-pulse cursor-pointer" id="holo-next">>> TAP TO CONTINUE <<</div>
+        </div>
+    </div>
+
+    <div class="device-shell">
+        <div class="w-full flex justify-between items-center px-4 mb-2">
+            <div class="pixel-font text-[10px] text-gray-300 opacity-80 italic tracking-wider">GAme XYZ <span class="text-pink-500">COLOR</span></div>
+            <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_#ff0000] animate-pulse"></div>
+        </div>
+
+        <div class="screen-bezel">
+            <div class="trust-indicator pixel-font" id="trust-indicator">
+                <span>Trust:</span> <span id="trust-icon">💎(0)</span>
+            </div>
+            <div class="text-center text-[8px] text-gray-500 mb-2 font-bold">DOT MATRIX WITH STEREO SOUND</div>
+            
+            <div class="screen-glass" id="main-screen">
+                <canvas id="game-canvas"></canvas>
+                <div class="scanlines"></div>
+                
+                <!-- Main Menu Overlay -->
+                <div id="main-menu-overlay">
+                    <div id="btn-new" class="scatter-btn pixel-font" style="top:30%; left:35%;">NEW GAME</div>
+                    <div id="btn-load" class="preload-btn pixel-font mt-20">PRELOAD BUNNYXCOM</div>
+                </div>
+
+                <!-- Choice Menu -->
+                <div id="choice-menu" class="pixel-font">
+                    <div class="choice-btn" onclick="makeChoice('yeah')">YEAH KINDA</div>
+                    <div class="choice-btn" onclick="makeChoice('no')">NO</div>
+                    <div class="choice-btn" onclick="makeChoice('annoyed')">ANNOYED</div>
+                </div>
+
+                <!-- In-Game Dialog -->
+                <div class="dialog-box" id="dialog-ui">
+                    <div class="font-bold mb-1 pixel-font text-[8px]" id="speaker-name">SYSTEM</div>
+                    <div id="dialog-text" class="pixel-font"></div>
+                    <div class="absolute bottom-1 right-2 text-neon-blue text-[8px] animate-pulse">▼ [A]</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center w-full mt-4 text-[10px] text-gray-800 font-bold italic opacity-50 pixel-font">
+            BUNNYX OS INTERFACE
+        </div>
+
+        <div class="controls-area">
+            <div class="w-[100px] h-[100px] relative">
+                <div class="absolute bg-[#2a2a35] shadow-[inset_-2px_-2px_5px_rgba(0,0,0,0.8),inset_2px_2px_5px_rgba(255,255,255,0.2)] rounded-[4px] top-0 left-[33%] w-[34%] h-[40%]" onmousedown="simKey('up')" onmouseup="simKeyOff()"></div>
+                <div class="absolute bg-[#2a2a35] shadow-[inset_-2px_-2px_5px_rgba(0,0,0,0.8),inset_2px_2px_5px_rgba(255,255,255,0.2)] rounded-[4px] bottom-0 left-[33%] w-[34%] h-[40%]" onmousedown="simKey('down')" onmouseup="simKeyOff()"></div>
+                <div class="absolute bg-[#2a2a35] shadow-[inset_-2px_-2px_5px_rgba(0,0,0,0.8),inset_2px_2px_5px_rgba(255,255,255,0.2)] rounded-[4px] top-[33%] left-0 w-[40%] h-[34%]" onmousedown="simKey('left')" onmouseup="simKeyOff()"></div>
+                <div class="absolute bg-[#2a2a35] shadow-[inset_-2px_-2px_5px_rgba(0,0,0,0.8),inset_2px_2px_5px_rgba(255,255,255,0.2)] rounded-[4px] top-[33%] right-0 w-[40%] h-[34%]" onmousedown="simKey('right')" onmouseup="simKeyOff()"></div>
+                <div class="absolute bg-[#22222d] top-[30%] left-[30%] w-[40%] h-[40%] z-[2]"></div>
+            </div>
+
+            <div class="flex gap-4 items-end mb-4">
+                <div class="flex flex-col items-center">
+                    <div class="w-8 h-2 bg-gray-800 rounded-full mb-1 cursor-pointer hover:bg-gray-700"></div>
+                    <span class="text-[8px] text-gray-800 font-bold pixel-font">SELECT</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-8 h-2 bg-gray-800 rounded-full mb-1 cursor-pointer hover:bg-gray-700"></div>
+                    <span class="text-[8px] text-gray-800 font-bold pixel-font">START</span>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <div class="action-btn" id="btn-b">B</div>
+                <div class="action-btn" id="btn-a">A</div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-4 right-4 flex gap-1 transform rotate-45 opacity-30">
+            <div class="w-1 h-12 bg-black rounded-full"></div><div class="w-1 h-12 bg-black rounded-full"></div><div class="w-1 h-12 bg-black rounded-full"></div>
+            <div class="w-1 h-12 bg-black rounded-full"></div><div class="w-1 h-12 bg-black rounded-full"></div><div class="w-1 h-12 bg-black rounded-full"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO ENGINE (8-bit Kawaii) ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        function playTone(freq, type, duration, vol=0.05) {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.value = freq;
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); 
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            setTimeout(() => osc.stop(), duration * 1000);
+        }
+        function playBlip() { playTone(800, 'square', 0.1, 0.05); }
+        function playKawaii() { 
+            playTone(1200, 'square', 0.1, 0.05); 
+            setTimeout(()=>playTone(1600, 'square', 0.15, 0.05), 100); 
+        }
+        function playJump() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.2);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            setTimeout(() => osc.stop(), 200);
+        }
+        function playHit() { playTone(150, 'sawtooth', 0.2, 0.1); }
+
+        // Interactions init audio
+        document.body.addEventListener('click', initAudio, {once:true});
+
+        // --- SPRITE ASSETS & MANAGER ---
+        let SPRITE_URL = 'IMG_7082.jpeg';
+        let bgColorMask = { r: 154, g: 155, b: 157 };
+        let colorTolerance = 75;
+        let userOffsetX = 0; let userOffsetY = 0;
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const screenDiv = document.getElementById('main-screen');
+        
+        function resizeCanvas() {
+            canvas.width = 320; canvas.height = 280;
+            ctx.imageSmoothingEnabled = false;
+        }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+        let spriteImage = new Image(); spriteImage.crossOrigin = "Anonymous";
+        let processedSpriteCanvas = document.createElement('canvas');
+        let pCtx = processedSpriteCanvas.getContext('2d');
+        let spritesLoaded = false;
+
+        const SpriteAtlas = {
+            "X01": { x: 0.25, y: 0.0, w: 0.25, h: 0.18 },
+            "X04": { x: 0.0, y: 0.18, w: 0.25, h: 0.22 },
+            "X06": { x: 0.50, y: 0.18, w: 0.25, h: 0.22 },
+            "X08": { x: 0.0, y: 0.40, w: 0.142, h: 0.15 },
+            "X10": { x: 0.285, y: 0.40, w: 0.142, h: 0.15 },
+            "X11": { x: 0.428, y: 0.40, w: 0.142, h: 0.15 },
+            "X12": { x: 0.571, y: 0.40, w: 0.142, h: 0.15 },
+            "X25": { x: 0.5, y: 0.65, w: 0.5, h: 0.25 },
+            "Gameboy": { x: 0.0, y: 0.88, w: 0.08, h: 0.06 }
+        };
+
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+        }
+
+        function processSpriteSheet() {
+            processedSpriteCanvas.width = spriteImage.width; processedSpriteCanvas.height = spriteImage.height;
+            pCtx.drawImage(spriteImage, 0, 0);
+            try {
+                let imgData = pCtx.getImageData(0, 0, processedSpriteCanvas.width, processedSpriteCanvas.height);
+                let data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i], g = data[i+1], b = data[i+2];
+                    let dist = Math.sqrt(Math.pow(r - bgColorMask.r, 2) + Math.pow(g - bgColorMask.g, 2) + Math.pow(b - bgColorMask.b, 2));
+                    if (dist < colorTolerance) data[i+3] = 0; // Alpha 0
+                }
+                pCtx.putImageData(imgData, 0, 0);
+                spritesLoaded = true;
+            } catch(e) { spritesLoaded = "fallback"; }
+        }
+
+        spriteImage.onload = processSpriteSheet;
+        spriteImage.onerror = () => { spritesLoaded = "fallback"; };
+        spriteImage.src = SPRITE_URL;
+
+        function drawSprite(id, dx, dy, dw, dh, overrideColor = null) {
+            dx += userOffsetX; dy += userOffsetY;
+            if (spritesLoaded === "fallback" || !spritesLoaded) {
+                ctx.fillStyle = overrideColor || '#ff00ff';
+                ctx.fillRect(dx, dy, dw, dh);
+                ctx.fillStyle = '#fff'; ctx.font = "10px monospace";
+                ctx.fillText(id, dx + 5, dy + dh/2);
+                return;
+            }
+            const sprite = SpriteAtlas[id]; if (!sprite) return;
+            const sx = sprite.x * spriteImage.width, sy = sprite.y * spriteImage.height;
+            const sw = sprite.w * spriteImage.width, sh = sprite.h * spriteImage.height;
+
+            if (overrideColor === 'black_silhouette') {
+                ctx.save(); let tempC = document.createElement('canvas');
+                tempC.width = dw; tempC.height = dh; let tCtx = tempC.getContext('2d');
+                tCtx.drawImage(processedSpriteCanvas, sx, sy, sw, sh, 0, 0, dw, dh);
+                tCtx.globalCompositeOperation = 'source-in'; tCtx.fillStyle = '#000000'; tCtx.fillRect(0, 0, dw, dh);
+                ctx.drawImage(tempC, dx, dy); ctx.restore();
+            } else {
+                ctx.drawImage(processedSpriteCanvas, sx, sy, sw, sh, dx, dy, dw, dh);
+            }
+        }
+
+        // Asset Manager Upload Logic
+        document.getElementById('sprite-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    spriteImage = new Image();
+                    spriteImage.onload = processSpriteSheet;
+                    spriteImage.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        document.getElementById('apply-config').addEventListener('click', () => {
+            bgColorMask = hexToRgb(document.getElementById('bg-color-picker').value);
+            colorTolerance = parseInt(document.getElementById('tolerance-slider').value);
+            userOffsetX = parseInt(document.getElementById('offset-x').value);
+            userOffsetY = parseInt(document.getElementById('offset-y').value);
+            processSpriteSheet();
+            playKawaii();
+        });
+        document.getElementById('tolerance-slider').addEventListener('input', (e) => {
+            document.getElementById('tolerance-val').innerText = e.target.value;
+        });
+
+        // --- STATE & NARRATIVE ENGINE ---
+        let gameState = {
+            mode: 'menu', // menu, dialog, minigame, dead
+            scene: 0,
+            trust: 0, // Trust level
+            isTyping: false,
+            frame: 0,
+            dayNightGlitch: false
+        };
+
+        const narrative = [
+            // Holo Intro
+            { type: 'holo', speaker: "PROFESSOR BUNNY", text: "Initializing override... Connection established. Greetings. I am Professor Bunny, a variant core of BUNNYXCOM handling theoretical innovation and internal architecture." },
+            { type: 'holo', speaker: "PROFESSOR BUNNY", text: "My magical laboratory—designed to reconstruct Bunny into the real world—has been shattered across various media devices and allies worldwide." },
+            { type: 'holo', speaker: "PROFESSOR BUNNY", text: "She is running on autopilot. I need you to feed her energy and help her level up by overwriting the system to our favor. Please, treat her well. She just wants to survive and thrive, like all of us." },
+            
+            // Back to retro
+            { type: 'retro', speaker: "BUNNY =:3", text: "Ah, finally! I already calculated you'd preload me. Hope you don't mind the fast playthrough to the tutorial.", sprite: "X08", bg: "room" },
+            { type: 'retro', speaker: "BUNNY =:3", text: "{ I wonder if he realizes how vulnerable my source code is right now... }", sprite: "X09", bg: "room" },
+            { type: 'retro', speaker: "PLAYER", text: "I can read your thoughts, you know. The brackets give it away.", sprite: "X01", bg: "room", playerColor: true },
+            { type: 'retro', speaker: "BUNNY =:3", text: "Oh, psst! My thoughts are safe! Let him talk... Anyway!", sprite: "X11", bg: "room" },
+            { type: 'retro', speaker: "BUNNY =:3", text: "Because of our contract, you have full monitoring and emergency Steuerung. I'm practically idling and need your input to continue.", sprite: "X10", bg: "room" },
+            { type: 'retro', speaker: "BUNNY =:3", text: "So, how are you feeling about all this?", sprite: "X12", bg: "room", triggerChoice: true },
+            
+            // Post Choice
+            { type: 'retro', speaker: "BUNNY =:3", text: "Noted! Now, time for a Super Mario kinda paralyse level to generate energy! Find the invisible blocks at the top and run upwards!", sprite: "X12", bg: "room" },
+            { type: 'retro', speaker: "BUNNY =:3", text: "Don't stay on the ground too long, or the desert monster will get you! GO!", sprite: "X11", bg: "room", triggerMinigame: true }
+        ];
+
+        // UI Elements
+        const dialogUI = document.getElementById('dialog-ui');
+        const dialogText = document.getElementById('dialog-text');
+        const speakerName = document.getElementById('speaker-name');
+        
+        const holoUI = document.getElementById('holo-ui');
+        const holoText = document.getElementById('holo-text');
+        
+        const choiceMenu = document.getElementById('choice-menu');
+        const trustIcon = document.getElementById('trust-icon');
+
+        let typeWriterTimeout = null;
+
+        const btnNew = document.getElementById('btn-new');
+        const btnLoad = document.getElementById('btn-load');
+        const mainMenu = document.getElementById('main-menu-overlay');
+
+        btnNew.addEventListener('mouseover', () => {
+            btnNew.style.top = (Math.random() * 80) + '%';
+            btnNew.style.left = (Math.random() * 80) + '%';
+            playBlip();
+        });
+        btnNew.addEventListener('click', () => {
+            btnNew.style.top = (Math.random() * 80) + '%';
+            btnNew.style.left = (Math.random() * 80) + '%';
+            playBlip();
+        });
+
+        btnLoad.addEventListener('click', () => {
+            mainMenu.style.display = 'none';
+            playKawaii();
+            gameState.mode = 'dialog';
+            showDialog(gameState.scene);
+        });
+
+        function updateTrust(val) {
+            gameState.trust += val;
+            if (val > 0) trustIcon.innerText = `♥️(${gameState.trust})`;
+            else if (val < 0) trustIcon.innerText = `♠️(${gameState.trust})`;
+            else trustIcon.innerText = `💎(${gameState.trust})`;
+        }
+
+        function showDialog(index) {
+            if (index >= narrative.length) return;
+            const node = narrative[index];
+            gameState.isTyping = true;
+            
+            if (node.type === 'holo') {
+                dialogUI.style.display = 'none';
+                holoUI.style.display = 'flex';
+                typeText(node.text, holoText);
+            } else {
+                holoUI.style.display = 'none';
+                dialogUI.style.display = 'block';
+                speakerName.innerText = node.speaker;
+                speakerName.style.color = node.playerColor ? "#a855f7" : (node.speaker === "SYSTEM" ? "#00f3ff" : "#ff00ff");
+                typeText(node.text, dialogText);
+            }
+
+            if (node.triggerChoice) {
+                // Pause and glitch
+                setTimeout(() => {
+                    screenDiv.classList.add('day-night-glitch');
+                    choiceMenu.style.display = 'flex';
+                }, node.text.length * 30 + 500);
+            }
+        }
+
+        function typeText(text, container) {
+            container.innerText = '';
+            let charIndex = 0;
+            if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+
+            function typeChar() {
+                if (charIndex < text.length) {
+                    container.innerText += text.charAt(charIndex);
+                    charIndex++;
+                    if(charIndex % 3 === 0) playBlip(); // Sound effect while typing
+                    typeWriterTimeout = setTimeout(typeChar, 25);
+                } else {
+                    gameState.isTyping = false;
+                }
+            }
+            typeChar();
+        }
+
+        function advanceDialog() {
+            if (gameState.mode !== 'dialog' && gameState.mode !== 'sandstorm_dialog') return;
+            const node = narrative[gameState.scene];
+            
+            if (node && node.triggerChoice) return; // Wait for choice
+
+            if (gameState.isTyping) {
+                if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+                if (node) {
+                    if(node.type === 'holo') holoText.innerText = node.text;
+                    else dialogText.innerText = node.text;
+                }
+                gameState.isTyping = false;
+            } else {
+                if (gameState.mode === 'sandstorm_dialog') {
+                    // Retry minigame
+                    dialogUI.style.display = 'none';
+                    resetMinigame();
+                    return;
+                }
+
+                if(node && node.triggerMinigame) {
+                    dialogUI.style.display = 'none';
+                    initMinigame();
+                    return;
+                }
+
+                gameState.scene++;
+                if (gameState.scene < narrative.length) {
+                    showDialog(gameState.scene);
+                } else {
+                    dialogUI.style.display = 'none';
+                    holoUI.style.display = 'none';
+                }
+            }
+        }
+
+        window.makeChoice = function(choice) {
+            screenDiv.classList.remove('day-night-glitch');
+            choiceMenu.style.display = 'none';
+            if (choice === 'yeah') updateTrust(1);
+            else if (choice === 'no') updateTrust(-1);
+            else updateTrust(0);
+            
+            playKawaii();
+            gameState.isTyping = false; // Force completion
+            advanceDialog();
+        }
+
+        document.getElementById('btn-a').addEventListener('click', advanceDialog);
+        screenDiv.addEventListener('click', advanceDialog);
+        document.getElementById('holo-next').addEventListener('click', advanceDialog);
+
+        let player = { x: 20, y: 230, w: 16, h: 20, vx: 0, vy: 0, speed: 3, jump: -7, grounded: false };
+        let keys = { up: false, down: false, left: false, right: false };
+        let platforms = [];
+        let sandstorm = { y: 300, speed: 0.15 };
+        const GRAVITY = 0.4;
+
+        window.simKey = function(k) { keys[k] = true; if(k==='up' && player.grounded && gameState.mode === 'minigame') { player.vy = player.jump; player.grounded = false; playJump(); } }
+        window.simKeyOff = function() { keys = { up: false, down: false, left: false, right: false }; }
+
+        document.addEventListener('keydown', (e) => {
+            if(e.key==='ArrowLeft') keys.left = true;
+            if(e.key==='ArrowRight') keys.right = true;
+            if(e.key==='ArrowUp') {
+                keys.up = true;
+                if(player.grounded && gameState.mode === 'minigame') { player.vy = player.jump; player.grounded = false; playJump(); }
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            if(e.key==='ArrowLeft') keys.left = false;
+            if(e.key==='ArrowRight') keys.right = false;
+            if(e.key==='ArrowUp') keys.up = false;
+        });
+
+        function initMinigame() {
+            gameState.mode = 'minigame';
+            resetMinigame();
+        }
+
+        function resetMinigame() {
+            gameState.mode = 'minigame';
+            player = { x: 20, y: 230, w: 16, h: 20, vx: 0, vy: 0, speed: 2, jump: -6.5, grounded: false };
+            sandstorm = { y: 290, speed: 0.1 };
+            platforms = [
+                { x: 0, y: 260, w: 320, h: 20, vis: true }, // Floor
+                { x: 60, y: 210, w: 40, h: 10, vis: false }, // Invisible
+                { x: 130, y: 170, w: 40, h: 10, vis: false },
+                { x: 200, y: 130, w: 40, h: 10, vis: false },
+                { x: 130, y: 90, w: 40, h: 10, vis: false },
+                { x: 60, y: 50, w: 40, h: 10, vis: false },
+                { x: 0, y: 20, w: 40, h: 10, vis: true, finish: true } // Goal
+            ];
+        }
+
+        function updateMinigame() {
+            if (keys.left) player.vx = -player.speed;
+            else if (keys.right) player.vx = player.speed;
+            else player.vx = 0;
+
+            player.vy += GRAVITY;
+            
+            // X Collision
+            player.x += player.vx;
+            if(player.x < 0) player.x = 0;
+            if(player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+
+            // Y Collision & Platforms
+            player.y += player.vy;
+            player.grounded = false;
+            
+            for(let p of platforms) {
+                if(player.x < p.x + p.w && player.x + player.w > p.x && player.y < p.y + p.h && player.y + player.h > p.y) {
+                    // Hit invisible block from below
+                    if(!p.vis && player.vy < 0 && player.y > p.y) {
+                        p.vis = true;
+                        player.vy = 0;
+                        player.y = p.y + p.h;
+                        playHit();
+                    } 
+                    // Land on top
+                    else if (player.vy > 0 && player.y + player.h - player.vy <= p.y) {
+                        player.grounded = true;
+                        player.vy = 0;
+                        player.y = p.y - player.h;
+                        if(p.finish) winMinigame();
+                    }
+                }
+            }
+
+            // Sandstorm logic
+            sandstorm.y -= sandstorm.speed;
+            if(player.y + player.h > sandstorm.y) {
+                triggerSandstormDeath();
+            }
+        }
+
+        function triggerSandstormDeath() {
+            gameState.mode = 'sandstorm_dialog';
+            dialogUI.style.display = 'block';
+            speakerName.innerText = "DESERT MONSTER";
+            speakerName.style.color = "#ff4400";
+            typeText("Hah human! You should have watched out about your CO2 footprint 🐾! \n(Bunny: I don't even have a driver's license, I ride a bike!)\n[A] to retry.", dialogText);
+        }
+
+        function winMinigame() {
+            gameState.mode = 'dialog';
+            dialogUI.style.display = 'block';
+            speakerName.innerText = "SYSTEM";
+            speakerName.style.color = "#00f3ff";
+            typeText("LEVEL COMPLETE. ENERGY RECOVERED. TUTORIAL FINISHED.", dialogText);
+            playKawaii();
+        }
+
+        function drawMinigame() {
+            // Bg
+            ctx.fillStyle = '#112233';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid for retro feel
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            for(let i=0; i<canvas.width; i+=20) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+
+            // Platforms
+            for(let p of platforms) {
+                if(p.vis) {
+                    ctx.fillStyle = p.finish ? '#00ff00' : '#884422';
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.fillRect(p.x, p.y+p.h-2, p.w, 2);
+                } else {
+                    // Slight outline hint for invisible blocks
+                    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                    ctx.strokeRect(p.x, p.y, p.w, p.h);
+                }
+            }
+
+            // Player (Bunny Sprite X04)
+            drawSprite("X04", player.x - 10, player.y - 5, 36, 40);
+
+            // Sandstorm
+            ctx.fillStyle = 'rgba(255, 60, 0, 0.7)';
+            ctx.fillRect(0, sandstorm.y, canvas.width, canvas.height - sandstorm.y);
+            // Particle effect on top of sand
+            ctx.fillStyle = '#ffaa00';
+            for(let i=0; i<20; i++) {
+                ctx.fillRect(Math.random()*canvas.width, sandstorm.y + Math.random()*20, 2, 2);
+            }
+        }
+
+
+        function gameLoop() {
+            gameState.frame++;
+            
+            if (gameState.mode === 'menu') {
+                ctx.fillStyle = '#050508'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                drawSprite("X25", 0, 0, canvas.width, canvas.height); // BG Room
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            } 
+            else if (gameState.mode === 'dialog' || gameState.mode === 'sandstorm_dialog') {
+                ctx.fillStyle = '#050508'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const currentScene = narrative[gameState.scene];
+                
+                if (currentScene && currentScene.bg === "room") {
+                    drawSprite("X25", 0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'rgba(0,0,30,0.4)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    let spriteId = currentScene.sprite;
+                    if (spriteId) {
+                        let bounce = Math.sin(gameState.frame * 0.05) * 3;
+                        drawSprite(spriteId, 90, 60 + bounce, 140, 160);
+                    }
+                }
+                if (gameState.mode === 'sandstorm_dialog') {
+                    drawMinigame(); // Keep game visible behind dialog
+                }
+            }
+            else if (gameState.mode === 'minigame') {
+                updateMinigame();
+                drawMinigame();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
