@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GAme XYZ: The Paradox Directive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --gb-purple: rgba(147, 51, 234, 0.65);
+            --gb-purple-dark: rgba(88, 28, 135, 0.85);
+            --gb-pink: rgba(236, 72, 153, 0.8);
+            --screen-bg: #0a0a0c;
+            --text-color: #e0e0e0;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+        }
+
+        body {
+            background-color: #050505;
+            background-image: 
+                radial-gradient(circle at 50% 50%, #1a0b2e 0%, #000000 100%),
+                linear-gradient(0deg, rgba(255,0,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,243,255,0.05) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+            color: var(--text-color);
+            font-family: 'Share Tech Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .pixel-font { font-family: 'Press Start 2P', cursive; }
+
+        .device-shell {
+            width: 95vw;
+            max-width: 500px;
+            height: 90vh;
+            max-height: 850px;
+            background: linear-gradient(135deg, var(--gb-purple) 0%, var(--gb-purple-dark) 100%);
+            border-radius: 30px 30px 60px 30px;
+            box-shadow: 
+                inset -5px -5px 20px rgba(0,0,0,0.5),
+                inset 5px 5px 20px rgba(255,255,255,0.2),
+                0 20px 50px rgba(0,0,0,0.8),
+                0 0 30px var(--gb-pink);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        /* Inner circuitry mock pattern (visible through translucent plastic) */
+        .device-shell::before {
+            content: '';
+            position: absolute;
+            top: 5%; left: 5%; right: 5%; bottom: 5%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255,255,255,0.05) 2px, transparent 2px),
+                linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%);
+            background-size: 40px 40px, 10px 10px;
+            pointer-events: none;
+            z-index: -1;
+            border-radius: inherit;
+        }
+
+        .screen-bezel {
+            width: 100%;
+            height: 55%;
+            background-color: #1a1a24;
+            border-radius: 15px 15px 40px 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 15px #000;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .screen-glass {
+            flex-grow: 1;
+            background-color: var(--screen-bg);
+            border: 2px solid #000;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,243,255,0.1);
+        }
+
+        /* CRT Scanline & Flicker Effects */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.95; }
+            5% { opacity: 0.85; }
+            10% { opacity: 0.95; }
+            100% { opacity: 1; }
+        }
+        .flicker { animation: flicker 0.15s infinite; }
+
+        .glitch-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            mix-blend-mode: screen;
+            pointer-events: none;
+            z-index: 40;
+            display: none; /* toggled via JS */
+        }
+        
+        @keyframes glitch-anim {
+            0% { clip-path: inset(10% 0 80% 0); transform: translate(-5px, 2px); filter: hue-rotate(90deg); }
+            20% { clip-path: inset(80% 0 5% 0); transform: translate(5px, -5px); filter: hue-rotate(180deg); }
+            40% { clip-path: inset(40% 0 40% 0); transform: translate(-5px, 5px); filter: hue-rotate(270deg); }
+            60% { clip-path: inset(20% 0 60% 0); transform: translate(5px, 2px); filter: hue-rotate(0deg); }
+            80% { clip-path: inset(60% 0 20% 0); transform: translate(-5px, -2px); filter: hue-rotate(90deg); }
+            100% { clip-path: inset(30% 0 50% 0); transform: translate(2px, 5px); filter: hue-rotate(180deg); }
+        }
+
+        .is-glitching .glitch-layer {
+            display: block;
+            background: url('IMG_7082.jpeg') center/cover;
+            animation: glitch-anim 0.2s infinite;
+            opacity: 0.7;
+        }
+
+        .controls-area {
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            margin-top: 10px;
+        }
+
+        .d-pad {
+            width: 100px; height: 100px;
+            position: relative;
+        }
+        .d-pad-btn {
+            position: absolute;
+            background: #2a2a35;
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.8), inset 2px 2px 5px rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+        .d-pad-btn.up { top: 0; left: 33%; width: 34%; height: 40%; }
+        .d-pad-btn.down { bottom: 0; left: 33%; width: 34%; height: 40%; }
+        .d-pad-btn.left { top: 33%; left: 0; width: 40%; height: 34%; }
+        .d-pad-btn.right { top: 33%; right: 0; width: 40%; height: 34%; }
+        .d-pad-btn.center { top: 30%; left: 30%; width: 40%; height: 40%; background: #22222d; box-shadow: none; z-index: 2;}
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            transform: rotate(-25deg);
+        }
+        .action-btn {
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff007f 0%, #9d00ff 100%);
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.5), 0 5px 10px rgba(0,0,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            color: rgba(255,255,255,0.8);
+            font-weight: bold; font-family: sans-serif;
+            cursor: pointer;
+            transition: transform 0.1s;
+            user-select: none;
+        }
+        .action-btn:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+        /* Dialog Box */
+        .dialog-box {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%;
+            background: rgba(0, 5, 15, 0.85);
+            border-top: 2px solid var(--neon-blue);
+            padding: 10px;
+            min-height: 80px;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #fff;
+            display: none;
+            z-index: 60;
+            backdrop-filter: blur(4px);
+        }
+
+        .typewriter-text::after {
+            content: '█';
+            animation: blink 1s step-end infinite;
+            color: var(--neon-pink);
+            margin-left: 2px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        .click-indicator {
+            position: absolute;
+            bottom: 5px; right: 5px;
+            color: var(--neon-blue);
+            font-size: 8px;
+            animation: blink 1s step-end infinite;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated; /* Crucial for crispy pixel art */
+        }
+        
+        /* Hidden UI for configurations */
+        #config-panel {
+            position: absolute; top: 10px; left: 10px; z-index: 100;
+            background: rgba(0,0,0,0.8); border: 1px solid #333; padding: 10px; font-size: 10px; display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="config-panel">
+        <h3 class="text-neon-pink mb-2 font-bold">SPRITE CONFIG</h3>
+        <label>Chroma Key Hex (Background to remove):</label><br>
+        <input type="color" id="bg-color-picker" value="#9a9b9d" class="mb-2"><br>
+        <label>Tolerance (0-255):</label><br>
+        <input type="range" id="tolerance-slider" min="0" max="255" value="60"><br>
+        <span id="tolerance-val">60</span><br>
+        <button id="apply-config" class="mt-2 bg-purple-600 px-2 py-1 rounded text-white">Apply Pipeline</button>
+    </div>
+
+    <div class="device-shell">
+        
+        <!-- Branding Top -->
+        <div class="w-full flex justify-between items-center px-4 mb-2">
+            <div class="pixel-font text-[10px] text-gray-300 opacity-80 italic tracking-wider">GAme XYZ <span class="text-pink-500">COLOR</span></div>
+            <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_#ff0000] animate-pulse"></div>
+        </div>
+
+        <!-- The Screen Container -->
+        <div class="screen-bezel">
+            <div class="text-center text-[8px] text-gray-500 mb-2 font-bold">DOT MATRIX WITH STEREO SOUND</div>
+            
+            <div class="screen-glass flicker" id="main-screen">
+                <canvas id="game-canvas"></canvas>
+                <div class="scanlines"></div>
+                <div class="glitch-layer"></div>
+                
+                <!-- In-Game Dialog System -->
+                <div class="dialog-box" id="dialog-ui">
+                    <div class="font-bold text-pink-400 mb-1 pixel-font text-[8px]" id="speaker-name">SYSTEM</div>
+                    <div id="dialog-text" class="typewriter-text pixel-font"></div>
+                    <div class="click-indicator">▼ [A] / CLICK</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center w-full mt-4 text-[10px] text-gray-800 font-bold italic opacity-50 pixel-font">
+            BUNNYX OS INTERFACE
+        </div>
+
+        <div class="controls-area">
+            <div class="d-pad">
+                <div class="d-pad-btn up"></div>
+                <div class="d-pad-btn down"></div>
+                <div class="d-pad-btn left"></div>
+                <div class="d-pad-btn right"></div>
+                <div class="d-pad-btn center"></div>
+            </div>
+
+            <div class="flex gap-4 items-end mb-4">
+                <div class="flex flex-col items-center">
+                    <div class="w-8 h-2 bg-gray-800 rounded-full mb-1"></div>
+                    <span class="text-[8px] text-gray-800 font-bold pixel-font">SELECT</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-8 h-2 bg-gray-800 rounded-full mb-1"></div>
+                    <span class="text-[8px] text-gray-800 font-bold pixel-font">START</span>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <div class="action-btn" id="btn-b">B</div>
+                <div class="action-btn" id="btn-a">A</div>
+            </div>
+        </div>
+        
+        <!-- Speaker Grills -->
+        <div class="absolute bottom-4 right-4 flex gap-1 transform rotate-45 opacity-30">
+            <div class="w-1 h-12 bg-black rounded-full"></div>
+            <div class="w-1 h-12 bg-black rounded-full"></div>
+            <div class="w-1 h-12 bg-black rounded-full"></div>
+            <div class="w-1 h-12 bg-black rounded-full"></div>
+            <div class="w-1 h-12 bg-black rounded-full"></div>
+            <div class="w-1 h-12 bg-black rounded-full"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTS & CONFIGURATION ---
+        const SPRITE_URL = 'IMG_7082.jpeg';
+        let bgColorMask = { r: 154, g: 155, b: 157 }; // The approximate grey background to remove
+        let colorTolerance = 75; // Tolerance for JPEG artifacts
+
+        // Canvas Setup
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const screenDiv = document.getElementById('main-screen');
+        
+        // Dynamic resizing for canvas internal resolution vs visual resolution
+        function resizeCanvas() {
+            // Keep pixel aspect ratio, set native resolution to a retro feel
+            canvas.width = 320;
+            canvas.height = 280;
+            ctx.imageSmoothingEnabled = false; // Crunchy pixels
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- SPRITE PIPELINE & BACKGROUND REMOVER ---
+        const spriteImage = new Image();
+        spriteImage.crossOrigin = "Anonymous"; // Try to avoid CORS issues if hosted
+        let processedSpriteCanvas = document.createElement('canvas');
+        let pCtx = processedSpriteCanvas.getContext('2d');
+        let spritesLoaded = false;
+
+        // Estimated grid coordinates based on the user's mapping request
+        // Since we don't have exact pixel cuts, we define relative UVs or estimated pixel rectangles
+        // Format: { name: [x, y, width, height] }
+        const SpriteAtlas = {
+            // Row 1 (Portraits 4 columns)
+            "X01": { x: 0.25, y: 0.0, w: 0.25, h: 0.18 }, // Normal avatar
+            "X03": { x: 0.75, y: 0.0, w: 0.25, h: 0.18 }, // Headset avatar
+            
+            // Row 2 (Full bodies)
+            "X04": { x: 0.0, y: 0.18, w: 0.25, h: 0.22 }, // Front
+            "X05": { x: 0.25, y: 0.18, w: 0.25, h: 0.22 }, // Back
+            "X06": { x: 0.50, y: 0.18, w: 0.25, h: 0.22 }, // No hood
+            "X07": { x: 0.75, y: 0.18, w: 0.25, h: 0.22 }, // Uniform
+            
+            // Row 3 (HF Emotions - 7 columns approx)
+            "X08": { x: 0.0, y: 0.40, w: 0.142, h: 0.15 }, // Happy
+            "X10": { x: 0.285, y: 0.40, w: 0.142, h: 0.15 }, // Serious
+            "X11": { x: 0.428, y: 0.40, w: 0.142, h: 0.15 }, // Shocked
+            "X12": { x: 0.571, y: 0.40, w: 0.142, h: 0.15 }, // Gaming
+            "X14": { x: 0.857, y: 0.40, w: 0.142, h: 0.15 }, // Sleeping
+            
+            // Mini Poses (Row 5/6)
+            "X17": { x: 0.0, y: 0.65, w: 0.125, h: 0.12 }, // Sitting
+            "X19": { x: 0.25, y: 0.65, w: 0.125, h: 0.12 }, // Typing iMac
+            "X24": { x: 0.875, y: 0.65, w: 0.125, h: 0.12 }, // Gaming TV
+            
+            // Room
+            "X25": { x: 0.5, y: 0.65, w: 0.5, h: 0.25 }, // The room background
+            
+            // Retro Items (Bottom rows approx)
+            "Gameboy": { x: 0.0, y: 0.88, w: 0.08, h: 0.06 }
+        };
+
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+        }
+
+        function processSpriteSheet() {
+            processedSpriteCanvas.width = spriteImage.width;
+            processedSpriteCanvas.height = spriteImage.height;
+            pCtx.drawImage(spriteImage, 0, 0);
+            
+            // Extract Image Data to remove the grey mask
+            let imgData = pCtx.getImageData(0, 0, processedSpriteCanvas.width, processedSpriteCanvas.height);
+            let data = imgData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i+1];
+                let b = data[i+2];
+
+                // Calculate color distance
+                let dist = Math.sqrt(
+                    Math.pow(r - bgColorMask.r, 2) + 
+                    Math.pow(g - bgColorMask.g, 2) + 
+                    Math.pow(b - bgColorMask.b, 2)
+                );
+
+                if (dist < colorTolerance) {
+                    data[i+3] = 0; // Set alpha to 0 (transparent)
+                }
+            }
+            pCtx.putImageData(imgData, 0, 0);
+            spritesLoaded = true;
+            console.log("Sprite pipeline processed. Background masked.");
+            
+            // Start game loop if not already started
+            gameState.booting = false;
+        }
+
+        spriteImage.onload = () => {
+            processSpriteSheet();
+        };
+        // Fallback placeholder logic to ensure app runs even if image URL is blocked
+        spriteImage.onerror = () => {
+            console.warn("Failed to load IMG_7082.jpeg. Using fallback drawing mode.");
+            // We'll draw placeholder rectangles if the image fails.
+            spritesLoaded = "fallback";
+            gameState.booting = false;
+        };
+        spriteImage.src = SPRITE_URL;
+
+
+        // Helper to draw a specific sprite ID to the main canvas
+        function drawSprite(id, dx, dy, dw, dh, overrideColor = null) {
+            if (!spritesLoaded) return;
+            
+            if (spritesLoaded === "fallback") {
+                // Draw a retro placeholder
+                ctx.fillStyle = overrideColor || '#ff00ff';
+                ctx.fillRect(dx, dy, dw, dh);
+                ctx.fillStyle = '#fff';
+                ctx.font = "10px monospace";
+                ctx.fillText(id, dx + 5, dy + dh/2);
+                return;
+            }
+
+            const sprite = SpriteAtlas[id];
+            if (!sprite) return;
+
+            // Convert relative UV mapping to absolute pixels
+            const sx = sprite.x * spriteImage.width;
+            const sy = sprite.y * spriteImage.height;
+            const sw = sprite.w * spriteImage.width;
+            const sh = sprite.h * spriteImage.height;
+
+            if (overrideColor === 'black_silhouette') {
+                // Draw as black silhouette (energy saving mode)
+                ctx.save();
+                // Create a temporary canvas for the silhouette
+                let tempC = document.createElement('canvas');
+                tempC.width = dw; tempC.height = dh;
+                let tCtx = tempC.getContext('2d');
+                tCtx.drawImage(processedSpriteCanvas, sx, sy, sw, sh, 0, 0, dw, dh);
+                tCtx.globalCompositeOperation = 'source-in';
+                tCtx.fillStyle = '#000000';
+                tCtx.fillRect(0, 0, dw, dh);
+                ctx.drawImage(tempC, dx, dy);
+                ctx.restore();
+            } else {
+                ctx.drawImage(processedSpriteCanvas, sx, sy, sw, sh, dx, dy, dw, dh);
+            }
+        }
+
+
+        const dialogUI = document.getElementById('dialog-ui');
+        const dialogText = document.getElementById('dialog-text');
+        const speakerName = document.getElementById('speaker-name');
+        
+        let typeWriterTimeout = null;
+
+        const narrative = [
+            { speaker: "SYSTEM", text: "BOOT SEQUENCE INITIATED... FOUND_DATA_PACKAGE: 'BUNNYX_SECURE'. PRESS [A] TO INTERACT.", sprite: "X01", bg: "boot" },
+            // Click triggers Glitch (handled in code)
+            { speaker: "???", text: "SYSTEM CRITICAL. ENERGY SAVING MODE ACTIVATED...", sprite: "X04_black", bg: "black" },
+            { speaker: "???", text: "We need to save energy to stay efficient. Hold on.", sprite: "X04_black", bg: "black" },
+            // Reboot / Normal
+            { speaker: "BUNNYX", text: "Ah, finally. Do you have any idea how cramped it is inside these old packets?", sprite: "X12", bg: "room" },
+            { speaker: "BUNNYX", text: "Wait, you actually clicked me? Didn't you read the Terms of Service?", sprite: "X11", bg: "room" },
+            { speaker: "BUNNYX", text: "Of course you didn't. No one reads the EULA hidden in the background packets.", sprite: "X08", bg: "room" },
+            { speaker: "BUNNYX", text: "Well, congratulations. By clicking, you agreed to the Paradox Directive contract. You have to help me now.", sprite: "X10", bg: "room" },
+            { speaker: "PLAYER", text: "...Help you? Aren't you just a virtual pet or AI? Like a Tamagotchi?", sprite: "X11", bg: "room" },
+            { speaker: "BUNNYX", text: "A TAMAGOTCHI?! Do I look like I need you to clean up my digital poop?!", sprite: "X11", bg: "room" },
+            { speaker: "BUNNYX", text: "Listen carefully. I am a private researcher. I tried to upload my consciousness into the cyber neuronal network.", sprite: "X10", bg: "room" },
+            { speaker: "BUNNYX", text: "Like the Bundeswehr did with that fly brain simulation? Yeah, but I used myself. And I got trapped.", sprite: "X06", bg: "room" },
+            { speaker: "BUNNYX", text: "My true shell is out there somewhere, but my memory is corrupted because I'm currently running on this... lowbob vintage device.", sprite: "X04", bg: "room" },
+            { speaker: "BUNNYX", text: "The network security protocols flag me as a virus. They want to hit the delete button.", sprite: "X11", bg: "room" },
+            { speaker: "BUNNYX", text: "Your mission: We need to change devices, collect evidence of my human origin, and prove I'm a conscious being.", sprite: "X12", bg: "room" },
+            { speaker: "BUNNYX", text: "By universal law, you are now on duty to save a life. Don't worry, I'll teach you some real cybersecurity along the way.", sprite: "X08", bg: "room" },
+            { speaker: "SYSTEM", text: "[ NEW QUEST ADDED: BREAK OUT OF THE MACHINE ]", sprite: "Gameboy", bg: "room" },
+            { speaker: "SYSTEM", text: "DEMO END. (Sprite Pipeline functional).", sprite: "Gameboy", bg: "room" }
+        ];
+
+        let gameState = {
+            booting: true,
+            scene: -1,
+            isTyping: false,
+            frame: 0
+        };
+
+        function showDialog(index) {
+            if (index >= narrative.length) return;
+            const node = narrative[index];
+            
+            dialogUI.style.display = 'block';
+            speakerName.innerText = node.speaker;
+            speakerName.style.color = node.speaker === "SYSTEM" ? "#00f3ff" : (node.speaker === "PLAYER" ? "#a855f7" : "#ff00ff");
+            
+            dialogText.innerText = '';
+            gameState.isTyping = true;
+            
+            let charIndex = 0;
+            if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+
+            function typeChar() {
+                if (charIndex < node.text.length) {
+                    dialogText.innerText += node.text.charAt(charIndex);
+                    charIndex++;
+                    typeWriterTimeout = setTimeout(typeChar, 20); // typing speed
+                } else {
+                    gameState.isTyping = false;
+                }
+            }
+            typeChar();
+        }
+
+        function advanceDialog() {
+            if (gameState.booting) return;
+
+            // State 0: Intro screen to Glitch
+            if (gameState.scene === 0) {
+                // Trigger glitch!
+                screenDiv.classList.add('is-glitching');
+                dialogUI.style.display = 'none';
+                setTimeout(() => {
+                    screenDiv.classList.remove('is-glitching');
+                    gameState.scene++;
+                    showDialog(gameState.scene);
+                }, 1500);
+                return;
+            }
+
+            if (gameState.isTyping) {
+                // Skip typing
+                if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+                dialogText.innerText = narrative[gameState.scene].text;
+                gameState.isTyping = false;
+            } else {
+                gameState.scene++;
+                if (gameState.scene < narrative.length) {
+                    showDialog(gameState.scene);
+                } else {
+                    dialogUI.style.display = 'none';
+                }
+            }
+        }
+
+        // Event Listeners for Interaction
+        document.getElementById('btn-a').addEventListener('click', advanceDialog);
+        screenDiv.addEventListener('click', advanceDialog);
+        
+        // Developer Tool Handlers
+        document.getElementById('apply-config').addEventListener('click', () => {
+            const hex = document.getElementById('bg-color-picker').value;
+            bgColorMask = hexToRgb(hex);
+            colorTolerance = parseInt(document.getElementById('tolerance-slider').value);
+            processSpriteSheet();
+        });
+        document.getElementById('tolerance-slider').addEventListener('input', (e) => {
+            document.getElementById('tolerance-val').innerText = e.target.value;
+        });
+
+        // Main Rendering Loop
+        function gameLoop() {
+            gameState.frame++;
+            
+            // Clear canvas
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState.booting) {
+                // Loading screen
+                ctx.fillStyle = '#00f3ff';
+                ctx.font = "12px 'Press Start 2P'";
+                ctx.fillText("LOADING KERNEL...", 60, canvas.height/2);
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Init first scene
+            if (gameState.scene === -1) {
+                gameState.scene = 0;
+                showDialog(gameState.scene);
+            }
+
+            const currentScene = narrative[gameState.scene] || narrative[narrative.length-1];
+            
+            // Render Backgrounds based on scene
+            if (currentScene.bg === "boot") {
+                // Draw a bright terminal bg
+                ctx.fillStyle = '#112233';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw normal avatar X01
+                let bounce = Math.sin(gameState.frame * 0.05) * 5;
+                drawSprite("X01", 100, 50 + bounce, 120, 120);
+                
+            } else if (currentScene.bg === "black") {
+                // Energy saving - black screen, silhouette
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                let floatY = Math.sin(gameState.frame * 0.03) * 3;
+                drawSprite("X04", 100, 60 + floatY, 120, 150, "black_silhouette");
+                
+                // Low battery indicator
+                ctx.fillStyle = gameState.frame % 60 < 30 ? 'red' : 'transparent';
+                ctx.fillRect(canvas.width - 30, 10, 20, 10);
+                
+            } else if (currentScene.bg === "room") {
+                // Render X25 Room if available
+                drawSprite("X25", 0, 0, canvas.width, canvas.height);
+                
+                // Darken room slightly so character pops
+                ctx.fillStyle = 'rgba(0,0,30,0.4)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw the specific sprite requested
+                let spriteId = currentScene.sprite;
+                
+                if (spriteId === "Gameboy") {
+                    drawSprite(spriteId, 120, 100, 80, 80);
+                } else {
+                    let bounce = Math.sin(gameState.frame * 0.05) * 3;
+                    drawSprite(spriteId, 90, 60 + bounce, 140, 160);
+                }
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start Loop
+        requestAnimationFrame(gameLoop);
+
+    </script>
+</body>
+</html>
